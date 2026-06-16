@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    
+
+<div class="app-container">
+  
+  <aside class="left-control-dock">
+    <div class="logo-wrap">
+      <span class="nav-logo">STROKE</span>
+    </div>
+    
+    <button class="drawer-toggle-btn" id="menuToggle">
+      <span class="btn-icon">☰</span>
+      <span class="btn-text">MENU</span>
+    </button>
+
+    <div class="dock-user-tag">
+      👋
+    </div>
+  </aside>
+
+  <div class="dashboard-drawer" id="dashDrawer">
+    <div class="drawer-header">
+      <span class="drawer-logo">Stroke</span>
+      <p class="drawer-sub">Navigation System</p>
+    </div>
+    
+    <nav class="drawer-nav-links">
+      <a href="/dashboard" class="drawer-link active">⊞ Dashboard</a>
+      <a href="/log" class="drawer-link">🌊 Log swim</a>
+      <a href="/pbs" class="drawer-link">🏆 Personal bests</a>
+      <a href="/goals" class="drawer-link">🎯 Goals</a>
+      <a href="/sets" class="drawer-link">📋 Set library</a>
+      <a href="/progress" class="drawer-link">📈 Progress</a>
+      <a href="/coaches" class="drawer-link">👤 Coaches</a>
+      <a href="/settings" class="drawer-link drawer-bottom">⚙️ Settings</a>
+      <a href="/logout" class="drawer-link">🚪 Log out</a>
+    </nav>
+  </div>
+
+  <main class="main-workspace">
+    <div class="greeting">
+      <h1>Good morning, {{ current_user.username }}.</h1>
+      <p>Hey, {{ current_user.username }} 👋 — Welcome back to your swimming studio workspace</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-label">This week</div>
+        <div class="stat-val">0</div>
+        <div class="stat-sub">sessions logged</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Volume</div>
+        <div class="stat-val">0<span style="font-size:20px">m</span></div>
+        <div class="stat-sub">total this week</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">WA points</div>
+        <div class="stat-val">—</div>
+        <div class="stat-sub">log a swim to start</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Streak</div>
+        <div class="stat-val">0<span style="font-size:20px">d</span></div>
+        <div class="stat-sub">log your first swim</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Personal bests <span class="panel-action">View all →</span></div>
+        <p style="font-size:13px;color:#555;padding:12px 0">No swims logged yet. Log your first swim to start tracking PBs.</p>
+        <a href="/log" class="log-btn" style="margin-top:8px;text-decoration:none">⌨️ Log your first swim</a>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Log a swim</div>
+        <a href="/log" class="log-btn">⌨️ Type manually <span class="log-btn-badge">Free</span></a>
+        <button class="log-btn locked" disabled>📷 Scan whiteboard <span class="log-btn-badge">Solo</span></button>
+        <button class="log-btn locked" disabled>🎙️ Voice log <span class="log-btn-badge">Solo</span></button>
+        
+        <div class="upgrade-banner">
+          <div>
+            <div class="upgrade-text">Upgrade to Solo</div>
+            <div class="upgrade-sub" id="rotatingFeature">Photo set scanner — scan any whiteboard</div>
+          </div>
+          <button class="upgrade-btn">$12/mo →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Volume — last 8 weeks</div>
+        <div class="console-switch-group">
+          <button class="console-switch-btn active">Metres</button>
+          <button class="console-switch-btn">Sessions</button>
+          <button class="console-switch-btn">Points</button>
+        </div>
+        <div class="chart-bars">
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar active" style="height:10%"></div>
+        </div>
+        <div class="chart-labels">
+          <div class="chart-lbl">Wk 1</div>
+          <div class="chart-lbl">Wk 2</div>
+          <div class="chart-lbl">Wk 3</div>
+          <div class="chart-lbl">Wk 4</div>
+          <div class="chart-lbl">Wk 5</div>
+          <div class="chart-lbl">Wk 6</div>
+          <div class="chart-lbl">Wk 7</div>
+          <div class="chart-lbl">Wk 8</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Goal</div>
+        <p style="font-size:13px;color:#555;padding:12px 0">No goal set yet. Set a target time and meet date to get started.</p>
+        <a href="/goals" class="log-btn" style="text-decoration:none">🎯 Set a goal</a>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Recent sessions <span class="panel-action">View all →</span></div>
+        <p style="font-size:13px;color:#555;padding:12px 0">No sessions yet. Log your first swim to see it here.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Streak</div>
+        <div class="points-big">0</div>
+        <div class="points-label">days in a row</div>
+        <div class="streak-grid">
+          {% for i in range(21) %}
+          <div class="s-day"></div>
+          {% endfor %}
+        </div>
+        <div class="streak-label">Log your first swim to start</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Toggle Console Drawer Display
+const menuToggle = document.getElementById('menuToggle');
+const dashDrawer = document.getElementById('dashDrawer');
+
+menuToggle.addEventListener('click', () => {
+  dashDrawer.classList.toggle('open');
+  menuToggle.classList.toggle('active');
+});
+
+// Metric Switcher Options
+document.querySelectorAll('.console-switch-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.console-switch-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// Rotating Feature Banner
+const features = [
+  "📷 Photo set scanner — scan any whiteboard",
+  "🎙️ Voice set logging — speak your set",
+  "🧠 AI performance insights",
+  "😴 Fatigue score and recovery guidance",
+  "🎯 Target time planner",
+  "📅 Auto generated training blocks",
+  "📉 Taper and race planner",
+  "⏱️ Split time analysis",
+  "📊 Volume vs performance analytics",
+  "✅ Consistency coaching — one weekly focus",
+  "🌍 Advanced World Aquatics points progression",
+  "🏋️ Dryland training plans",
+  "🌊 Stroke rate tracking",
+  "😴 Rest interval tracking"
+];
+
+let index = 0;
+const el = document.getElementById('rotatingFeature');
+
+function rotate() {
+  if (!el) return;
+
+  // Step 1 — slide out
+  el.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+  el.style.transform = 'translateY(-10px)';
+  el.style.opacity = '0';
+
+  // Step 2 — swap text while invisible
+  setTimeout(() => {
+    index = (index + 1) % features.length;
+    el.textContent = features[index];
+
+    // Reset position below so it slides up into view
+    el.style.transition = 'none';
+    el.style.transform = 'translateY(10px)';
+    el.style.opacity = '0';
+
+    // Step 3 — force browser to register the reset before animating in
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+        el.style.transform = 'translateY(0)';
+        el.style.opacity = '1';
+      });
+    });
+  }, 320);
+}
+
+// Start after 2 seconds then every 3.5 seconds
+if (el) {
+  el.style.display = 'inline-block';
+  setTimeout(() => {
+    rotate();
+    setInterval(rotate, 3500);
+  }, 2000);
+}
+</script>
+
+</body>
+</html>

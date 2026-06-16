@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+
+<div class="app-container">
+  
+  <!-- LEFT SIDEBAR CONTROL BAR (Replaces Top Navbar) -->
+  <aside class="left-control-dock">
+    <div class="logo-wrap">
+      <span class="nav-logo">S</span>
+    </div>
+    
+    <!-- Tactile Console Menu Button -->
+    <button class="drawer-toggle-btn" id="menuToggle">
+      <span class="btn-icon">☰</span>
+      <span class="btn-text">MENU</span>
+    </button>
+
+    <div class="dock-user-tag">
+      👋
+    </div>
+  </aside>
+
+  <!-- POP-OUT MODULAR DRAWER -->
+  <div class="dashboard-drawer" id="dashDrawer">
+    <div class="drawer-header">
+      <span class="drawer-logo">Stroke</span>
+      <p class="drawer-sub">Navigation System</p>
+    </div>
+    
+    <nav class="drawer-nav-links">
+      <a href="/dashboard" class="drawer-link active">⊞ Dashboard</a>
+      <a href="/log" class="drawer-link">🌊 Log swim</a>
+      <a href="/pbs" class="drawer-link">🏆 Personal bests</a>
+      <a href="/goals" class="drawer-link">🎯 Goals</a>
+      <a href="/sets" class="drawer-link">📋 Set library</a>
+      <a href="/progress" class="drawer-link">📈 Progress</a>
+      <a href="/coaches" class="drawer-link">👤 Coaches</a>
+      <a href="/settings" class="drawer-link drawer-bottom">⚙️ Settings</a>
+      <a href="/logout" class="drawer-link">🚪 Log out</a>
+    </nav>
+  </div>
+
+  <!-- MAIN HARDWARE CONTENT PANEL -->
+  <main class="main-workspace">
+    <div class="greeting">
+      <h1>Good morning, {{ current_user.username }}.</h1>
+      <p>Hey, {{ current_user.username }} 👋 — Welcome back to your swimming studio workspace</p>
+    </div>
+
+    <!-- STATS BLOCKS -->
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-label">This week</div>
+        <div class="stat-val">0</div>
+        <div class="stat-sub">sessions logged</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Volume</div>
+        <div class="stat-val">0<span style="font-size:20px">m</span></div>
+        <div class="stat-sub">total this week</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">WA points</div>
+        <div class="stat-val">—</div>
+        <div class="stat-sub">log a swim to start</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Streak</div>
+        <div class="stat-val">0<span style="font-size:20px">d</span></div>
+        <div class="stat-sub">log your first swim</div>
+      </div>
+    </div>
+
+    <!-- MAIN DASHBOARD UTILITIES -->
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Personal bests <span class="panel-action">View all →</span></div>
+        <p style="font-size:13px;color:#555;padding:12px 0">No swims logged yet. Log your first swim to start tracking PBs.</p>
+        <a href="/log" class="log-btn" style="margin-top:8px;text-decoration:none">⌨️ Log your first swim</a>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Log a swim</div>
+        <a href="/log" class="log-btn">⌨️ Type manually <span class="log-btn-badge">Free</span></a>
+        <button class="log-btn locked" disabled>📷 Scan whiteboard <span class="log-btn-badge">Solo</span></button>
+        <button class="log-btn locked" disabled>🎙️ Voice log <span class="log-btn-badge">Solo</span></button>
+        <div class="upgrade-banner">
+          <div>
+            <div class="upgrade-text">Upgrade to Solo</div>
+            <div class="upgrade-sub">Scan any whiteboard. Speak any set.</div>
+          </div>
+          <button class="upgrade-btn">$12/mo →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Volume — last 8 weeks</div>
+        <div class="console-switch-group">
+          <button class="console-switch-btn active">Metres</button>
+          <button class="console-switch-btn">Sessions</button>
+          <button class="console-switch-btn">Points</button>
+        </div>
+        <div class="chart-bars">
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar" style="height:10%"></div>
+          <div class="bar active" style="height:10%"></div>
+        </div>
+        <div class="chart-labels">
+          <div class="chart-lbl">Wk 1</div>
+          <div class="chart-lbl">Wk 2</div>
+          <div class="chart-lbl">Wk 3</div>
+          <div class="chart-lbl">Wk 4</div>
+          <div class="chart-lbl">Wk 5</div>
+          <div class="chart-lbl">Wk 6</div>
+          <div class="chart-lbl">Wk 7</div>
+          <div class="chart-lbl">Wk 8</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Goal</div>
+        <p style="font-size:13px;color:#555;padding:12px 0">No goal set yet. Set a target time and meet date to get started.</p>
+        <a href="/goals" class="log-btn" style="text-decoration:none">🎯 Set a goal</a>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Recent sessions <span class="panel-action">View all →</span></div>
+        <p style="font-size:13px;color:#555;padding:12px 0">No sessions yet. Log your first swim to see it here.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Streak</div>
+        <div class="points-big">0</div>
+        <div class="points-label">days in a row</div>
+        <div class="streak-grid">
+          {% for i in range(21) %}
+          <div class="s-day"></div>
+          {% endfor %}
+        </div>
+        <div class="streak-label">Log your first swim to start</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- COMPONENT INTERACTION SCRIPTS -->
+<script>
+// Toggle Console Drawer Display
+const menuToggle = document.getElementById('menuToggle');
+const dashDrawer = document.getElementById('dashDrawer');
+
+menuToggle.addEventListener('click', () => {
+  dashDrawer.classList.toggle('open');
+  menuToggle.classList.toggle('active');
+});
+
+// Metric Switcher Options
+document.querySelectorAll('.console-switch-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.console-switch-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

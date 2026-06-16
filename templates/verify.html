@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify email — STROKE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-logo">STROKE</a>
+    </nav>
+    <div class="auth-wrap">
+        <div class="auth-card">
+            <h1>Check your email</h1>
+            <p class="auth-sub">We sent a 6 digit code to {{ email }}. Enter it below to verify your account.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            <form method="POST" action="/verify">
+                <input type="hidden" name="email" value="{{ email }}">
+                <div class="form-group">
+                    <label>Verification code</label>
+                    <input type="text" name="code" placeholder="000000" maxlength="6" required autocomplete="one-time-code" style="font-size:24px;letter-spacing:8px;text-align:center">
+                </div>
+                <button type="submit" class="btn-primary">Verify email</button>
+            </form>
+            <p class="auth-switch">Wrong email? <a href="/signup">Start over</a></p>
+            <p class="auth-switch" style="margin-top:8px"><a href="/resend-code?email={{ email }}">Resend code</a></p>
+        </div>
+    </div>
+</body>
+</html>
