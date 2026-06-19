@@ -3,183 +3,290 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — STROKE</title>
+<title>STROKE — Swimming Performance Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 <body>
 
-<div class="app-container">
-  
-  <!-- LEFT SIDEBAR CONTROL BAR (Replaces Top Navbar) -->
-  <aside class="left-control-dock">
-    <div class="logo-wrap">
-      <span class="nav-logo">S</span>
-    </div>
-    
-    <!-- Tactile Console Menu Button -->
-    <button class="drawer-toggle-btn" id="menuToggle">
-      <span class="btn-icon">☰</span>
-      <span class="btn-text">MENU</span>
-    </button>
-
-    <div class="dock-user-tag">
-      👋
-    </div>
-  </aside>
-
-  <!-- POP-OUT MODULAR DRAWER -->
-  <div class="dashboard-drawer" id="dashDrawer">
-    <div class="drawer-header">
-      <span class="drawer-logo">Stroke</span>
-      <p class="drawer-sub">Navigation System</p>
-    </div>
-    
-    <nav class="drawer-nav-links">
-      <a href="/dashboard" class="drawer-link active">⊞ Dashboard</a>
-      <a href="/log" class="drawer-link">🌊 Log swim</a>
-      <a href="/pbs" class="drawer-link">🏆 Personal bests</a>
-      <a href="/goals" class="drawer-link">🎯 Goals</a>
-      <a href="/sets" class="drawer-link">📋 Set library</a>
-      <a href="/progress" class="drawer-link">📈 Progress</a>
-      <a href="/coaches" class="drawer-link">👤 Coaches</a>
-      <a href="/settings" class="drawer-link drawer-bottom">⚙️ Settings</a>
-      <a href="/logout" class="drawer-link">🚪 Log out</a>
-    </nav>
+<nav class="land-nav">
+  <span class="nav-logo">STROKE</span>
+  <div class="land-nav-links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#coaches">Coaches</a>
+    <a href="/login">Log in</a>
   </div>
+  <a href="/signup" class="land-nav-cta">Get started free</a>
+</nav>
 
-  <!-- MAIN HARDWARE CONTENT PANEL -->
-  <main class="main-workspace">
-    <div class="greeting">
-      <h1>Good morning, {{ current_user.username }}.</h1>
-      <p>Hey, {{ current_user.username }} 👋 — Welcome back to your swimming studio workspace</p>
+<!-- HERO -->
+<section class="hero-wrap" id="top">
+  <canvas id="waveCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-pill"><span class="dot"></span> Free forever.</div>
+    <h1>Log <span class="rotate-wrap"><span id="rotateWord" class="rotate-word">smarter</span></span>.<br>Swim <span class="acc">faster.</span></h1>
+    <p class="hero-sub">Track every session, scan your coach's whiteboard, and benchmark against world standards — all from your phone at the pool.</p>
+    <div class="hero-actions">
+      <a href="/signup" class="hero-btn-primary">Get started free</a>
+      <a href="#features" class="hero-btn-ghost">See how it works</a>
     </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat" id="hs1"><div class="hstat-num" id="cnt1">0</div><div class="hstat-label">events tracked</div></div>
+    <div class="hstat" id="hs2"><div class="hstat-num" id="cnt2">0</div><div class="hstat-label">free forever</div></div>
+    <div class="hstat" id="hs3"><div class="hstat-num" id="cnt3">0</div><div class="hstat-label">seconds to log</div></div>
+  </div>
+</section>
 
-    <!-- STATS BLOCKS -->
-    <div class="stats-row">
-      <div class="stat">
-        <div class="stat-label">This week</div>
-        <div class="stat-val">0</div>
-        <div class="stat-sub">sessions logged</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Volume</div>
-        <div class="stat-val">0<span style="font-size:20px">m</span></div>
-        <div class="stat-sub">total this week</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">WA points</div>
-        <div class="stat-val">—</div>
-        <div class="stat-sub">log a swim to start</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Streak</div>
-        <div class="stat-val">0<span style="font-size:20px">d</span></div>
-        <div class="stat-sub">log your first swim</div>
-      </div>
-    </div>
-
-    <!-- MAIN DASHBOARD UTILITIES -->
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-label">Personal bests <span class="panel-action">View all →</span></div>
-        <p style="font-size:13px;color:#555;padding:12px 0">No swims logged yet. Log your first swim to start tracking PBs.</p>
-        <a href="/log" class="log-btn" style="margin-top:8px;text-decoration:none">⌨️ Log your first swim</a>
-      </div>
-
-      <div class="panel">
-        <div class="panel-label">Log a swim</div>
-        <a href="/log" class="log-btn">⌨️ Type manually <span class="log-btn-badge">Free</span></a>
-        <button class="log-btn locked" disabled>📷 Scan whiteboard <span class="log-btn-badge">Solo</span></button>
-        <button class="log-btn locked" disabled>🎙️ Voice log <span class="log-btn-badge">Solo</span></button>
-        <div class="upgrade-banner">
-          <div>
-            <div class="upgrade-text">Upgrade to Solo</div>
-            <div class="upgrade-sub">Scan any whiteboard. Speak any set.</div>
-          </div>
-          <button class="upgrade-btn">$12/mo →</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-label">Volume — last 8 weeks</div>
-        <div class="console-switch-group">
-          <button class="console-switch-btn active">Metres</button>
-          <button class="console-switch-btn">Sessions</button>
-          <button class="console-switch-btn">Points</button>
-        </div>
-        <div class="chart-bars">
-          <div class="bar" style="height:10%"></div>
-          <div class="bar" style="height:10%"></div>
-          <div class="bar" style="height:10%"></div>
-          <div class="bar" style="height:10%"></div>
-          <div class="bar" style="height:10%"></div>
-          <div class="bar" style="height:10%"></div>
-          <div class="bar" style="height:10%"></div>
-          <div class="bar active" style="height:10%"></div>
-        </div>
-        <div class="chart-labels">
-          <div class="chart-lbl">Wk 1</div>
-          <div class="chart-lbl">Wk 2</div>
-          <div class="chart-lbl">Wk 3</div>
-          <div class="chart-lbl">Wk 4</div>
-          <div class="chart-lbl">Wk 5</div>
-          <div class="chart-lbl">Wk 6</div>
-          <div class="chart-lbl">Wk 7</div>
-          <div class="chart-lbl">Wk 8</div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-label">Goal</div>
-        <p style="font-size:13px;color:#555;padding:12px 0">No goal set yet. Set a target time and meet date to get started.</p>
-        <a href="/goals" class="log-btn" style="text-decoration:none">🎯 Set a goal</a>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-label">Recent sessions <span class="panel-action">View all →</span></div>
-        <p style="font-size:13px;color:#555;padding:12px 0">No sessions yet. Log your first swim to see it here.</p>
-      </div>
-
-      <div class="panel">
-        <div class="panel-label">Streak</div>
-        <div class="points-big">0</div>
-        <div class="points-label">days in a row</div>
-        <div class="streak-grid">
-          {% for i in range(21) %}
-          <div class="s-day"></div>
-          {% endfor %}
-        </div>
-        <div class="streak-label">Log your first swim to start</div>
-      </div>
-    </div>
-
-  </main>
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span>Swim logging</span><span>·</span><span>PB tracking</span><span>·</span><span>World Aquatics points</span><span>·</span><span>Photo set scanner</span><span>·</span><span>Voice logging</span><span>·</span><span>AI insights</span><span>·</span><span>Offline mode</span><span>·</span>
+    <span>Swim logging</span><span>·</span><span>PB tracking</span><span>·</span><span>World Aquatics points</span><span>·</span><span>Photo set scanner</span><span>·</span><span>Voice logging</span><span>·</span><span>AI insights</span><span>·</span><span>Offline mode</span><span>·</span>
+  </div>
 </div>
 
-<!-- COMPONENT INTERACTION SCRIPTS -->
+<!-- THREE WAYS TO LOG -->
+<section class="lsec" id="features">
+  <div class="lsec-inner">
+    <p class="lsec-label lreveal">How you log</p>
+    <h2 class="lsec-h lreveal-l">No watch needed.<br>Log a swim in three seconds.</h2>
+    <p class="lsec-sub lreveal-r">Every competitor needs a $200 Garmin or manual typing. STROKE gives you three faster ways — straight from your phone at the pool.</p>
+    <div class="log3-grid">
+      <div class="log3-card lreveal ld1">
+        <div class="log3-icon">📷</div>
+        <p class="log3-title">Photo scan</p>
+        <p class="log3-desc">Point your phone at the whiteboard. We read your coach's handwriting — shorthand and all — and log the set instantly.</p>
+        <span class="log3-badge solo">Solo</span>
+      </div>
+      <div class="log3-card lreveal ld2">
+        <div class="log3-icon">🎙️</div>
+        <p class="log3-title">Voice record</p>
+        <p class="log3-desc">Speak the set out loud — "ten by one hundred free on one thirty" — and it's logged as a structured session automatically.</p>
+        <span class="log3-badge solo">Solo</span>
+      </div>
+      <div class="log3-card lreveal ld3">
+        <div class="log3-icon">⌨️</div>
+        <p class="log3-title">Manual entry</p>
+        <p class="log3-desc">Type it in once, save as a template. Next session — one tap to reuse. Most swimmers never type the same set twice.</p>
+        <span class="log3-badge free">Free</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="lsec lsec--alt">
+  <div class="lsec-inner">
+    <p class="lsec-label lreveal">Platform features</p>
+    <h2 class="lsec-h lreveal">Everything a swimmer needs.<br>Nothing they don't.</h2>
+    <div class="feat-grid">
+      <div class="feat-card lreveal ld1"><p class="feat-tag">Free</p><p class="feat-title">PB tracking</p><p class="feat-desc">Every swim logged, every personal best tracked across every event and distance.</p></div>
+      <div class="feat-card lreveal ld2"><p class="feat-tag">Free</p><p class="feat-title">World Aquatics points</p><p class="feat-desc">The only proper calculator built for swimmers. Compare any time, any event, instantly.</p></div>
+      <div class="feat-card lreveal ld3"><p class="feat-tag">Free</p><p class="feat-title">Offline mode</p><p class="feat-desc">Download your session before leaving home. No wifi at the pool? Everything still works.</p></div>
+      <div class="feat-card lreveal ld1"><p class="feat-tag">Solo</p><p class="feat-title">AI insights</p><p class="feat-desc">Personalised analysis of training patterns, fatigue, and what to focus on next.</p></div>
+      <div class="feat-card lreveal ld2"><p class="feat-tag">Solo</p><p class="feat-title">Goals & training plans</p><p class="feat-desc">Set a target time and meet date — STROKE builds the training blocks to get you there.</p></div>
+      <div class="feat-card lreveal ld3"><p class="feat-tag">Solo</p><p class="feat-title">Split time analysis</p><p class="feat-desc">See exactly where time is being lost — start, turn, or the back half.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- WORLD AQUATICS POINTS -->
+<section class="pts-sec">
+  <div class="lsec-inner">
+    <p class="lsec-label lreveal">World Aquatics points</p>
+    <div class="pts-split">
+      <div class="pts-card lreveal-l" id="ptsCard">
+        <div class="pts-num" id="ptsCounter">0</div>
+        <div class="pts-lbl">World Aquatics points</div>
+        <div class="pts-bars">
+          <div class="pts-row"><div class="pts-meta"><span>100m freestyle</span><span>52.34</span></div><div class="pts-bg"><div class="pts-fg" data-w="85"></div></div></div>
+          <div class="pts-row"><div class="pts-meta"><span>200m freestyle</span><span>1:54.20</span></div><div class="pts-bg"><div class="pts-fg" data-w="72"></div></div></div>
+          <div class="pts-row"><div class="pts-meta"><span>50m freestyle</span><span>24.80</span></div><div class="pts-bg"><div class="pts-fg" data-w="78"></div></div></div>
+        </div>
+      </div>
+      <div class="lreveal-r">
+        <h2 class="pts-copy-h">See exactly<br>where you <em>stand</em><br>globally.</h2>
+        <p class="pts-copy-p">Enter any time, any event — STROKE calculates your World Aquatics points instantly and tracks how they improve over months of training. No other free app does this properly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="lsec" id="pricing">
+  <div class="lsec-inner">
+    <p class="lsec-label lreveal">Pricing</p>
+    <h2 class="lsec-h lreveal-l">Simple pricing.<br>Serious results.</h2>
+    <p class="lsec-sub lreveal-r">Start completely free. Upgrade when you're ready to go deeper.</p>
+    <div class="price-grid">
+      <div class="price-card lreveal ld1">
+        <p class="price-tier">Free</p>
+        <p class="price-val">$0</p>
+        <p class="price-per">forever</p>
+        <p class="price-desc">Everything you need to log and track your swimming seriously.</p>
+        <hr class="price-divider">
+        <ul class="price-feats">
+          <li>Swim logging — manual entry</li>
+          <li>Saved templates & copy last session</li>
+          <li>PB tracking across all events</li>
+          <li>World Aquatics points calculator</li>
+          <li>Offline mode</li>
+        </ul>
+        <a href="/signup" class="price-btn">Get started free</a>
+      </div>
+      <div class="price-card hot lreveal ld2">
+        <div class="price-badge">Most popular</div>
+        <p class="price-tier">Solo</p>
+        <p class="price-val">$12</p>
+        <p class="price-per">per month</p>
+        <p class="price-desc">Smart logging and AI analysis for swimmers serious about improving.</p>
+        <hr class="price-divider">
+        <ul class="price-feats">
+          <li>Everything in free</li>
+          <li>Photo set scanner</li>
+          <li>Voice set logging</li>
+          <li>AI performance insights</li>
+          <li>Goals & auto training plans</li>
+          <li>Split time analysis</li>
+        </ul>
+        <a href="/signup" class="price-btn">Start Solo</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COACH WAITLIST -->
+<section class="coach-sec" id="coaches">
+  <div class="coach-inner">
+    <p class="lsec-label lreveal">For coaches</p>
+    <h2 class="lsec-h lreveal"> THE COACH<br>is coming soon.</h2>
+    <form class="coach-form lreveal">
+      <input type="email" class="coach-input" placeholder="you@example.com" required>
+      <button type="submit" class="coach-submit">Join waitlist</button>
+    </form>
+    <p class="coach-note">No spam. We'll only email you when it's ready.</p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-sec">
+  <div class="cta-ring cta-ring--small"></div>
+  <div class="cta-ring cta-ring--medium"></div>
+  <div class="cta-ring cta-ring--large"></div>
+  <h2 class="cta-h lreveal">Start swimming<br>smarter today.</h2>
+  <p class="cta-sub lreveal">No credit card. No watch. Set up in two minutes.</p>
+  <div class="cta-btns lreveal">
+    <a href="/signup" class="hero-btn-primary">Get started free</a>
+  </div>
+</section>
+
+<footer class="lfooter">
+  <div>
+    <p class="lfooter-logo">Stroke</p>
+    <p class="lfooter-sub">Built in New Zealand. For swimmers everywhere.</p>
+  </div>
+  <div class="lfooter-links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#coaches">Coaches</a>
+    <a href="/login">Log in</a>
+  </div>
+</footer>
+
 <script>
-// Toggle Console Drawer Display
-const menuToggle = document.getElementById('menuToggle');
-const dashDrawer = document.getElementById('dashDrawer');
-
-menuToggle.addEventListener('click', () => {
-  dashDrawer.classList.toggle('open');
-  menuToggle.classList.toggle('active');
-});
-
-// Metric Switcher Options
-document.querySelectorAll('.console-switch-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.console-switch-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
+(function(){
+const cv=document.getElementById('waveCanvas'),ctx=cv.getContext('2d');
+let W,H,pts;
+function resize(){W=cv.width=cv.offsetWidth;H=cv.height=cv.offsetHeight;buildPts()}
+function buildPts(){pts=Array.from({length:30},()=>({x:Math.random()*W,y:Math.random()*H,vy:.3+Math.random()*.5,r:1.4+Math.random()*2.2,wave:Math.random()*Math.PI*2,ws:.008+Math.random()*.015,wa:14+Math.random()*30}))}
+function draw(t){
+  ctx.clearRect(0,0,W,H);
+  pts.forEach(p=>{
+    p.wave+=p.ws;p.y+=p.vy;if(p.y>H+8)p.y=-8;
+    const px=p.x+Math.sin(p.wave)*p.wa;
+    ctx.beginPath();ctx.arc(((px%W)+W)%W,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(17,17,17,0.10)';ctx.fill();
   });
+  [0,1,2].forEach(i=>{
+    const wy=H*0.78+i*20+Math.sin(t*0.0006+i)*10;
+    ctx.strokeStyle=i===0?'rgba(17,17,17,0.85)':'rgba(17,17,17,'+(0.18-i*0.04)+')';
+    ctx.lineWidth=i===0?2.5:1.5;
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=4){
+      const y=wy+Math.sin((x/W)*Math.PI*4+t*0.0009+i*0.6)*14;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  });
+}
+function loop(t){draw(t);requestAnimationFrame(loop)}
+resize();window.addEventListener('resize',resize);requestAnimationFrame(loop);
+
+function countUp(el,target,dur,suffix=''){
+  if(!el)return;
+  const s=performance.now();
+  (function step(now){
+    const p=Math.min((now-s)/dur,1),e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(e*target)+suffix;
+    if(p<1)requestAnimationFrame(step);
+  })(s);
+}
+setTimeout(()=>{
+  countUp(document.getElementById('cnt1'),50,1100,'+');
+  document.getElementById('cnt2').textContent='100%';
+  countUp(document.getElementById('cnt3'),3,800);
+  ['hs1','hs2','hs3'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('on'),650+i*150));
+},500);
+
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')});
+},{threshold:.12});
+document.querySelectorAll('.lreveal,.lreveal-l,.lreveal-r').forEach(el=>io.observe(el));
+
+const ptsIo=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      countUp(document.getElementById('ptsCounter'),847,1300);
+      document.querySelectorAll('.pts-fg').forEach(b=>{b.style.width=b.dataset.w+'%'});
+    }
+  });
+},{threshold:.3});
+const pc=document.getElementById('ptsCard');if(pc)ptsIo.observe(pc);
+
+document.querySelector('.coach-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  this.innerHTML='<p style="font-weight:800;color:#111;font-size:14px">You\'re on the list! 🎉</p>';
 });
+})();
+
+const rotateWords = ["smarter", "faster", "better", "consistently"];
+let rIndex = 0;
+const rEl = document.getElementById('rotateWord');
+
+function rotateHeroWord(){
+  if(!rEl) return;
+  rEl.classList.remove('rotate-in');
+  rEl.classList.add('rotate-out');
+
+  setTimeout(()=>{
+    rIndex = (rIndex + 1) % rotateWords.length;
+    rEl.textContent = rotateWords[rIndex];
+    rEl.classList.remove('rotate-out');
+    rEl.classList.add('rotate-in');
+  }, 380);
+}
+
+setTimeout(()=>{
+  setInterval(rotateHeroWord, 2200);
+}, 1500);
+
+
+
+
+
 </script>
 
 </body>

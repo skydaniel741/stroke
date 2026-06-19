@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
 <body>
     <nav>
@@ -25,12 +26,12 @@
                 <input type="hidden" name="email" value="{{ email }}">
                 <div class="form-group">
                     <label>Verification code</label>
-                    <input type="text" name="code" placeholder="000000" maxlength="6" required autocomplete="one-time-code" style="font-size:24px;letter-spacing:8px;text-align:center">
+                    <input type="text" name="code" placeholder="000000" maxlength="6" required autocomplete="one-time-code" class="code-input">
                 </div>
                 <button type="submit" class="btn-primary">Verify email</button>
             </form>
             <p class="auth-switch">Wrong email? <a href="/signup">Start over</a></p>
-            <p class="auth-switch" style="margin-top:8px"><a href="/resend-code?email={{ email }}">Resend code</a></p>
+            <p class="auth-switch auth-switch--compact"><a href="/resend-code?email={{ email }}">Resend code</a></p>
         </div>
     </div>
 </body>

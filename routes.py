@@ -133,3 +133,49 @@ def logout():
 @login_required
 def dashboard():
     return render_template('dashboard.html')
+
+
+
+@main.route('/log', methods=['GET', 'POST'])
+@login_required
+def log():
+    from app import db
+    from models import Swim, Session
+
+    if request.method == 'POST':
+        log_type = request.form.get('log_type')
+        notes = request.form.get('notes', '')
+
+        if log_type == 'pb':
+            # Save a PB / race time
+            swim = Swim(
+                user_id=current_user.id,
+                event=request.form.get('event'),
+                pool=request.form.get('pool'),
+                stroke=request.form.get('stroke'),
+                time=request.form.get('time'),
+                notes=notes,
+                logged_at=datetime.utcnow()
+            )
+            db.session.add(swim)
+            db.session.commit()
+            flash('PB logged!', 'success')
+
+        elif log_type == 'session':
+            # Save a full training session
+            session_data = request.form.get('session_data', '[]')
+            session = Session(
+                user_id=current_user.id,
+                session_type=request.form.get('event'),
+                pool=request.form.get('pool'),
+                sets_data=session_data,
+                notes=notes,
+                logged_at=datetime.utcnow()
+            )
+            db.session.add(session)
+            db.session.commit()
+            flash('Session logged!', 'success')
+
+        return redirect(url_for('main.dashboard'))
+
+    return render_template('log.html')

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Log swim — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/log.css') }}">
+</head>
+<body>
+
+<nav class="log-nav">
+  <a href="/dashboard" class="log-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back
+  </a>
+  <a href="/" class="log-nav-logo">STROKE</a>
+  <div class="spacer"></div>
+</nav>
+
+<!-- ═══════════════════════════════════
+     SCREEN 0 — CHOOSE PATH
+════════════════════════════════════ -->
+<div class="screen active" id="screen0">
+  <p class="path-greeting">Log a swim</p>
+  <p class="path-sub">What are we logging?</p>
+
+  <div class="path-grid">
+    <div class="path-card pb" onclick="startPB()">
+      <p class="path-title">PB / Race time</p>
+      <p class="path-desc">One event, one time. Done in 5 seconds.</p>
+    </div>
+    <div class="path-card session" onclick="startSession()">
+      <p class="path-title">Training session</p>
+      <p class="path-desc">Full set, reps, rest intervals, HR targets.</p>
+    </div>
+  </div>
+
+  <p class="quick-label">Quick repeat</p>
+
+  <div class="repeat-card" onclick="repeatLast()">
+    <div>
+      <p class="repeat-label">Last session</p>
+      <p class="repeat-event" id="lastEvent">Race Warm Up + 10×100m FR</p>
+      <p class="repeat-meta" id="lastMeta">3,400m · 25m pool · Yesterday</p>
+    </div>
+    <div class="repeat-arrow">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </div>
+  </div>
+
+  <div class="divider-row">
+    <div class="divider-line"></div>
+    <span class="divider-text">saved sets</span>
+    <div class="divider-line"></div>
+  </div>
+
+  <div class="saved-item" onclick="useSaved('Race Warm Up + Sprint Set','3,200m · 25m pool')">
+    <div><p class="saved-name">Race Warm Up + Sprint Set</p><p class="saved-meta">3,200m · 25m pool</p></div>
+    <span class="use-badge">Use</span>
+  </div>
+  <div class="saved-item" onclick="useSaved('Endurance Block','10×100m + 400m CD · 4,400m')">
+    <div><p class="saved-name">Endurance Block</p><p class="saved-meta">10×100m + 400m CD · 4,400m</p></div>
+    <span class="use-badge">Use</span>
+  </div>
+  <div class="saved-item" onclick="useSaved('Technique Day','Drills + 8×50m · 2,400m')">
+    <div><p class="saved-name">Technique Day</p><p class="saved-meta">Drills + 8×50m · 2,400m</p></div>
+    <span class="use-badge">Use</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 1 — PB EVENT PICKER
+════════════════════════════════════ -->
+<div class="screen" id="screen1">
+  <p class="screen-title">Pick event</p>
+  <p class="screen-sub">Select pool and event</p>
+
+  <div class="pool-toggle">
+    <button class="pool-btn active" id="pool25" onclick="setPool('25')">25m</button>
+    <button class="pool-btn" id="pool50" onclick="setPool('50')">50m</button>
+    <button class="pool-btn" id="poolOW" onclick="setPool('OW')">Open water</button>
+  </div>
+
+  <div class="stroke-tabs">
+    <div class="stroke-tab active" onclick="setStroke(this,'Freestyle','FR')">Free</div>
+    <div class="stroke-tab" onclick="setStroke(this,'Butterfly','FL')">Fly</div>
+    <div class="stroke-tab" onclick="setStroke(this,'Backstroke','BK')">Back</div>
+    <div class="stroke-tab" onclick="setStroke(this,'Breaststroke','BR')">Breast</div>
+    <div class="stroke-tab" onclick="setStroke(this,'IM','IM')">IM</div>
+  </div>
+
+  <div class="event-grid" id="eventGrid"></div>
+
+  <div class="screen-nav">
+    <button class="snav-back" onclick="goTo(0)">Back</button>
+    <button class="snav-next" id="nextTo2" onclick="goTo(2)" disabled>Next →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 2 — PB TIME ENTRY
+════════════════════════════════════ -->
+<div class="screen" id="screen2">
+  <p class="screen-title">Enter time</p>
+  <div class="event-chip" onclick="goTo(1)" id="eventChip">100m Freestyle · 25m ✎</div>
+  <div class="time-display" id="timeDisplay">0:00.00</div>
+  <p class="time-hint">mm : ss . ms</p>
+  <div class="numpad">
+    <div class="num-btn" onclick="numPress('1')">1</div>
+    <div class="num-btn" onclick="numPress('2')">2</div>
+    <div class="num-btn" onclick="numPress('3')">3</div>
+    <div class="num-btn" onclick="numPress('4')">4</div>
+    <div class="num-btn" onclick="numPress('5')">5</div>
+    <div class="num-btn" onclick="numPress('6')">6</div>
+    <div class="num-btn" onclick="numPress('7')">7</div>
+    <div class="num-btn" onclick="numPress('8')">8</div>
+    <div class="num-btn" onclick="numPress('9')">9</div>
+    <div class="num-btn empty"></div>
+    <div class="num-btn" onclick="numPress('0')">0</div>
+    <div class="num-btn del" onclick="numDelete()">⌫</div>
+  </div>
+  <div class="screen-nav">
+    <button class="snav-back" onclick="goTo(1)">Back</button>
+    <button class="snav-next" id="nextTo4pb" onclick="prepPBConfirm()" disabled>Next →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 3 — SESSION BUILDER
+════════════════════════════════════ -->
+<div class="screen" id="screen3">
+  <p class="screen-title">Build session</p>
+  <p class="screen-sub">Add your sets — keep it simple or go detailed</p>
+
+  <div class="session-meta-row">
+    <div class="meta-group">
+      <label class="meta-label">Pool</label>
+      <select class="meta-select" id="sessionPool">
+        <option>25m</option>
+        <option>50m</option>
+        <option>Open water</option>
+      </select>
+    </div>
+    <div class="meta-group">
+      <label class="meta-label">Session type</label>
+      <select class="meta-select" id="sessionType">
+        <option>Training</option>
+        <option>Race warm up</option>
+        <option>Time trial</option>
+        <option>Recovery</option>
+        <option>Squad session</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sets-list" id="setsList"></div>
+
+  <button class="add-set-btn" onclick="addSet()">+ Add set</button>
+
+  <div class="session-total">
+    <div class="total-item"><div class="total-val" id="totalDist">0m</div><div class="total-label">Total distance</div></div>
+    <div class="total-item"><div class="total-val" id="totalSets">0</div><div class="total-label">Sets</div></div>
+    <div class="total-item"><div class="total-val" id="totalReps">0</div><div class="total-label">Total reps</div></div>
+  </div>
+
+  <div class="screen-nav">
+    <button class="snav-back" onclick="goTo(0)">Back</button>
+    <button class="snav-next" onclick="prepSessionConfirm()">Review →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 4 — CONFIRM & SAVE
+════════════════════════════════════ -->
+<div class="screen" id="screen4">
+  <p class="screen-title">Save swim</p>
+  <p class="screen-sub" id="confirmMode">PB logged</p>
+
+  <div class="confirm-card">
+    <div class="confirm-row"><span class="confirm-key">Type</span><span class="confirm-val" id="cType">PB</span></div>
+    <div class="confirm-row"><span class="confirm-key">Event</span><span class="confirm-val" id="cEvent">100m Freestyle</span></div>
+    <div class="confirm-row"><span class="confirm-key">Time / Volume</span><span class="confirm-val" id="cTime">—</span></div>
+    <div class="confirm-row"><span class="confirm-key">Pool</span><span class="confirm-val" id="cPool">25m</span></div>
+    <div class="confirm-row"><span class="confirm-key">Date</span><span class="confirm-val" id="cDate">Today</span></div>
+  </div>
+
+  <textarea class="save-notes" id="sessionNotes" rows="2" placeholder="How did it feel? (optional)"></textarea>
+
+  <form method="POST" action="/log" id="logForm">
+    <input type="hidden" name="log_type" id="f_type">
+    <input type="hidden" name="event" id="f_event">
+    <input type="hidden" name="pool" id="f_pool">
+    <input type="hidden" name="stroke" id="f_stroke">
+    <input type="hidden" name="time" id="f_time">
+    <input type="hidden" name="session_data" id="f_session">
+    <input type="hidden" name="notes" id="f_notes">
+    <button type="button" class="save-btn" onclick="submitLog()">Save swim ✓</button>
+  </form>
+
+  <button class="snav-back" onclick="editBack()" class="full-width">Edit</button>
+</div>
+
+<script>
+// ─── STATE ───
+const pb = { pool:'25', stroke:'Freestyle', strokeCode:'FR', distance:null, digits:[] };
+let sessionSets = [];
+let confirmType = 'pb';
+
+// ─── NAV ───
+function goTo(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen'+n).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startPB(){ goTo(1); initEventGrid(); }
+function startSession(){ goTo(3); if(sessionSets.length===0) addSet(); }
+function editBack(){ goTo(confirmType==='pb' ? 2 : 3); }
+
+// ─── REPEAT / SAVED ───
+function repeatLast(){
+  document.getElementById('f_type').value = 'session';
+  document.getElementById('f_event').value = document.getElementById('lastEvent').textContent;
+  document.getElementById('f_time').value = '';
+  document.getElementById('f_session').value = 'repeat';
+  document.getElementById('f_notes').value = '';
+  document.getElementById('logForm').submit();
+}
+function useSaved(name){
+  alert('Set "'+name+'" loaded — ready to save (wire to backend)');
+}
+
+// ─── PB POOL ───
+function setPool(p){
+  pb.pool = p;
+  ['25','50','OW'].forEach(x=>{
+    const el = document.getElementById('pool'+x);
+    if(el) el.classList.toggle('active', x===p);
+  });
+}
+
+// ─── PB STROKE ───
+function setStroke(el, name, code){
+  pb.stroke = name; pb.strokeCode = code; pb.distance = null;
+  document.querySelectorAll('.stroke-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  initEventGrid();
+  document.getElementById('nextTo2').disabled = true;
+}
+
+function initEventGrid(){
+  const distances = {
+    'Freestyle':['50m','100m','200m','400m','800m','1500m'],
+    'Butterfly':['50m','100m','200m'],
+    'Backstroke':['50m','100m','200m'],
+    'Breaststroke':['50m','100m','200m'],
+    'IM':['100m','200m','400m']
+  };
+  const grid = document.getElementById('eventGrid');
+  grid.innerHTML = (distances[pb.stroke]||['50m','100m','200m']).map(d=>
+    `<div class="event-btn ${pb.distance===d?'selected':''}" onclick="selectEvent(this,'${d}')">${d}</div>`
+  ).join('');
+}
+
+function selectEvent(el, d){
+  pb.distance = d;
+  document.querySelectorAll('.event-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('nextTo2').disabled = false;
+  document.getElementById('eventChip').textContent = d+' '+pb.stroke+' · '+pb.pool+'m ✎';
+}
+
+// ─── NUMPAD ───
+function numPress(d){
+  if(pb.digits.length>=6) return;
+  pb.digits.push(d);
+  renderTime();
+}
+function numDelete(){ pb.digits.pop(); renderTime(); }
+function renderTime(){
+  const d = pb.digits.join('').padStart(6,'0');
+  const m=d.slice(0,2), s=d.slice(2,4), ms=d.slice(4,6);
+  document.getElementById('timeDisplay').textContent =
+    parseInt(m)>0 ? `${parseInt(m)}:${s}.${ms}` : `${parseInt(s)}.${ms}`;
+  const hasTime = pb.digits.length>0;
+  const btn = document.getElementById('nextTo4pb');
+  btn.disabled = !hasTime;
+}
+function getTimeStr(){
+  const d = pb.digits.join('').padStart(6,'0');
+  const m=parseInt(d.slice(0,2)), s=d.slice(2,4), ms=d.slice(4,6);
+  return m>0 ? `${m}:${s}.${ms}` : `${s}.${ms}`;
+}
+
+// ─── PB CONFIRM ───
+function prepPBConfirm(){
+  confirmType = 'pb';
+  const today = new Date().toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('confirmMode').textContent = 'PB / race time';
+  document.getElementById('cType').textContent = 'PB';
+  document.getElementById('cEvent').textContent = (pb.distance||'—')+' '+pb.stroke;
+  document.getElementById('cTime').textContent = getTimeStr();
+  document.getElementById('cPool').textContent = pb.pool==='OW'?'Open water':pb.pool+'m';
+  document.getElementById('cDate').textContent = today;
+  goTo(4);
+}
+
+// ─── SESSION BUILDER ───
+let setCount = 0;
+const strokeOptions = ['FR','FL','BK','BR','IM','Kick','Pull','Drill','Mix'];
+
+function addSet(){
+  setCount++;
+  const id = 'set_'+Date.now();
+  sessionSets.push({id, reps:'', dist:'', stroke:'FR', rest:'', hr:''});
+  renderSets();
+}
+
+function removeSet(id){
+  sessionSets = sessionSets.filter(s=>s.id!==id);
+  renderSets();
+}
+
+function updateSet(id, field, val){
+  const s = sessionSets.find(s=>s.id===id);
+  if(s) s[field] = val;
+  updateTotals();
+}
+
+function renderSets(){
+  const list = document.getElementById('setsList');
+  list.innerHTML = sessionSets.map((s,i)=>`
+    <div class="set-row">
+      <div class="set-row-num">${i+1}</div>
+      <div class="set-fields">
+        <div class="set-fields-row">
+          <input class="set-field" placeholder="Reps" type="number" value="${s.reps}"
+            oninput="updateSet('${s.id}','reps',this.value)" class="text-center">
+          <input class="set-field" placeholder="Dist (m)" type="number" value="${s.dist}"
+            oninput="updateSet('${s.id}','dist',this.value)">
+          <select class="set-field" onchange="updateSet('${s.id}','stroke',this.value)">
+            ${strokeOptions.map(o=>`<option ${s.stroke===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="set-field-row2">
+          <input class="set-field" placeholder="Rest (e.g. 1:30)" value="${s.rest}"
+            oninput="updateSet('${s.id}','rest',this.value)">
+          <input class="set-field" placeholder="HR target" value="${s.hr}"
+            oninput="updateSet('${s.id}','hr',this.value)">
+        </div>
+      </div>
+      <button class="set-remove" onclick="removeSet('${s.id}')">✕</button>
+    </div>
+  `).join('');
+  updateTotals();
+}
+
+function updateTotals(){
+  let totalDist = 0, totalReps = 0;
+  sessionSets.forEach(s=>{
+    const r = parseInt(s.reps)||0;
+    const d = parseInt(s.dist)||0;
+    totalReps += r;
+    totalDist += r*d;
+  });
+  document.getElementById('totalDist').textContent = totalDist>0 ? (totalDist>=1000?(totalDist/1000).toFixed(1)+'km':totalDist+'m') : '0m';
+  document.getElementById('totalSets').textContent = sessionSets.length;
+  document.getElementById('totalReps').textContent = totalReps;
+}
+
+// ─── SESSION CONFIRM ───
+function prepSessionConfirm(){
+  confirmType = 'session';
+  if(sessionSets.length===0){alert('Add at least one set first');return;}
+  const today = new Date().toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'});
+  const pool = document.getElementById('sessionPool').value;
+  const type = document.getElementById('sessionType').value;
+  let totalDist=0, totalReps=0;
+  sessionSets.forEach(s=>{totalDist+=(parseInt(s.reps)||0)*(parseInt(s.dist)||0);totalReps+=(parseInt(s.reps)||0);});
+  const distStr = totalDist>=1000?(totalDist/1000).toFixed(1)+'km':totalDist+'m';
+  document.getElementById('confirmMode').textContent = 'Training session';
+  document.getElementById('cType').textContent = type;
+  document.getElementById('cEvent').textContent = sessionSets.length+' set'+(sessionSets.length!==1?'s':'')+' · '+totalReps+' reps';
+  document.getElementById('cTime').textContent = distStr;
+  document.getElementById('cPool').textContent = pool;
+  document.getElementById('cDate').textContent = today;
+  goTo(4);
+}
+
+// ─── SUBMIT ───
+function submitLog(){
+  document.getElementById('f_type').value = confirmType;
+  if(confirmType==='pb'){
+    document.getElementById('f_event').value = (pb.distance||'')+' '+pb.stroke;
+    document.getElementById('f_pool').value = pb.pool;
+    document.getElementById('f_stroke').value = pb.strokeCode;
+    document.getElementById('f_time').value = getTimeStr();
+    document.getElementById('f_session').value = '';
+  } else {
+    document.getElementById('f_event').value = document.getElementById('sessionType').value;
+    document.getElementById('f_pool').value = document.getElementById('sessionPool').value;
+    document.getElementById('f_stroke').value = '';
+    document.getElementById('f_time').value = '';
+    document.getElementById('f_session').value = JSON.stringify(sessionSets);
+  }
+  document.getElementById('f_notes').value = document.getElementById('sessionNotes').value;
+  document.getElementById('logForm').submit();
+}
+
+// init
+initEventGrid();
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+/* ============================================================
+   AUTH PAGE STYLES
+   Shared styling for login, signup, verify, and signin pages.
+   ============================================================ */
+
+.split-wrap{
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:1.4fr 1fr;
+}
+
+.split-visual{
+  position:relative;
+  background:#111;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  padding:56px;
+}
+
+.split-visual canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+.split-tag{
+  position:absolute;
+  top:36px;
+  left:56px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#fac8d5;
+  z-index:2;
+}
+
+.split-tag .line{
+  width:40px;
+  height:2px;
+  background:#fac8d5;
+}
+
+.split-content{
+  position:relative;
+  z-index:2;
+}
+
+.split-content h2{
+  font-family:'Antonio',sans-serif;
+  font-size:52px;
+  font-weight:700;
+  text-transform:uppercase;
+  line-height:1.05;
+  color:#fff;
+  margin-bottom:16px;
+}
+
+.split-content p{
+  font-size:15px;
+  font-weight:500;
+  color:#ccc;
+  line-height:1.7;
+  max-width:420px;
+}
+
+.split-form-side{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#ffffff;
+  padding:40px;
+}
+
+.pw-wrap{
+  position:relative;
+}
+
+.pw-wrap input{
+  padding-right:46px;
+}
+
+.pw-toggle{
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+  background:none;
+  border:none;
+  padding:4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#555;
+}
+
+.pw-toggle:hover{color:#111}
+
+.pw-toggle svg{width:20px;height:20px}
+
+.form-row-between{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:22px;
+  margin-top:-6px;
+}
+
+.remember-check{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.remember-check input{display:none}
+
+.check-box{
+  width:18px;
+  height:18px;
+  border:2.5px solid #111;
+  border-radius:4px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  transition:background .15s;
+}
+
+.check-box svg{
+  width:12px;
+  height:12px;
+  opacity:0;
+  transition:opacity .1s;
+}
+
+.remember-check input:checked + .check-box{background:#fac8d5}
+.remember-check input:checked + .check-box svg{opacity:1}
+
+.remember-label{
+  font-size:13px;
+  font-weight:700;
+  color:#111;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.forgot-link{
+  font-size:13px;
+  font-weight:700;
+  color:#111;
+  text-decoration:underline;
+}
+
+.auth-wrap--compact{
+  min-height:auto;
+  padding:0;
+}
+
+.code-input{
+  font-size:24px;
+  letter-spacing:8px;
+  text-align:center;
+}
+
+.auth-switch--compact{
+  margin-top:8px;
+}
+
+@media(max-width:768px){
+  .split-wrap{grid-template-columns:1fr}
+  .split-visual{display:none}
+}
