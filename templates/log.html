@@ -176,7 +176,7 @@
     <div class="total-item"><div class="total-val" id="totalReps">0</div><div class="total-label">Total reps</div></div>
   </div>
 
-  <button class="save-template-btn" onclick="saveAsTemplate()">💾 Save this as a reusable set</button>
+  <button class="save-template-btn" onclick="openSaveTemplateModal()">Save this as a reusable set</button>
   <p class="save-template-status" id="saveTemplateStatus"></p>
 
   <div class="screen-nav">
@@ -229,6 +229,20 @@
       <button class="wizard-next" id="wNextBtn" onclick="wizardNext()" disabled>Next →</button>
     </div>
     <div class="wizard-cancel" onclick="closeWizard()">Cancel</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SAVE TEMPLATE MODAL
+════════════════════════════════════ -->
+<div class="wizard-overlay" id="saveTemplateOverlay">
+  <div class="wizard-card">
+    <p class="wizard-q">Name this set</p>
+    <input class="wizard-custom-input" type="text" id="templateNameInput" placeholder="e.g. Sprint Pyramid" onkeydown="if(event.key==='Enter')confirmSaveTemplate()">
+    <div class="wizard-nav">
+      <button class="wizard-back" onclick="closeSaveTemplateModal()">Cancel</button>
+      <button class="wizard-next" onclick="confirmSaveTemplate()">Save set</button>
+    </div>
   </div>
 </div>
 
@@ -314,14 +328,27 @@ function useSaved(id, mode){
 }
 
 // ─── SAVE SESSION AS REUSABLE SET ───
-function saveAsTemplate(){
+function openSaveTemplateModal(){
   const status = document.getElementById('saveTemplateStatus');
+  status.textContent = '';
   if(sessionSets.length===0){
     status.textContent = 'Add at least one set first.';
     return;
   }
-  const name = prompt('Name this set (e.g. "Sprint Pyramid"):');
+  document.getElementById('templateNameInput').value = '';
+  document.getElementById('saveTemplateOverlay').classList.add('open');
+  document.getElementById('templateNameInput').focus();
+}
+
+function closeSaveTemplateModal(){
+  document.getElementById('saveTemplateOverlay').classList.remove('open');
+}
+
+function confirmSaveTemplate(){
+  const name = document.getElementById('templateNameInput').value.trim();
+  const status = document.getElementById('saveTemplateStatus');
   if(!name) return;
+  closeSaveTemplateModal();
 
   const body = new URLSearchParams({
     name: name,

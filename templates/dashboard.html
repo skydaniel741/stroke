@@ -147,6 +147,9 @@
 
   </main>
 
+  <!-- DRAWER BACKDROP -->
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
   <!-- POP-OUT MODULAR DRAWER (RIGHT SIDE) -->
   <div class="dashboard-drawer" id="dashDrawer">
     <div class="drawer-header">
@@ -158,16 +161,48 @@
         </svg>
       </button>
     </div>
-    
+
+    <div class="drawer-user">
+      <div class="drawer-user-avatar">{{ current_user.username[0]|upper }}</div>
+      <div class="drawer-user-info">
+        <p class="drawer-user-name">{{ current_user.username }}</p>
+        <span class="drawer-plan-badge {{ 'hot' if current_user.plan == 'solo' else '' }}">{{ current_user.plan|capitalize }} plan</span>
+      </div>
+    </div>
+
     <nav class="drawer-nav-links">
-      <a href="/log" class="drawer-link"> Log swim</a>
-      <a href="/pbs" class="drawer-link"> Personal bests</a>
-      <a href="/goals" class="drawer-link"> Goals</a>
-      <a href="/sets" class="drawer-link"> Set library</a>
-      <a href="/progress" class="drawer-link"> Progress</a>
-      <a href="/wa-points" class="drawer-link"> Fina Points</a>
-      <a href="/settings" class="drawer-link drawer-bottom">Settings</a>
-      <a href="/logout" class="drawer-link">Log out</a>
+      <a href="/log" class="drawer-link {{ 'active' if request.path == '/log' else '' }}">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        Log swim
+      </a>
+      <a href="/pbs" class="drawer-link {{ 'active' if request.path == '/pbs' else '' }}">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        Personal bests
+      </a>
+      <a href="/goals" class="drawer-link {{ 'active' if request.path == '/goals' else '' }}">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+        Goals
+      </a>
+      <a href="/sets" class="drawer-link {{ 'active' if request.path == '/sets' else '' }}">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        Set library
+      </a>
+      <a href="/progress" class="drawer-link {{ 'active' if request.path == '/progress' else '' }}">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        Progress
+      </a>
+      <a href="/wa-points" class="drawer-link {{ 'active' if request.path == '/wa-points' else '' }}">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        Fina Points
+      </a>
+      <a href="/settings" class="drawer-link drawer-bottom {{ 'active' if request.path == '/settings' else '' }}">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        Settings
+      </a>
+      <a href="/logout" class="drawer-link drawer-logout">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        Log out
+      </a>
     </nav>
   </div>
 
@@ -179,23 +214,26 @@
 const menuToggle = document.getElementById('menuToggle');
 const dashDrawer = document.getElementById('dashDrawer');
 const closeDrawer = document.getElementById('closeDrawer');
+const drawerBackdrop = document.getElementById('drawerBackdrop');
 
 function openDrawer(){
   dashDrawer.classList.add('open');
+  drawerBackdrop.classList.add('open');
   menuToggle.classList.add('active');
 }
 
 function closeDrawerMenu(){
   dashDrawer.classList.remove('open');
+  drawerBackdrop.classList.remove('open');
   menuToggle.classList.remove('active');
 }
 
 menuToggle.addEventListener('click', () => {
-  dashDrawer.classList.toggle('open');
-  menuToggle.classList.toggle('active');
+  dashDrawer.classList.contains('open') ? closeDrawerMenu() : openDrawer();
 });
 
 closeDrawer.addEventListener('click', closeDrawerMenu);
+drawerBackdrop.addEventListener('click', closeDrawerMenu);
 
 // Close drawer when clicking outside
 document.addEventListener('click', (e) => {

@@ -1,0 +1,287 @@
+/* ============================================================
+   WA POINTS CALCULATOR STYLES
+   Matches the bold, playful visual system used across the
+   landing page, dashboard, and log flow.
+   ============================================================ */
+
+.wa-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  height:56px;
+  background:#fff;
+  border-bottom:3px solid #ccccff;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.wa-nav-back{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:#111;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.wa-nav-logo{
+  font-family:'Antonio',sans-serif;
+  font-size:22px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:#111;
+  text-decoration:none;
+}
+
+.wa-wrap{
+  max-width:640px;
+  margin:0 auto;
+  padding:32px 20px 60px;
+}
+
+.wa-title{
+  font-family:'Antonio',sans-serif;
+  font-size:34px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  color:#111;
+  margin-bottom:4px;
+}
+
+.wa-sub{
+  font-size:14px;
+  font-weight:600;
+  color:#777;
+  margin-bottom:24px;
+}
+
+.wa-toggle-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+}
+
+.wa-toggle-btn{
+  flex:1;
+  padding:12px 10px;
+  border:2.5px solid #111;
+  border-radius:10px;
+  background:#fff;
+  font-family:'Inter',sans-serif;
+  font-weight:800;
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#111;
+  cursor:pointer;
+  transition:all .15s;
+}
+
+.wa-toggle-btn.active{
+  background:#ccccff;
+  box-shadow:3px 3px 0 #111;
+}
+
+.wa-card{
+  background:#fff;
+  border:3px solid #111;
+  border-radius:16px;
+  padding:22px;
+  margin-bottom:16px;
+  box-shadow:5px 5px 0 #ccccff;
+}
+
+.wa-field-label{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#555;
+  font-weight:800;
+  margin-bottom:8px;
+  display:block;
+}
+
+.wa-select{
+  width:100%;
+  padding:13px 14px;
+  border-radius:10px;
+  border:2px solid #111;
+  font-size:15px;
+  font-weight:600;
+  font-family:'Inter',sans-serif;
+  background:#fff;
+  color:#111;
+  margin-bottom:16px;
+}
+
+.wa-time-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:6px;
+  align-items:center;
+}
+
+.wa-time-row input{
+  width:100%;
+  padding:13px;
+  border-radius:10px;
+  border:2px solid #111;
+  font-size:20px;
+  text-align:center;
+  font-weight:700;
+  font-family:'Antonio',sans-serif;
+  color:#111;
+}
+
+.wa-time-sep{
+  display:flex;
+  align-items:center;
+  font-size:20px;
+  font-weight:800;
+  color:#111;
+}
+
+.wa-points-input{
+  width:100%;
+  padding:16px;
+  border-radius:10px;
+  border:2px solid #111;
+  font-size:24px;
+  text-align:center;
+  font-weight:800;
+  font-family:'Antonio',sans-serif;
+  color:#111;
+  margin-bottom:6px;
+}
+
+.wa-result{
+  background:#111;
+  color:#fff;
+  border:3px solid #111;
+  border-radius:16px;
+  padding:28px 24px;
+  text-align:center;
+  margin-bottom:16px;
+}
+
+.wa-result-val{
+  font-family:'Antonio',sans-serif;
+  font-size:56px;
+  line-height:1;
+  color:#ccccff;
+}
+
+.wa-result-label{
+  font-size:12px;
+  color:#ccc;
+  margin-top:8px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-weight:800;
+}
+
+.wa-result-sub{
+  font-size:13px;
+  color:#999;
+  margin-top:14px;
+}
+
+/* ---------- WORLD RECORD CARD ---------- */
+.wr-card{
+  background:#f7f7ff;
+  border:3px solid #111;
+  border-radius:16px;
+  padding:24px;
+  margin-bottom:16px;
+  box-shadow:5px 5px 0 #111;
+}
+
+.wr-label{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#8f8ff0;
+  margin-bottom:14px;
+}
+
+.wr-name{
+  font-family:'Antonio',sans-serif;
+  font-size:28px;
+  font-weight:700;
+  text-transform:uppercase;
+  color:#111;
+  line-height:1.05;
+}
+
+.wr-country{
+  font-size:13px;
+  font-weight:700;
+  color:#555;
+  margin-top:4px;
+}
+
+.wr-time{
+  font-family:'Antonio',sans-serif;
+  font-size:40px;
+  font-weight:700;
+  color:#111;
+  margin-top:14px;
+}
+
+.wr-meta{
+  font-size:12.5px;
+  font-weight:600;
+  color:#777;
+  margin-top:6px;
+  line-height:1.6;
+}
+
+.wr-video-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:18px;
+  padding:12px 20px;
+  background:#111;
+  color:#ccccff;
+  border:2.5px solid #111;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  text-decoration:none;
+  transition:all .15s;
+}
+
+.wr-video-btn:hover{
+  background:#292929;
+}
+
+.wr-empty{
+  font-size:13px;
+  font-weight:600;
+  color:#6d6d8a;
+  text-align:center;
+  padding:12px 0;
+}
+
+.wa-note{
+  font-size:12px;
+  color:#888;
+  font-weight:500;
+  margin-top:20px;
+  line-height:1.6;
+}
+
+@media(max-width:480px){
+  .wa-toggle-row{flex-wrap:wrap;}
+}

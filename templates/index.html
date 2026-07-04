@@ -24,21 +24,49 @@
 
 <!-- HERO -->
 <section class="hero-wrap" id="top">
-  <div class="hero-pill lreveal"><span class="dot"></span>Built poolside, not in a boardroom</div>
-  <h1 class="lreveal">A logbook that keeps up<br>with <span class="acc">your training.</span></h1>
-  <p class="hero-sub lreveal">Stroke started as a way to stop losing sets to a wet notebook. Scan the whiteboard, say the set out loud, or type it once and reuse it — then watch every best time, split and points score add up over a season.</p>
-  <div class="hero-actions lreveal">
-    <a href="/signup" class="hero-btn-primary">Get started free</a>
-    <a href="#log" class="hero-btn-ghost">See how it works</a>
+  <video class="hero-video" autoplay muted loop playsinline>
+    <source src="{{ url_for('static', filename='videos/hero-swim.mp4') }}" type="video/mp4">
+  </video>
+  <div class="hero-scrim"></div>
+  <div class="hero-blob hero-blob--1"></div>
+  <div class="hero-blob hero-blob--2"></div>
+  <div class="hero-content">
+    <div class="hero-pill lreveal"><span class="dot"></span>Built poolside, not in a boardroom</div>
+    <h1 class="lreveal">A logbook that keeps up<br>with <span class="acc">your training.</span></h1>
+    <p class="hero-sub lreveal">Stroke started as a way to stop losing sets to a wet notebook. Scan the whiteboard, say the set out loud, or type it once and reuse it — then watch every best time, split and points score add up over a season.</p>
+    <div class="hero-actions lreveal">
+      <a href="/signup" class="hero-btn-primary">Get started free</a>
+      <a href="#log" class="hero-btn-ghost hero-btn-ghost--light">See how it works</a>
+    </div>
+  </div>
+  <div class="hero-scroll-cue lreveal">
+    <span>Scroll</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
   </div>
 </section>
+
+<!-- MARQUEE TICKER -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span>Log in seconds</span><span class="marquee-dot">●</span>
+    <span>Track every PB</span><span class="marquee-dot">●</span>
+    <span>World Aquatics points built in</span><span class="marquee-dot">●</span>
+    <span>No watch needed</span><span class="marquee-dot">●</span>
+    <span>Works offline</span><span class="marquee-dot">●</span>
+    <span>Log in seconds</span><span class="marquee-dot">●</span>
+    <span>Track every PB</span><span class="marquee-dot">●</span>
+    <span>World Aquatics points built in</span><span class="marquee-dot">●</span>
+    <span>No watch needed</span><span class="marquee-dot">●</span>
+    <span>Works offline</span><span class="marquee-dot">●</span>
+  </div>
+</div>
 
 <!-- VIDEO PANEL -->
 <section class="reel-sec">
   <div class="reel-frame lreveal">
-    <span class="reel-badge">01 — In the water</span>
+    <span class="reel-badge">01 — Every second counts</span>
     <video class="reel-video" autoplay muted loop playsinline>
-      <source src="{{ url_for('static', filename='videos/hero-swim.mp4') }}" type="video/mp4">
+      <source src="{{ url_for('static', filename='videos/dive-start.mp4') }}" type="video/mp4">
     </video>
     <p class="reel-caption">Every feature exists because a set got missed, mistyped, or forgotten on deck.</p>
   </div>
@@ -70,18 +98,56 @@
   </div>
 </section>
 
+<!-- BIG STAT MOMENT -->
+<section class="stat-moment">
+  <div class="stat-moment-ring"></div>
+  <p class="stat-moment-label lreveal">The whole point</p>
+  <h2 class="stat-moment-h lreveal">
+    <span class="stat-moment-big">5</span>
+    <span class="stat-moment-unit">seconds</span>
+    <br>to log a swim.
+  </h2>
+  <p class="stat-moment-sub lreveal">Not five minutes hunting for the app you meant to open. Five seconds, wet fingers and all.</p>
+</section>
+
 <!-- FEATURES -->
 <section class="lsec lsec--alt">
   <div class="lsec-inner">
     <p class="lsec-label lreveal">What's inside</p>
     <h2 class="lsec-h lreveal">Everything a swimmer actually reaches for.</h2>
-    <div class="feat-grid">
-      <div class="feat-card lreveal ld1"><p class="feat-title">Personal bests</p><p class="feat-desc">Every swim logged, every best time tracked across every event and distance — automatically.</p></div>
-      <div class="feat-card lreveal ld2"><p class="feat-title">World Aquatics points</p><p class="feat-desc">A proper points calculator built for swimmers, not spreadsheets. Compare any time, any event, instantly.</p></div>
-      <div class="feat-card lreveal ld3"><p class="feat-title">Offline mode</p><p class="feat-desc">Download your session before you leave home. No wifi on deck? Everything still works.</p></div>
-      <div class="feat-card lreveal ld1"><p class="feat-title">AI training insights</p><p class="feat-desc">A read on your training patterns and fatigue — plain language, not a dashboard full of charts.</p></div>
-      <div class="feat-card lreveal ld2"><p class="feat-title">Goals & training plans</p><p class="feat-desc">Set a target time and a meet date. Stroke lays out the blocks that get you there.</p></div>
-      <div class="feat-card lreveal ld3"><p class="feat-title">Split analysis</p><p class="feat-desc">See exactly where time is going missing — the start, the turn, or the back half.</p></div>
+    <div class="bento-grid">
+      <div class="bento-item feat lreveal">
+        <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        <div>
+          <p class="feat-title">World Aquatics points</p>
+          <p class="feat-desc">A proper points calculator built for swimmers, not spreadsheets. Compare any time, any event, instantly — plus who holds the world record for it.</p>
+        </div>
+      </div>
+      <div class="bento-item bento-b lreveal ld1">
+        <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        <p class="feat-title">Personal bests</p>
+        <p class="feat-desc">Every best time tracked automatically.</p>
+      </div>
+      <div class="bento-item bento-c lreveal ld2">
+        <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <p class="feat-title">AI training insights</p>
+        <p class="feat-desc">Plain language, not a dashboard of charts.</p>
+      </div>
+      <div class="bento-item bento-d lreveal ld1">
+        <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"></path><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+        <p class="feat-title">Offline mode</p>
+        <p class="feat-desc">No wifi on deck? Still works.</p>
+      </div>
+      <div class="bento-item bento-e lreveal ld2">
+        <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+        <p class="feat-title">Goals & training plans</p>
+        <p class="feat-desc">Set a time, get the blocks to reach it.</p>
+      </div>
+      <div class="bento-item bento-f lreveal ld3">
+        <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        <p class="feat-title">Split analysis</p>
+        <p class="feat-desc">See exactly where time is going missing.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -120,6 +186,47 @@
         <h2 class="pts-copy-h">See exactly<br>where you <em>stand</em><br>globally.</h2>
         <p class="pts-copy-p">Enter any time for any event and Stroke calculates your World Aquatics points on the spot, then tracks how they move over a season of training. Try it — no account needed.</p>
         <a href="/signup" class="hero-btn-primary" style="display:inline-block;margin-top:16px;">Track this over time</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIME CONVERTER -->
+<section class="lsec lsec--alt" id="converter">
+  <div class="lsec-inner">
+    <p class="lsec-label lreveal">Time converter</p>
+    <div class="pts-split">
+      <div class="lreveal-l">
+        <h2 class="lsec-h">Short course.<br>Long course.<br><em class="conv-em">Same swimmer.</em></h2>
+        <p class="lsec-sub">Trained all winter in a 25m pool and racing long course this summer? Get a rough long course equivalent for any short course time — or the other way around — based on the same pace ratios used in the points calculator.</p>
+      </div>
+      <div class="conv-card lreveal-r" id="convCard">
+        <div class="conv-result">
+          <div class="conv-result-val" id="convResult">—</div>
+          <div class="conv-result-lbl" id="convResultLbl">Enter a time to convert</div>
+        </div>
+
+        <div class="pts-mini-calc">
+          <div class="pts-mini-row">
+            <select class="pts-mini-select" id="convFrom" onchange="convPopulate(); convCalc()">
+              <option value="SCM">From: Short course (25m)</option>
+              <option value="LCM">From: Long course (50m)</option>
+            </select>
+            <select class="pts-mini-select" id="convGender" onchange="convPopulate(); convCalc()">
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+            </select>
+          </div>
+          <select class="pts-mini-select pts-mini-full" id="convEvent" onchange="convCalc()"></select>
+          <div class="pts-mini-row">
+            <input type="number" class="pts-mini-input" id="convMin" placeholder="Min" min="0" max="59" oninput="miniClamp(this,59); convCalc()" onblur="miniPad(this)">
+            <span class="pts-mini-sep">:</span>
+            <input type="number" class="pts-mini-input" id="convSec" placeholder="Sec" min="0" max="59" oninput="miniClamp(this,59); convCalc()" onblur="miniPad(this)">
+            <span class="pts-mini-sep">.</span>
+            <input type="number" class="pts-mini-input" id="convMs" placeholder="00" min="0" max="99" oninput="miniClamp(this,99); convCalc()" onblur="miniPad(this)">
+          </div>
+        </div>
+        <p class="conv-note">Estimate only — based on record-pace ratios between courses, not an official conversion.</p>
       </div>
     </div>
   </div>
@@ -270,6 +377,45 @@ function miniCalc(){
   counter.textContent = points;
 }
 
+function convPopulate(){
+  const from = document.getElementById('convFrom').value;
+  const gender = document.getElementById('convGender').value;
+  const events = Object.keys(miniBaseTimes[from][gender]);
+  const sel = document.getElementById('convEvent');
+  const prev = sel.value;
+  sel.innerHTML = events.map(e => `<option value="${e}">${e}</option>`).join('');
+  if(events.includes(prev)) sel.value = prev;
+}
+
+function convCalc(){
+  const from = document.getElementById('convFrom').value;
+  const to = from === 'SCM' ? 'LCM' : 'SCM';
+  const gender = document.getElementById('convGender').value;
+  const event = document.getElementById('convEvent').value;
+  const baseFrom = miniBaseTimes[from][gender][event];
+  const baseTo = miniBaseTimes[to][gender][event];
+  const result = document.getElementById('convResult');
+  const label = document.getElementById('convResultLbl');
+  if(!baseFrom || !baseTo) return;
+
+  const min = Math.min(parseInt(document.getElementById('convMin').value) || 0, 59);
+  const sec = Math.min(parseInt(document.getElementById('convSec').value) || 0, 59);
+  const ms = Math.min(parseInt(document.getElementById('convMs').value) || 0, 99);
+  const T = min*60 + sec + ms/100;
+
+  if(T <= 0){
+    result.textContent = '—';
+    label.textContent = 'Enter a time to convert';
+    return;
+  }
+
+  const converted = T * (baseTo / baseFrom);
+  const outMin = Math.floor(converted / 60);
+  const outSec = (converted - outMin*60).toFixed(2).padStart(5,'0');
+  result.textContent = outMin > 0 ? `${outMin}:${outSec}` : outSec;
+  label.textContent = `≈ ${to === 'LCM' ? 'Long course (50m)' : 'Short course (25m)'} equivalent`;
+}
+
 (function(){
 const io=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')});
@@ -288,6 +434,19 @@ const ptsIo=new IntersectionObserver(entries=>{
   });
 },{threshold:.3});
 const pc=document.getElementById('ptsCard');if(pc)ptsIo.observe(pc);
+
+const convIo=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      convPopulate();
+      document.getElementById('convMin').value = 1;
+      document.getElementById('convSec').value = 0;
+      document.getElementById('convMs').value = 0;
+      convCalc();
+    }
+  });
+},{threshold:.3});
+const cc=document.getElementById('convCard');if(cc)convIo.observe(cc);
 
 document.querySelector('.coach-form').addEventListener('submit',function(e){
   e.preventDefault();

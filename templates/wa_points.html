@@ -7,43 +7,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<style>
-  /* placeholder styling — swap for your black/white/lavender palette once main.css is wired up */
-  :root{
-    --wa-bg:#fff; --wa-ink:#111; --wa-lav:#A6B1E1; --wa-lav-dark:#7C89D0; --wa-grey:#f4f4f6; --wa-line:#e4e4ea;
-  }
-  .wa-wrap{max-width:640px;margin:0 auto;padding:24px 20px 60px;font-family:'Inter',sans-serif;color:var(--wa-ink);}
-  .wa-back{display:inline-flex;align-items:center;gap:6px;color:var(--wa-ink);text-decoration:none;font-weight:600;font-size:14px;margin-bottom:18px;}
-  .wa-title{font-family:'Antonio',sans-serif;font-size:32px;margin:0 0 4px;}
-  .wa-sub{color:#666;margin:0 0 24px;font-size:14px;}
-
-  .wa-toggle-row{display:flex;gap:8px;margin-bottom:16px;}
-  .wa-toggle-btn{flex:1;padding:10px;border:2px solid var(--wa-line);border-radius:10px;background:#fff;font-weight:700;font-size:14px;cursor:pointer;}
-  .wa-toggle-btn.active{background:var(--wa-lav);border-color:var(--wa-lav-dark);color:#111;}
-
-  .wa-card{background:var(--wa-grey);border-radius:14px;padding:20px;margin-bottom:16px;}
-  .wa-field-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#777;font-weight:700;margin-bottom:6px;display:block;}
-  .wa-select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--wa-line);font-size:15px;background:#fff;margin-bottom:14px;}
-
-  .wa-time-row{display:flex;gap:8px;margin-bottom:14px;}
-  .wa-time-row input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--wa-line);font-size:18px;text-align:center;font-weight:700;}
-  .wa-time-sep{display:flex;align-items:center;font-size:18px;font-weight:700;}
-
-  .wa-points-input{width:100%;padding:14px;border-radius:10px;border:1px solid var(--wa-line);font-size:22px;text-align:center;font-weight:800;margin-bottom:14px;}
-
-  .wa-result{background:var(--wa-ink);color:#fff;border-radius:14px;padding:24px;text-align:center;}
-  .wa-result-val{font-family:'Antonio',sans-serif;font-size:48px;line-height:1;color:var(--wa-lav);}
-  .wa-result-label{font-size:13px;color:#ccc;margin-top:6px;text-transform:uppercase;letter-spacing:.05em;}
-  .wa-result-sub{font-size:13px;color:#999;margin-top:12px;}
-
-  .wa-note{font-size:12px;color:#888;margin-top:20px;line-height:1.5;}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/wa_points.css') }}">
 </head>
 <body>
 
+<nav class="wa-nav">
+  <a href="/dashboard" class="wa-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back
+  </a>
+  <a href="/" class="wa-nav-logo">STROKE</a>
+  <div style="width:60px"></div>
+</nav>
+
 <div class="wa-wrap">
-  <a href="/dashboard" class="wa-back">← Back</a>
-  <h1 class="wa-title">Fina Points Calculator</h1>
+  <h1 class="wa-title">World Aquatics Points</h1>
+  <p class="wa-sub">See exactly where a time stands — and who owns the world record for it.</p>
 
   <div class="wa-toggle-row">
     <button class="wa-toggle-btn active" id="modeTime" onclick="setMode('time')">Time → Points</button>
@@ -61,7 +40,7 @@
     </div>
 
     <label class="wa-field-label">Event</label>
-    <select class="wa-select" id="eventSelect" onchange="calculate()"></select>
+    <select class="wa-select" id="eventSelect" onchange="calculate(); renderWorldRecord();"></select>
 
     <div id="timeInputBlock">
       <label class="wa-field-label">Your time</label>
@@ -86,18 +65,21 @@
     <div class="wa-result-sub" id="resultSub"></div>
   </div>
 
+  <div class="wr-card" id="wrCard">
+    <p class="wr-label">World record</p>
+    <div id="wrContent"></div>
+  </div>
+
   <p class="wa-note">
     Base times sourced from World Aquatics: SCM 2025 table (valid 01 Sep 2025 – 31 Aug 2026) and
     LCM 2026 table (valid 01 Jan 2026 – 31 Dec 2026). Formula: P = 1000 × (B/T)³, where B is the
-    base time and T is your time, both in seconds.
+    base time and T is your time, both in seconds. World record details are long course (50m) only
+    for now — short course records are coming soon.
   </p>
 </div>
 
 <script>
 // ─── BASE TIMES (seconds) ───
-// Official World Aquatics base times. LCM 2026 events below marked NEW reflect
-// world records broken since the 2025 LCM table — verify against worldaquatics.com/swimming/points
-// if you want to double check before this goes live.
 const baseTimes = {
   LCM: {
     men: {
@@ -106,15 +88,15 @@ const baseTimes = {
       '50 Backstroke': 23.55, '100 Backstroke': 51.60, '200 Backstroke': 111.92,
       '50 Breaststroke': 25.95, '100 Breaststroke': 56.88, '200 Breaststroke': 125.48,
       '50 Butterfly': 22.27, '100 Butterfly': 49.45, '200 Butterfly': 110.34,
-      '200 IM': 112.69, /* NEW 2026 */ '400 IM': 242.50
+      '200 IM': 112.69, '400 IM': 242.50
     },
     women: {
       '50 Freestyle': 23.61, '100 Freestyle': 51.71, '200 Freestyle': 112.23,
-      '400 Freestyle': 234.18, /* NEW 2026 */ '800 Freestyle': 484.79, '1500 Freestyle': 920.48,
+      '400 Freestyle': 234.18, '800 Freestyle': 484.79, '1500 Freestyle': 920.48,
       '50 Backstroke': 26.86, '100 Backstroke': 57.13, '200 Backstroke': 123.14,
       '50 Breaststroke': 29.16, '100 Breaststroke': 64.13, '200 Breaststroke': 137.55,
-      '50 Butterfly': 24.43, '100 Butterfly': 54.59, /* NEW 2026 */ '200 Butterfly': 121.81,
-      '200 IM': 125.70, /* NEW 2026 */ '400 IM': 263.65 /* NEW 2026 */
+      '50 Butterfly': 24.43, '100 Butterfly': 54.59, '200 Butterfly': 121.81,
+      '200 IM': 125.70, '400 IM': 263.65
     }
   },
   SCM: {
@@ -137,6 +119,50 @@ const baseTimes = {
   }
 };
 
+// ─── WORLD RECORDS (long course only, for now) ───
+// video: real, verified YouTube links where found. Everything else falls
+// back to a YouTube search link rather than a guessed video URL.
+const worldRecords = {
+  men: {
+    '50 Freestyle': { name:'Cameron McEvoy', country:'Australia', time:'20.88', date:'20 Mar 2026', meet:'China Open', location:'Shenzhen', video:'https://www.youtube.com/watch?v=81i-TH1Tyz4' },
+    '100 Freestyle': { name:'Pan Zhanle', country:'China', time:'46.40', date:'31 Jul 2024', meet:'Olympic Games', location:'Paris' },
+    '200 Freestyle': { name:'Paul Biedermann', country:'Germany', time:'1:42.00', date:'28 Jul 2009', meet:'World Championships', location:'Rome' },
+    '400 Freestyle': { name:'Lukas Märtens', country:'Germany', time:'3:39.96', date:'12 Apr 2025', meet:'Swim Open Stockholm', location:'Stockholm', video:'https://www.youtube.com/watch?v=DpE9dioF0WI' },
+    '800 Freestyle': { name:'Zhang Lin', country:'China', time:'7:32.12', date:'29 Jul 2009', meet:'World Championships', location:'Rome' },
+    '1500 Freestyle': { name:'Bobby Finke', country:'United States', time:'14:30.67', date:'4 Aug 2024', meet:'Olympic Games', location:'Paris' },
+    '50 Backstroke': { name:'Kliment Kolesnikov', country:'Russia', time:'23.55', date:'27 Jul 2023', meet:'Russian Cup', location:'Kazan' },
+    '100 Backstroke': { name:'Thomas Ceccon', country:'Italy', time:'51.60', date:'20 Jun 2022', meet:'World Championships', location:'Budapest' },
+    '200 Backstroke': { name:'Aaron Peirsol', country:'United States', time:'1:51.92', date:'31 Jul 2009', meet:'World Championships', location:'Rome' },
+    '50 Breaststroke': { name:'Adam Peaty', country:'Great Britain', time:'25.95', date:'25 Jul 2017', meet:'World Championships', location:'Budapest' },
+    '100 Breaststroke': { name:'Adam Peaty', country:'Great Britain', time:'56.88', date:'21 Jul 2019', meet:'World Championships', location:'Gwangju' },
+    '200 Breaststroke': { name:'Qin Haiyang', country:'China', time:'2:05.48', date:'28 Jul 2023', meet:'World Championships', location:'Fukuoka' },
+    '50 Butterfly': { name:'Andriy Govorov', country:'Ukraine', time:'22.27', date:'1 Jul 2018', meet:'Sette Colli Trophy', location:'Rome' },
+    '100 Butterfly': { name:'Caeleb Dressel', country:'United States', time:'49.45', date:'31 Jul 2021', meet:'Olympic Games', location:'Tokyo' },
+    '200 Butterfly': { name:'Kristóf Milák', country:'Hungary', time:'1:50.34', date:'21 Jun 2022', meet:'World Championships', location:'Budapest' },
+    '200 IM': { name:'Léon Marchand', country:'France', time:'1:52.69', date:'30 Jul 2025', meet:'World Championships', location:'Singapore' },
+    '400 IM': { name:'Léon Marchand', country:'France', time:'4:02.50', date:'23 Jul 2023', meet:'World Championships', location:'Fukuoka' }
+  },
+  women: {
+    '50 Freestyle': { name:'Gretchen Walsh', country:'United States', time:'23.55', date:'28 Jun 2026', meet:'Sette Colli Trophy', location:'Rome' },
+    '100 Freestyle': { name:'Marrit Steenbergen', country:'Netherlands', time:'51.68', date:'27 Jun 2026', meet:'Sette Colli Trophy', location:'Rome' },
+    '200 Freestyle': { name:'Ariarne Titmus', country:'Australia', time:'1:52.23', date:'12 Jun 2024', meet:'Australian Olympic Trials', location:'Brisbane' },
+    '400 Freestyle': { name:'Summer McIntosh', country:'Canada', time:'3:54.18', date:'7 Jun 2025', meet:'Canadian Trials', location:'Victoria' },
+    '800 Freestyle': { name:'Katie Ledecky', country:'United States', time:'8:04.12', date:'3 May 2025', meet:'TYR Pro Swim Series', location:'Fort Lauderdale' },
+    '1500 Freestyle': { name:'Katie Ledecky', country:'United States', time:'15:20.48', date:'16 May 2018', meet:'TYR Pro Swim Series', location:'Indianapolis' },
+    '50 Backstroke': { name:'Kaylee McKeown', country:'Australia', time:'26.86', date:'20 Oct 2023', meet:'World Cup', location:'Budapest' },
+    '100 Backstroke': { name:'Regan Smith', country:'United States', time:'57.13', date:'18 Jun 2024', meet:'U.S. Olympic Trials', location:'Indianapolis' },
+    '200 Backstroke': { name:'Kaylee McKeown', country:'Australia', time:'2:03.14', date:'10 Mar 2023', meet:'NSW State Championships', location:'Sydney' },
+    '50 Breaststroke': { name:'Rūta Meilutytė', country:'Lithuania', time:'29.16', date:'30 Jul 2023', meet:'World Championships', location:'Fukuoka' },
+    '100 Breaststroke': { name:'Lilly King', country:'United States', time:'1:04.13', date:'25 Jul 2017', meet:'World Championships', location:'Budapest' },
+    '200 Breaststroke': { name:'Evgeniia Chikunova', country:'Russia', time:'2:17.55', date:'21 Apr 2023', meet:'Russian Championships', location:'Kazan' },
+    '50 Butterfly': { name:'Sarah Sjöström', country:'Sweden', time:'24.43', date:'5 Jul 2014', meet:'Swedish Championships', location:'Borås' },
+    '100 Butterfly': { name:'Gretchen Walsh', country:'United States', time:'54.33', date:'2 May 2026', meet:'Fort Lauderdale Open', location:'Fort Lauderdale' },
+    '200 Butterfly': { name:'Liu Zige', country:'China', time:'2:01.81', date:'21 Oct 2009', meet:'Chinese National Games', location:'Jinan' },
+    '200 IM': { name:'Summer McIntosh', country:'Canada', time:'2:05.70', date:'9 Jun 2025', meet:'Canadian Trials', location:'Victoria' },
+    '400 IM': { name:'Summer McIntosh', country:'Canada', time:'4:23.65', date:'11 Jun 2025', meet:'Canadian Trials', location:'Victoria' }
+  }
+};
+
 let state = { mode:'time', pool:'LCM', gender:'men', event:null };
 
 function setMode(m){
@@ -154,6 +180,7 @@ function setPool(p){
   document.getElementById('poolSCM').classList.toggle('active', p==='SCM');
   populateEvents();
   calculate();
+  renderWorldRecord();
 }
 
 function setGender(g){
@@ -161,6 +188,7 @@ function setGender(g){
   document.getElementById('genderM').classList.toggle('active', g==='men');
   document.getElementById('genderF').classList.toggle('active', g==='women');
   calculate();
+  renderWorldRecord();
 }
 
 function populateEvents(){
@@ -235,9 +263,37 @@ function calculate(){
   }
 }
 
+function renderWorldRecord(){
+  const wrap = document.getElementById('wrContent');
+  const event = document.getElementById('eventSelect').value;
+
+  if(state.pool !== 'LCM'){
+    wrap.innerHTML = `<p class="wr-empty">Short course world records are coming soon.</p>`;
+    return;
+  }
+
+  const wr = worldRecords[state.gender][event];
+  if(!wr){
+    wrap.innerHTML = `<p class="wr-empty">World record data for this event is coming soon.</p>`;
+    return;
+  }
+
+  const videoUrl = wr.video || `https://www.youtube.com/results?search_query=${encodeURIComponent(wr.name + ' ' + event + ' world record')}`;
+  const videoLabel = wr.video ? 'Watch the record' : 'Search for the race';
+
+  wrap.innerHTML = `
+    <p class="wr-name">${wr.name}</p>
+    <p class="wr-country">${wr.country}</p>
+    <p class="wr-time">${wr.time}</p>
+    <p class="wr-meta">${wr.meet}, ${wr.location} — ${wr.date}</p>
+    <a class="wr-video-btn" href="${videoUrl}" target="_blank" rel="noopener">${videoLabel} →</a>
+  `;
+}
+
 // init
 populateEvents();
 calculate();
+renderWorldRecord();
 </script>
 </body>
 </html>
