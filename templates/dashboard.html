@@ -14,70 +14,40 @@
 
 <div class="app-container">
   
-  <!-- LEFT SIDEBAR CONTROL BAR (Replaces Top Navbar) -->
-  <aside class="left-control-dock">
-    <div class="logo-wrap">
-      <span class="nav-logo">STROKE</span>
-    </div>
-    
-    <!-- Tactile Console Menu Button -->
-    <button class="drawer-toggle-btn" id="menuToggle">
-      <span class="btn-icon">☰</span>
-      <span class="btn-text">MENU</span>
-    </button>
-
-    <div class="dock-user-tag">
-    </div>
-  </aside>
-
-  <!-- POP-OUT MODULAR DRAWER -->
-  <div class="dashboard-drawer" id="dashDrawer">
-    <div class="drawer-header">
-      <span class="drawer-logo">Stroke</span>
-      <p class="drawer-sub">Navigation System</p>
-    </div>
-    
-    <nav class="drawer-nav-links">
-      <a href="/dashboard" class="drawer-link active">⊞ Dashboard</a>
-      <a href="/log" class="drawer-link"> Log swim</a>
-      <a href="/pbs" class="drawer-link"> Personal bests</a>
-      <a href="/goals" class="drawer-link"> Goals</a>
-      <a href="/sets" class="drawer-link"> Set library</a>
-      <a href="/progress" class="drawer-link"> Progress</a>
-      <a href="/coaches" class="drawer-link">Coaches</a>
-      <a href="/settings" class="drawer-link drawer-bottom">Settings</a>
-      <a href="/logout" class="drawer-link">Log out</a>
-    </nav>
-  </div>
-
   <!-- MAIN HARDWARE CONTENT PANEL -->
   <main class="main-workspace">
-    <div class="greeting">
-      <h1>Good morning, {{ current_user.username }}.</h1>
-      <p>Hey, {{ current_user.username }} Welcome back to your swimming studio workspace</p>
+    <div class="workspace-header">
+      <div class="greeting">
+        <h1>Good morning, {{ current_user.username }}.</h1>
+        <p>Hey, {{ current_user.username }} Welcome back to your swimming studio workspace</p>
+      </div>
+      <button class="drawer-toggle-btn" id="menuToggle">
+        <span class="btn-icon">☰</span>
+        <span class="btn-text">MENU</span>
+      </button>
     </div>
 
     <!-- STATS BLOCKS -->
     <div class="stats-row">
       <div class="stat">
         <div class="stat-label">This week</div>
-        <div class="stat-val">0</div>
+        <div class="stat-val">{{ sessions_this_week }}</div>
         <div class="stat-sub">sessions logged</div>
       </div>
       <div class="stat">
         <div class="stat-label">Volume</div>
-        <div class="stat-val">0<span class="unit-label">m</span></div>
+        <div class="stat-val">{{ volume_this_week }}<span class="unit-label">m</span></div>
         <div class="stat-sub">total this week</div>
       </div>
       <div class="stat">
-        <div class="stat-label">WA points</div>
-        <div class="stat-val">—</div>
-        <div class="stat-sub">log a swim to start</div>
+        <div class="stat-label">PBs</div>
+        <div class="stat-val">{{ personal_bests|length }}</div>
+        <div class="stat-sub">{{ 'events tracked' if personal_bests else 'log a swim to start' }}</div>
       </div>
       <div class="stat">
         <div class="stat-label">Streak</div>
-        <div class="stat-val">0<span class="unit-label">d</span></div>
-        <div class="stat-sub">log your first swim</div>
+        <div class="stat-val">{{ streak }}<span class="unit-label">d</span></div>
+        <div class="stat-sub">{{ 'in a row' if streak else 'log your first swim' }}</div>
       </div>
     </div>
 
@@ -85,8 +55,18 @@
     <div class="grid-2">
       <div class="panel">
         <div class="panel-label">Personal bests <span class="panel-action">View all →</span></div>
-        <p class="panel-note">No swims logged yet. Log your first swim to start tracking PBs.</p>
-        <a href="/log" class="log-btn no-underline mt-8">⌨️ Log your first swim</a>
+        {% if personal_bests %}
+          {% for pb in personal_bests %}
+            <div class="session-row">
+              <span>{{ pb.event }}</span>
+              <span>{{ pb.pool }}</span>
+              <span>{{ pb.time }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="panel-note">No swims logged yet. Log your first swim to start tracking PBs.</p>
+          <a href="/log" class="log-btn no-underline mt-8"> Log your first swim</a>
+        {% endif %}
       </div>
 
       <div class="panel">
@@ -113,14 +93,9 @@
           <button class="console-switch-btn">Points</button>
         </div>
         <div class="chart-bars">
-          <div class="bar h-10"></div>
-          <div class="bar h-10"></div>
-          <div class="bar h-10"></div>
-          <div class="bar h-10"></div>
-          <div class="bar h-10"></div>
-          <div class="bar h-10"></div>
-          <div class="bar h-10"></div>
-          <div class="bar active h-10"></div>
+          {% for v in weekly_volume %}
+          <div class="bar {{ 'active' if loop.last else '' }}" style="height:{{ [(v / max_week * 100)|round(0, 'floor')|int, 4]|max }}%" title="{{ v }}m"></div>
+          {% endfor %}
         </div>
         <div class="chart-labels">
           <div class="chart-lbl">Wk 1</div>
@@ -144,23 +119,58 @@
     <div class="grid-2">
       <div class="panel">
         <div class="panel-label">Recent sessions <span class="panel-action">View all →</span></div>
-        <p class="panel-note">No sessions yet. Log your first swim to see it here.</p>
+        {% if recent_activity %}
+          {% for a in recent_activity %}
+            <div class="session-row">
+              <span>{{ a.kind }} — {{ a.label }}</span>
+              <span>{{ a.pool }}</span>
+              <span>{{ a.logged_at.strftime('%d %b') }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="panel-note">No sessions yet. Log your first swim to see it here.</p>
+        {% endif %}
       </div>
 
       <div class="panel">
         <div class="panel-label">Streak</div>
-        <div class="points-big">0</div>
+        <div class="points-big">{{ streak }}</div>
         <div class="points-label">days in a row</div>
         <div class="streak-grid">
-          {% for i in range(21) %}
-          <div class="s-day"></div>
+          {% for day in streak_days %}
+          <div class="s-day {{ 'done' if day.done else '' }} {{ 'today' if day.today else '' }}"></div>
           {% endfor %}
         </div>
-        <div class="streak-label">Log your first swim to start</div>
+        <div class="streak-label">{{ 'Keep it going.' if streak else 'Log your first swim to start' }}</div>
       </div>
     </div>
 
   </main>
+
+  <!-- POP-OUT MODULAR DRAWER (RIGHT SIDE) -->
+  <div class="dashboard-drawer" id="dashDrawer">
+    <div class="drawer-header">
+      <span class="drawer-logo">STROKE</span>
+      <button class="drawer-close-btn" id="closeDrawer" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <nav class="drawer-nav-links">
+      <a href="/log" class="drawer-link"> Log swim</a>
+      <a href="/pbs" class="drawer-link"> Personal bests</a>
+      <a href="/goals" class="drawer-link"> Goals</a>
+      <a href="/sets" class="drawer-link"> Set library</a>
+      <a href="/progress" class="drawer-link"> Progress</a>
+      <a href="/wa-points" class="drawer-link"> Fina Points</a>
+      <a href="/settings" class="drawer-link drawer-bottom">Settings</a>
+      <a href="/logout" class="drawer-link">Log out</a>
+    </nav>
+  </div>
+
 </div>
 
 <!-- COMPONENT INTERACTION SCRIPTS -->
@@ -168,10 +178,39 @@
 // Toggle Console Drawer Display
 const menuToggle = document.getElementById('menuToggle');
 const dashDrawer = document.getElementById('dashDrawer');
+const closeDrawer = document.getElementById('closeDrawer');
+
+function openDrawer(){
+  dashDrawer.classList.add('open');
+  menuToggle.classList.add('active');
+}
+
+function closeDrawerMenu(){
+  dashDrawer.classList.remove('open');
+  menuToggle.classList.remove('active');
+}
 
 menuToggle.addEventListener('click', () => {
   dashDrawer.classList.toggle('open');
   menuToggle.classList.toggle('active');
+});
+
+closeDrawer.addEventListener('click', closeDrawerMenu);
+
+// Close drawer when clicking outside
+document.addEventListener('click', (e) => {
+  if(!dashDrawer.contains(e.target) && !menuToggle.contains(e.target)){
+    if(dashDrawer.classList.contains('open')){
+      closeDrawerMenu();
+    }
+  }
+});
+
+// Close drawer on escape key
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && dashDrawer.classList.contains('open')){
+    closeDrawerMenu();
+  }
 });
 
 // Metric Switcher Options

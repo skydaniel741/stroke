@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,129 +7,62 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-    </head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
 <body>
-    <div class="split-wrap">
+    <nav>
+        <a href="/" class="nav-logo">STROKE</a>
+    </nav>
 
-        <div class="split-visual">
-            <canvas id="swimCanvas"></canvas>
-            <div class="split-tag"><span class="line"></span>STROKE</div>
-            <div class="split-content">
-                <h2>Get faster.<br>Every session.</h2>
-                <p>Log your swims, track every PB, and see exactly where you stand against the world — all in one place.</p>
-            </div>
-        </div>
-
-        <div class="split-form-side">
-            <div class="auth-wrap auth-wrap--compact">
-                <div class="auth-card">
-                    <h1>Welcome back</h1>
-                    <p class="auth-sub">Log in to your STROKE account.</p>
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }}">{{ message }}</div>
-                        {% endfor %}
-                    {% endwith %}
-                    <form method="POST" action="/login">
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" name="email" placeholder="you@example.com" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Password</label>
-                            <div class="pw-wrap">
-                                <input type="password" name="password" id="passwordInput" placeholder="your password" required>
-                                <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password">
-                                    <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
-                                        <path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a18.5 18.5 0 015.06-5.94M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"></path>
-                                        <line x1="1" y1="1" x2="23" y2="23"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-row-between">
-                            <label class="remember-check">
-                                <input type="checkbox" name="remember">
-                                <span class="check-box">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                </span>
-                                <span class="remember-label">Remember me</span>
-                            </label>
-                            <a href="/forgot-password" class="forgot-link">Forgot?</a>
-                        </div>
-                        <button type="submit" class="btn-primary">Log in</button>
-                    </form>
-                    <p class="auth-switch">No account yet? <a href="/signup">Sign up free</a></p>
+    <div class="auth-wrap">
+        <div class="auth-card">
+            <h1>Welcome back</h1>
+            <p class="auth-sub">Log in to your STROKE account.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="you@example.com" required>
                 </div>
-            </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="pw-wrap">
+                        <input type="password" name="password" id="passwordInput" placeholder="your password" required>
+                        <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password">
+                            <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                                <path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a18.5 18.5 0 015.06-5.94M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-row-between">
+                    <label class="remember-check">
+                        <input type="checkbox" name="remember">
+                        <span class="check-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </span>
+                        <span class="remember-label">Remember me</span>
+                    </label>
+                    <a href="/forgot-password" class="forgot-link">Forgot?</a>
+                </div>
+                <button type="submit" class="btn-primary">Log in</button>
+            </form>
+            <p class="auth-switch">No account yet? <a href="/signup">Sign up free</a></p>
         </div>
-
     </div>
 
     <script>
-        const canvas = document.getElementById('swimCanvas');
-        const ctx = canvas.getContext('2d');
-        let W, H, particles;
-
-        function resize(){
-            W = canvas.width = canvas.offsetWidth;
-            H = canvas.height = canvas.offsetHeight;
-            buildParticles();
-        }
-
-        function buildParticles(){
-            particles = Array.from({length:50}, () => ({
-                x: Math.random()*W,
-                y: Math.random()*H,
-                vy: 0.3 + Math.random()*0.6,
-                r: 1 + Math.random()*2,
-                wave: Math.random()*Math.PI*2,
-                ws: 0.008 + Math.random()*0.015,
-                wa: 16 + Math.random()*30
-            }));
-        }
-
-        function draw(t){
-            ctx.clearRect(0,0,W,H);
-            ctx.fillStyle = '#111';
-            ctx.fillRect(0,0,W,H);
-
-            particles.forEach(p => {
-                p.wave += p.ws;
-                p.y += p.vy;
-                if(p.y > H+8) p.y = -8;
-                const px = p.x + Math.sin(p.wave)*p.wa;
-                ctx.beginPath();
-                ctx.arc(((px%W)+W)%W, p.y, p.r, 0, Math.PI*2);
-                ctx.fillStyle = 'rgba(250,200,213,0.5)';
-                ctx.fill();
-            });
-
-            [0,1,2].forEach(i => {
-                const wy = H*0.55 + i*36 + Math.sin(t*0.0006+i)*14;
-                ctx.strokeStyle = i===0 ? 'rgba(250,200,213,0.6)' : 'rgba(250,200,213,'+(0.2-i*0.05)+')';
-                ctx.lineWidth = i===0 ? 2 : 1.2;
-                ctx.beginPath();
-                for(let x=0; x<=W; x+=4){
-                    const y = wy + Math.sin((x/W)*Math.PI*4 + t*0.0008 + i*0.6)*16;
-                    x===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
-                }
-                ctx.stroke();
-            });
-        }
-
-        function loop(t){ draw(t); requestAnimationFrame(loop); }
-        resize();
-        window.addEventListener('resize', resize);
-        requestAnimationFrame(loop);
-
         const pwInput = document.getElementById('passwordInput');
         const pwToggle = document.getElementById('pwToggle');
         const eyeOpen = document.getElementById('eyeOpen');

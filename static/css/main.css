@@ -15,7 +15,7 @@ html {
 
 body {
   font-family: 'Inter', sans-serif;
-  background: #ffffff;
+  background: #fcfcff;
   color: #111111;
   line-height: 1.6;
   min-height: 100vh;
@@ -58,7 +58,7 @@ nav {
   top: 0;
   z-index: 100;
   background: #ffffff;
-  border-bottom: 3px solid #111111;
+  border-bottom: 3px solid #ccccff;
 }
 
 .nav-logo {
@@ -94,7 +94,7 @@ nav {
 .form-group select {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid #111111;
+  border: 2px solid #ccccff;
   border-radius: 10px;
   background: #ffffff;
   color: #111111;
@@ -111,13 +111,13 @@ nav {
   width: 100%;
   padding: 16px;
   border-radius: 12px;
-  background: #111111;
-  color: #ffffff;
+  background: #ccccff;
+  color: #111111;
   font-size: 15px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 4px 0 #e5e5ff;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -131,7 +131,7 @@ nav {
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 18px;
-  border: 2px solid #111111;
+  border: 2px solid #ccccff;
 }
 
 .alert-error {
@@ -156,10 +156,10 @@ nav {
   width: 100%;
   max-width: 440px;
   background: #ffffff;
-  border: 3px solid #111111;
+  border: 3px solid #ccccff;
   border-radius: 20px;
   padding: 40px 36px;
-  box-shadow: 8px 8px 0 #111111;
+  box-shadow: 8px 8px 0 #e5e5ff;
 }
 
 .auth-card h1 {
@@ -198,10 +198,10 @@ nav {
 
 .panel {
   background: #ffffff;
-  border: 3px solid #111111;
+  border: 3px solid #ccccff;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 4px 4px 0 #111111;
+  box-shadow: 4px 4px 0 #e5e5ff;
 }
 
 .panel-label {
@@ -213,7 +213,7 @@ nav {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #111111;
-  border-bottom: 2px solid #111111;
+  border-bottom: 2px solid #ccccff;
   padding-bottom: 10px;
   margin-bottom: 18px;
 }
@@ -225,7 +225,7 @@ nav {
   gap: 8px;
   width: 100%;
   padding: 14px 16px;
-  border: 2.5px solid #111111;
+  border: 2.5px solid #ccccff;
   border-radius: 12px;
   background: #ffffff;
   color: #111111;
@@ -236,7 +236,7 @@ nav {
 }
 
 .log-btn:hover {
-  background: #fac8d5;
+  background: #f3f3ff;
 }
 
 .log-btn.locked {
@@ -266,13 +266,13 @@ nav {
 }
 
 .bar:hover {
-  background: #fac8d5;
-  border-color: #111111;
+  background: #ccccff;
+  border-color: #ccccff;
 }
 
 .bar.active {
-  background: #111111;
-  border-color: #111111;
+  background: #ccccff;
+  border-color: #ccccff;
 }
 
 .s-day {
@@ -289,8 +289,8 @@ nav {
 }
 
 .s-day.today {
-  background: #fac8d5;
-  border: 2px solid #111111;
+  background: #ccccff;
+  border: 2px solid #ccccff;
 }
 
 .text-center {

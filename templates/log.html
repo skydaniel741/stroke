@@ -38,18 +38,20 @@
     </div>
   </div>
 
+  {% if last_session %}
   <p class="quick-label">Quick repeat</p>
 
-  <div class="repeat-card" onclick="repeatLast()">
+  <div class="repeat-card" onclick="repeatLast()" data-pool="{{ last_session.pool }}" data-type="{{ last_session.session_type }}" data-sets='{{ last_session.sets_data }}'>
     <div>
       <p class="repeat-label">Last session</p>
-      <p class="repeat-event" id="lastEvent">Race Warm Up + 10×100m FR</p>
-      <p class="repeat-meta" id="lastMeta">3,400m · 25m pool · Yesterday</p>
+      <p class="repeat-event">{{ last_session.session_type }}</p>
+      <p class="repeat-meta">{{ last_session.total_distance() }}m · {{ last_session.pool }} pool · {{ last_session.logged_at.strftime('%d %b') }}</p>
     </div>
     <div class="repeat-arrow">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </div>
   </div>
+  {% endif %}
 
   <div class="divider-row">
     <div class="divider-line"></div>
@@ -57,17 +59,27 @@
     <div class="divider-line"></div>
   </div>
 
-  <div class="saved-item" onclick="useSaved('Race Warm Up + Sprint Set','3,200m · 25m pool')">
-    <div><p class="saved-name">Race Warm Up + Sprint Set</p><p class="saved-meta">3,200m · 25m pool</p></div>
-    <span class="use-badge">Use</span>
-  </div>
-  <div class="saved-item" onclick="useSaved('Endurance Block','10×100m + 400m CD · 4,400m')">
-    <div><p class="saved-name">Endurance Block</p><p class="saved-meta">10×100m + 400m CD · 4,400m</p></div>
-    <span class="use-badge">Use</span>
-  </div>
-  <div class="saved-item" onclick="useSaved('Technique Day','Drills + 8×50m · 2,400m')">
-    <div><p class="saved-name">Technique Day</p><p class="saved-meta">Drills + 8×50m · 2,400m</p></div>
-    <span class="use-badge">Use</span>
+  <div id="savedSetsList">
+    {% for s in saved_sets %}
+    <div class="saved-item" data-id="{{ s.id }}" data-pool="{{ s.pool }}" data-type="{{ s.session_type }}" data-sets='{{ s.sets_data }}'>
+      <div class="saved-item-num">{{ loop.index }}</div>
+      <div class="saved-item-body">
+        <p class="saved-name">{{ s.name }}</p>
+        <p class="saved-meta">{{ s.total_distance() }}m · {{ s.pool }} pool · {{ s.session_type }}</p>
+      </div>
+      <div class="saved-actions">
+        <span class="use-badge edit-badge" onclick="useSaved({{ s.id }},'edit')">Edit</span>
+        <span class="use-badge" onclick="useSaved({{ s.id }},'use')">Use</span>
+        {% if s.created_by == current_user.id or current_user.is_admin %}
+        <form method="POST" action="/sets/delete/{{ s.id }}" class="saved-delete-form">
+          <button type="submit" class="saved-delete-btn" title="Delete set" onclick="return confirm('Delete this saved set?')">✕</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="sets-empty">No saved sets yet. Build a training session and save it as a reusable set.</div>
+    {% endfor %}
   </div>
 </div>
 
@@ -81,7 +93,6 @@
   <div class="pool-toggle">
     <button class="pool-btn active" id="pool25" onclick="setPool('25')">25m</button>
     <button class="pool-btn" id="pool50" onclick="setPool('50')">50m</button>
-    <button class="pool-btn" id="poolOW" onclick="setPool('OW')">Open water</button>
   </div>
 
   <div class="stroke-tabs">
@@ -133,7 +144,7 @@
 ════════════════════════════════════ -->
 <div class="screen" id="screen3">
   <p class="screen-title">Build session</p>
-  <p class="screen-sub">Add your sets — keep it simple or go detailed</p>
+  <p class="screen-sub">We'll build this one set at a time</p>
 
   <div class="session-meta-row">
     <div class="meta-group">
@@ -141,7 +152,6 @@
       <select class="meta-select" id="sessionPool">
         <option>25m</option>
         <option>50m</option>
-        <option>Open water</option>
       </select>
     </div>
     <div class="meta-group">
@@ -156,9 +166,9 @@
     </div>
   </div>
 
-  <div class="sets-list" id="setsList"></div>
+  <div class="sets-summary" id="setsSummary"></div>
 
-  <button class="add-set-btn" onclick="addSet()">+ Add set</button>
+  <button class="add-set-btn" onclick="openWizard()">+ Add a set</button>
 
   <div class="session-total">
     <div class="total-item"><div class="total-val" id="totalDist">0m</div><div class="total-label">Total distance</div></div>
@@ -166,9 +176,59 @@
     <div class="total-item"><div class="total-val" id="totalReps">0</div><div class="total-label">Total reps</div></div>
   </div>
 
+  <button class="save-template-btn" onclick="saveAsTemplate()">💾 Save this as a reusable set</button>
+  <p class="save-template-status" id="saveTemplateStatus"></p>
+
   <div class="screen-nav">
     <button class="snav-back" onclick="goTo(0)">Back</button>
     <button class="snav-next" onclick="prepSessionConfirm()">Review →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SET WIZARD (overlay)
+════════════════════════════════════ -->
+<div class="wizard-overlay" id="wizardOverlay">
+  <div class="wizard-card">
+    <div class="wizard-progress">
+      <div class="wizard-dot" id="wdot0"></div>
+      <div class="wizard-dot" id="wdot1"></div>
+      <div class="wizard-dot" id="wdot2"></div>
+      <div class="wizard-dot" id="wdot3"></div>
+    </div>
+
+    <div class="wizard-step active" id="wstep0">
+      <p class="wizard-q">How many reps?</p>
+      <div class="wizard-options" id="wReps"></div>
+      <input class="wizard-custom-input" type="number" id="wRepsCustom" placeholder="Custom number" oninput="wizardCustom('reps', this.value)">
+    </div>
+
+    <div class="wizard-step" id="wstep1">
+      <p class="wizard-q">What distance (metres)?</p>
+      <div class="wizard-options" id="wDist"></div>
+      <input class="wizard-custom-input" type="number" id="wDistCustom" placeholder="Custom distance" oninput="wizardCustom('dist', this.value)">
+    </div>
+
+    <div class="wizard-step" id="wstep2">
+      <p class="wizard-q">What stroke?</p>
+      <div class="wizard-options" id="wStroke"></div>
+    </div>
+
+    <div class="wizard-step" id="wstep3">
+      <p class="wizard-q">Rest between reps?</p>
+      <div class="wizard-options" id="wRest"></div>
+      <input class="wizard-custom-input" type="text" id="wRestCustom" placeholder="e.g. 1:15" oninput="wizardCustom('rest', this.value)">
+      <div class="wizard-advanced-toggle" onclick="toggleAdvanced()">+ Add heart rate target (optional)</div>
+      <div class="wizard-advanced-panel" id="advancedPanel">
+        <input class="wizard-custom-input" type="text" id="wHR" placeholder="e.g. 150bpm" oninput="wizardCustom('hr', this.value)">
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <button class="wizard-back" id="wBackBtn" onclick="wizardBack()">Back</button>
+      <button class="wizard-next" id="wNextBtn" onclick="wizardNext()" disabled>Next →</button>
+    </div>
+    <div class="wizard-cancel" onclick="closeWizard()">Cancel</div>
   </div>
 </div>
 
@@ -217,26 +277,104 @@ function goTo(n){
 }
 
 function startPB(){ goTo(1); initEventGrid(); }
-function startSession(){ goTo(3); if(sessionSets.length===0) addSet(); }
+function startSession(){ goTo(3); renderSetsSummary(); }
 function editBack(){ goTo(confirmType==='pb' ? 2 : 3); }
 
 // ─── REPEAT / SAVED ───
 function repeatLast(){
-  document.getElementById('f_type').value = 'session';
-  document.getElementById('f_event').value = document.getElementById('lastEvent').textContent;
-  document.getElementById('f_time').value = '';
-  document.getElementById('f_session').value = 'repeat';
-  document.getElementById('f_notes').value = '';
-  document.getElementById('logForm').submit();
+  const card = document.querySelector('.repeat-card');
+  if(!card) return;
+  let sets;
+  try{ sets = JSON.parse(card.dataset.sets || '[]'); }catch(e){ sets = []; }
+  if(sets.length===0) return;
+
+  sessionSets = sets.map((s,i)=>({id:'set_'+Date.now()+i, ...s}));
+  document.getElementById('sessionPool').value = card.dataset.pool;
+  document.getElementById('sessionType').value = card.dataset.type;
+  renderSetsSummary();
+  prepSessionConfirm();
 }
-function useSaved(name){
-  alert('Set "'+name+'" loaded — ready to save (wire to backend)');
+
+function useSaved(id, mode){
+  const card = document.querySelector(`.saved-item[data-id="${id}"]`);
+  if(!card) return;
+  let sets;
+  try{ sets = JSON.parse(card.dataset.sets || '[]'); }catch(e){ sets = []; }
+
+  sessionSets = sets.map((s,i)=>({id:'set_'+Date.now()+i, ...s}));
+  document.getElementById('sessionPool').value = card.dataset.pool;
+  document.getElementById('sessionType').value = card.dataset.type;
+  renderSetsSummary();
+
+  if(mode === 'edit'){
+    goTo(3);
+  } else {
+    prepSessionConfirm();
+  }
+}
+
+// ─── SAVE SESSION AS REUSABLE SET ───
+function saveAsTemplate(){
+  const status = document.getElementById('saveTemplateStatus');
+  if(sessionSets.length===0){
+    status.textContent = 'Add at least one set first.';
+    return;
+  }
+  const name = prompt('Name this set (e.g. "Sprint Pyramid"):');
+  if(!name) return;
+
+  const body = new URLSearchParams({
+    name: name,
+    pool: document.getElementById('sessionPool').value,
+    session_type: document.getElementById('sessionType').value,
+    sets_data: JSON.stringify(sessionSets)
+  });
+
+  fetch('/sets/create', { method:'POST', body:body })
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.ok){
+        status.textContent = `Saved as "${data.name}" — find it under Saved sets.`;
+        addSavedItemToList(data.id, data.name, document.getElementById('sessionPool').value, document.getElementById('sessionType').value, sessionSets);
+      } else {
+        status.textContent = data.error || 'Could not save set.';
+      }
+    })
+    .catch(()=>{ status.textContent = 'Could not save set — try again.'; });
+}
+
+function addSavedItemToList(id, name, pool, type, sets){
+  const list = document.getElementById('savedSetsList');
+  const empty = list.querySelector('.sets-empty');
+  if(empty) empty.remove();
+  const dist = sets.reduce((t,s)=>t+((parseInt(s.reps)||0)*(parseInt(s.dist)||0)),0);
+  const num = list.querySelectorAll('.saved-item').length + 1;
+  const div = document.createElement('div');
+  div.className = 'saved-item';
+  div.dataset.id = id;
+  div.dataset.pool = pool;
+  div.dataset.type = type;
+  div.dataset.sets = JSON.stringify(sets);
+  div.innerHTML = `
+    <div class="saved-item-num">${num}</div>
+    <div class="saved-item-body">
+      <p class="saved-name">${name}</p>
+      <p class="saved-meta">${dist}m · ${pool} pool · ${type}</p>
+    </div>
+    <div class="saved-actions">
+      <span class="use-badge edit-badge" onclick="useSaved(${id},'edit')">Edit</span>
+      <span class="use-badge" onclick="useSaved(${id},'use')">Use</span>
+      <form method="POST" action="/sets/delete/${id}" class="saved-delete-form">
+        <button type="submit" class="saved-delete-btn" title="Delete set" onclick="return confirm('Delete this saved set?')">✕</button>
+      </form>
+    </div>`;
+  list.appendChild(div);
 }
 
 // ─── PB POOL ───
 function setPool(p){
   pb.pool = p;
-  ['25','50','OW'].forEach(x=>{
+  ['25','50'].forEach(x=>{
     const el = document.getElementById('pool'+x);
     if(el) el.classList.toggle('active', x===p);
   });
@@ -303,58 +441,155 @@ function prepPBConfirm(){
   document.getElementById('cType').textContent = 'PB';
   document.getElementById('cEvent').textContent = (pb.distance||'—')+' '+pb.stroke;
   document.getElementById('cTime').textContent = getTimeStr();
-  document.getElementById('cPool').textContent = pb.pool==='OW'?'Open water':pb.pool+'m';
+  document.getElementById('cPool').textContent = pb.pool+'m';
   document.getElementById('cDate').textContent = today;
   goTo(4);
 }
 
-// ─── SESSION BUILDER ───
-let setCount = 0;
-const strokeOptions = ['FR','FL','BK','BR','IM','Kick','Pull','Drill','Mix'];
+// ─── WIZARD STATE ───
+let wizardStep = 0;
+let wizardSet = {};
+let editingSetId = null;
 
-function addSet(){
-  setCount++;
-  const id = 'set_'+Date.now();
-  sessionSets.push({id, reps:'', dist:'', stroke:'FR', rest:'', hr:''});
-  renderSets();
+const repsOptions = [1,2,4,6,8,10,12];
+const distOptions = [25,50,100,200,400];
+const strokeOptionsFull = [
+  {label:'Freestyle', code:'FR'}, {label:'Fly', code:'FL'}, {label:'Backstroke', code:'BK'},
+  {label:'Breaststroke', code:'BR'}, {label:'IM', code:'IM'}, {label:'Kick', code:'Kick'},
+  {label:'Pull', code:'Pull'}, {label:'Drill', code:'Drill'}
+];
+const restOptions = ['None','0:15','0:30','0:45','1:00','1:30','2:00'];
+
+function openWizard(setToEdit){
+  wizardStep = 0;
+  wizardSet = setToEdit ? {...setToEdit} : {reps:null, dist:null, stroke:null, rest:'', hr:''};
+  editingSetId = setToEdit ? setToEdit.id : null;
+  document.getElementById('wRepsCustom').value = '';
+  document.getElementById('wDistCustom').value = '';
+  document.getElementById('wRestCustom').value = '';
+  document.getElementById('wHR').value = setToEdit ? (setToEdit.hr||'') : '';
+  document.getElementById('advancedPanel').classList.toggle('open', !!(setToEdit && setToEdit.hr));
+  renderWizardOptions();
+  showWizardStep(0);
+  document.getElementById('wizardOverlay').classList.add('open');
+}
+
+function closeWizard(){
+  document.getElementById('wizardOverlay').classList.remove('open');
+}
+
+function renderWizardOptions(){
+  document.getElementById('wReps').innerHTML = repsOptions.map(r=>
+    `<div class="wizard-opt ${wizardSet.reps==r?'selected':''}" onclick="pickWizard('reps',${r})">${r}</div>`
+  ).join('');
+  document.getElementById('wDist').innerHTML = distOptions.map(d=>
+    `<div class="wizard-opt ${wizardSet.dist==d?'selected':''}" onclick="pickWizard('dist',${d})">${d}m</div>`
+  ).join('');
+  document.getElementById('wStroke').innerHTML = strokeOptionsFull.map(s=>
+    `<div class="wizard-opt ${wizardSet.stroke===s.code?'selected':''}" onclick="pickWizard('stroke','${s.code}')">${s.label}</div>`
+  ).join('');
+  document.getElementById('wRest').innerHTML = restOptions.map(r=>{
+    const val = r==='None' ? '' : r;
+    return `<div class="wizard-opt ${wizardSet.rest===val?'selected':''}" onclick="pickWizard('rest','${val}')">${r}</div>`;
+  }).join('');
+}
+
+function pickWizard(field, value){
+  wizardSet[field] = value;
+  renderWizardOptions();
+  document.getElementById('wNextBtn').disabled = false;
+  if(field==='reps') document.getElementById('wRepsCustom').value='';
+  if(field==='dist') document.getElementById('wDistCustom').value='';
+}
+
+function wizardCustom(field, value){
+  if(value===''){
+    if(field==='rest' || field==='hr') wizardSet[field] = '';
+    return;
+  }
+  wizardSet[field] = (field==='rest' || field==='hr') ? value : parseInt(value);
+  renderWizardOptions();
+  document.getElementById('wNextBtn').disabled = false;
+}
+
+function toggleAdvanced(){
+  document.getElementById('advancedPanel').classList.toggle('open');
+}
+
+function showWizardStep(n){
+  document.querySelectorAll('.wizard-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('wstep'+n).classList.add('active');
+  document.querySelectorAll('.wizard-dot').forEach((d,i)=>d.classList.toggle('active', i<=n));
+  document.getElementById('wBackBtn').style.visibility = n===0 ? 'hidden' : 'visible';
+
+  const stepValid = [
+    wizardSet.reps !== null && wizardSet.reps !== undefined && wizardSet.reps !== '',
+    wizardSet.dist !== null && wizardSet.dist !== undefined && wizardSet.dist !== '',
+    wizardSet.stroke !== null && wizardSet.stroke !== undefined && wizardSet.stroke !== '',
+    true
+  ];
+  const nextBtn = document.getElementById('wNextBtn');
+  nextBtn.disabled = !stepValid[n];
+  nextBtn.textContent = n===3 ? (editingSetId ? 'Save set ✓' : 'Add set ✓') : 'Next →';
+}
+
+function wizardNext(){
+  if(wizardStep < 3){
+    wizardStep++;
+    showWizardStep(wizardStep);
+  } else {
+    if(editingSetId){
+      const idx = sessionSets.findIndex(s=>s.id===editingSetId);
+      if(idx>-1) sessionSets[idx] = {...wizardSet, id: editingSetId};
+    } else {
+      sessionSets.push({...wizardSet, id:'set_'+Date.now()});
+    }
+    closeWizard();
+    renderSetsSummary();
+  }
+}
+
+function wizardBack(){
+  if(wizardStep>0){
+    wizardStep--;
+    showWizardStep(wizardStep);
+  }
+}
+
+function editSet(id){
+  const s = sessionSets.find(s=>s.id===id);
+  if(s) openWizard(s);
 }
 
 function removeSet(id){
   sessionSets = sessionSets.filter(s=>s.id!==id);
-  renderSets();
+  renderSetsSummary();
 }
 
-function updateSet(id, field, val){
-  const s = sessionSets.find(s=>s.id===id);
-  if(s) s[field] = val;
-  updateTotals();
+function strokeLabel(code){
+  const found = strokeOptionsFull.find(s=>s.code===code);
+  return found ? found.label : code;
 }
 
-function renderSets(){
-  const list = document.getElementById('setsList');
-  list.innerHTML = sessionSets.map((s,i)=>`
-    <div class="set-row">
-      <div class="set-row-num">${i+1}</div>
-      <div class="set-fields">
-        <div class="set-fields-row">
-          <input class="set-field" placeholder="Reps" type="number" value="${s.reps}"
-            oninput="updateSet('${s.id}','reps',this.value)" class="text-center">
-          <input class="set-field" placeholder="Dist (m)" type="number" value="${s.dist}"
-            oninput="updateSet('${s.id}','dist',this.value)">
-          <select class="set-field" onchange="updateSet('${s.id}','stroke',this.value)">
-            ${strokeOptions.map(o=>`<option ${s.stroke===o?'selected':''}>${o}</option>`).join('')}
-          </select>
+function renderSetsSummary(){
+  const wrap = document.getElementById('setsSummary');
+  if(sessionSets.length===0){
+    wrap.innerHTML = `<p class="sets-empty">No sets yet — tap "+ Add a set" to start.</p>`;
+  } else {
+    wrap.innerHTML = sessionSets.map((s,i)=>`
+      <div class="set-summary-row">
+        <div class="set-summary-num">${i+1}</div>
+        <div class="set-summary-text">
+          <span class="set-summary-main">${s.reps} × ${s.dist}m ${strokeLabel(s.stroke)}</span>
+          <span class="set-summary-sub">${s.rest ? 'Rest '+s.rest : 'No rest set'}${s.hr ? ' · HR '+s.hr : ''}</span>
         </div>
-        <div class="set-field-row2">
-          <input class="set-field" placeholder="Rest (e.g. 1:30)" value="${s.rest}"
-            oninput="updateSet('${s.id}','rest',this.value)">
-          <input class="set-field" placeholder="HR target" value="${s.hr}"
-            oninput="updateSet('${s.id}','hr',this.value)">
+        <div class="set-summary-actions">
+          <span class="set-edit" onclick="editSet('${s.id}')">Edit</span>
+          <span class="set-remove-x" onclick="removeSet('${s.id}')">✕</span>
         </div>
       </div>
-      <button class="set-remove" onclick="removeSet('${s.id}')">✕</button>
-    </div>
-  `).join('');
+    `).join('');
+  }
   updateTotals();
 }
 
@@ -412,6 +647,7 @@ function submitLog(){
 
 // init
 initEventGrid();
+renderSetsSummary();
 </script>
 </body>
 </html>

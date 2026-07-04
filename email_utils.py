@@ -30,7 +30,7 @@ def send_verification_email(to_email, username, code):
     <html>
     <head>
         <style>
-            body {{ font-family: Inter, sans-serif; background: #060f1c; color: #EAF5FF; margin: 0; padding: 0; }}
+            body {{ font-family: Inter, sans-serif; background: #ccccff; color: #EAF5FF; margin: 0; padding: 0; }}
             .wrap {{ max-width: 480px; margin: 40px auto; padding: 40px; background: #0c1c30; border-radius: 14px; border: 0.5px solid rgba(160,221,255,0.1); }}
             .logo {{ font-size: 18px; font-weight: 500; letter-spacing: 0.16em; color: #A0DDFF; margin-bottom: 28px; }}
             h1 {{ font-size: 22px; font-weight: 400; color: #EAF5FF; margin-bottom: 12px; }}

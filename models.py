@@ -1,4 +1,5 @@
 import json
+import re
 
 from flask_login import UserMixin
 from datetime import datetime
@@ -14,6 +15,7 @@ class User(db.Model, UserMixin):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     plan = db.Column(db.String(20), default='free')
     is_verified = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False)
     verify_code = db.Column(db.String(6), nullable=True)
     verify_code_sent_at = db.Column(db.DateTime, nullable=True)
 
@@ -56,6 +58,12 @@ class Swim(db.Model):
         except:
             return None
 
+    def distance(self):
+        if not self.event:
+            return 0
+        match = re.match(r'\s*(\d+)', self.event)
+        return int(match.group(1)) if match else 0
+
 
 class Session(db.Model):
     __tablename__ = 'session'
@@ -66,6 +74,33 @@ class Session(db.Model):
     sets_data = db.Column(db.Text)
     notes = db.Column(db.Text)
     logged_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def get_sets(self):
+        try:
+            return json.loads(self.sets_data or '[]')
+        except:
+            return []
+
+    def total_distance(self):
+        total = 0
+        for s in self.get_sets():
+            try:
+                total += int(s.get('reps', 0)) * int(s.get('dist', 0))
+            except:
+                pass
+        return total
+
+
+class SavedSet(db.Model):
+    __tablename__ = 'saved_set'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    pool = db.Column(db.String(10), default='25m')
+    session_type = db.Column(db.String(50), default='Training')
+    sets_data = db.Column(db.Text)  # JSON string, same shape as sessionSets in log.html
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def get_sets(self):
         try:

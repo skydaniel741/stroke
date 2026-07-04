@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Sets — STROKE Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f7f7fa;
+    margin: 0;
+    color: #111;
+  }
+  
+  .adm-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: #111;
+    color: #fff;
+  }
+  
+  .adm-nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    margin-left: 20px;
+  }
+  
+  .adm-logo {
+    font-family: 'Antonio', sans-serif;
+    font-size: 20px;
+  }
+  
+  .adm-wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+  
+  .adm-title {
+    font-family: 'Antonio', sans-serif;
+    font-size: 30px;
+    margin: 0 0 20px;
+  }
+  
+  .adm-panel {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #eee;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  
+  .adm-panel-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    font-weight: 800;
+    font-size: 15px;
+  }
+  
+  .adm-panel-body {
+    padding: 20px;
+  }
+  
+  .set-form {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #777;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    border: 2px solid #ccccff;
+    background: #fcfcff;
+    color: #111;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+  }
+  
+  .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .btn-add-set {
+    background: #ccccff;
+    color: #111;
+    border: 3px solid #111;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  
+  .btn-add-set:hover {
+    background: #111;
+    color: #ccccff;
+  }
+
+  .block-builder {
+    border: 2px solid #ccccff;
+    border-radius: 12px;
+    padding: 14px;
+    background: #fcfcff;
+  }
+
+  .block-row {
+    display: grid;
+    grid-template-columns: 0.7fr 1fr 1.1fr 0.9fr auto;
+    gap: 8px;
+  }
+
+  .block-row input,
+  .block-row select {
+    border: 2px solid #ccccff;
+    background: #fff;
+    color: #111;
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+  }
+
+  .btn-add-block {
+    background: #111;
+    color: #ccccff;
+    border: none;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-add-block:hover { background: #292929; }
+
+  .block-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .block-empty {
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .block-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 2px solid #111;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .block-chip-remove {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #111;
+    background: #fff;
+    cursor: pointer;
+    font-size: 11px;
+    color: #777;
+  }
+
+  .block-chip-remove:hover { background: #111; color: #fff; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #888;
+    padding: 12px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f2f2f4;
+    font-size: 14px;
+  }
+  
+  .btn-delete {
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+  
+  .btn-delete:hover {
+    background: #d63031;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-size: 14px;
+  }
+  
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+  
+  .alert-success {
+    background: #e3f7e9;
+    color: #1a7a3d;
+    border: 1px solid #1a7a3d;
+  }
+  
+  .alert-error {
+    background: #fbe9e9;
+    color: #b23b3b;
+    border: 1px solid #b23b3b;
+  }
+</style>
+</head>
+<body>
+
+<nav class="adm-nav">
+  <span class="adm-logo">STROKE Admin</span>
+  <div>
+    <a href="/admin">Overview</a>
+    <a href="/admin/sets">Swim sets</a>
+    <a href="/dashboard">Back to app</a>
+    <a href="/logout">Log out</a>
+  </div>
+</nav>
+
+<div class="adm-wrap">
+  <p class="adm-title">Manage Swim Sets</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Create New Set</div>
+    <div class="adm-panel-body">
+      <form method="POST" action="/admin/sets/create" class="set-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Set Name</label>
+            <input type="text" name="name" placeholder="e.g., Sprint Pyramid" required>
+          </div>
+          <div class="form-group">
+            <label>Pool</label>
+            <select name="pool">
+              <option value="25m">25m (SCM)</option>
+              <option value="50m">50m (LCM)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Session Type</label>
+            <select name="session_type">
+              <option value="Training">Training</option>
+              <option value="Endurance">Endurance</option>
+              <option value="Speed">Speed</option>
+              <option value="Technique">Technique</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Blocks</label>
+          <div class="block-builder">
+            <div class="block-row">
+              <input type="number" id="blkReps" placeholder="Reps" min="1">
+              <input type="number" id="blkDist" placeholder="Distance (m)" min="25" step="25">
+              <select id="blkStroke">
+                <option value="FR">Freestyle</option>
+                <option value="BK">Backstroke</option>
+                <option value="BR">Breaststroke</option>
+                <option value="FL">Butterfly</option>
+                <option value="IM">IM</option>
+                <option value="Kick">Kick</option>
+                <option value="Pull">Pull</option>
+                <option value="Drill">Drill</option>
+              </select>
+              <input type="text" id="blkRest" placeholder="Rest (e.g. 1:30)">
+              <button type="button" class="btn-add-block" onclick="addBlock()">+ Add block</button>
+            </div>
+            <div class="block-list" id="blockList">
+              <p class="block-empty" id="blockEmpty">No blocks added yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" name="sets_data" id="setsDataInput" value="[]">
+        <button type="submit" class="btn-add-set" onclick="return validateBlocks()">Create Set</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Existing Sets</div>
+    {% if sets %}
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Pool</th>
+              <th>Type</th>
+              <th>Distance (m)</th>
+              <th>Created</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in sets %}
+            <tr>
+              <td><strong>{{ s.name }}</strong></td>
+              <td>{{ s.pool }}</td>
+              <td>{{ s.session_type }}</td>
+              <td>{{ s.total_distance() }}</td>
+              <td>{{ s.created_at.strftime('%d %b %Y') }}</td>
+              <td>
+                <form method="POST" action="/admin/sets/delete/{{ s.id }}" style="display:inline;">
+                  <button type="submit" class="btn-delete" onclick="return confirm('Delete this set?')">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">No saved sets yet. Create one above to get started.</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+let blocks = [];
+
+const strokeLabels = { FR:'Freestyle', BK:'Backstroke', BR:'Breaststroke', FL:'Butterfly', IM:'IM', Kick:'Kick', Pull:'Pull', Drill:'Drill' };
+
+function renderBlocks(){
+  const list = document.getElementById('blockList');
+  const empty = document.getElementById('blockEmpty');
+  if(blocks.length === 0){
+    list.innerHTML = '';
+    list.appendChild(empty);
+    empty.style.display = 'block';
+  } else {
+    list.innerHTML = blocks.map((b, i) => `
+      <div class="block-chip">
+        <span>${b.reps} × ${b.dist}m ${strokeLabels[b.stroke] || b.stroke}${b.rest ? ' · Rest ' + b.rest : ''}</span>
+        <button type="button" class="block-chip-remove" onclick="removeBlock(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+  document.getElementById('setsDataInput').value = JSON.stringify(blocks);
+}
+
+function addBlock(){
+  const reps = parseInt(document.getElementById('blkReps').value);
+  const dist = parseInt(document.getElementById('blkDist').value);
+  const stroke = document.getElementById('blkStroke').value;
+  const rest = document.getElementById('blkRest').value.trim();
+
+  if(!reps || !dist){
+    alert('Reps and distance are required for a block.');
+    return;
+  }
+
+  blocks.push({ reps, dist, stroke, rest });
+  document.getElementById('blkReps').value = '';
+  document.getElementById('blkDist').value = '';
+  document.getElementById('blkRest').value = '';
+  renderBlocks();
+}
+
+function removeBlock(i){
+  blocks.splice(i, 1);
+  renderBlocks();
+}
+
+function validateBlocks(){
+  if(blocks.length === 0){
+    alert('Add at least one block before creating the set.');
+    return false;
+  }
+  return true;
+}
+</script>
+
+</body>
+</html>

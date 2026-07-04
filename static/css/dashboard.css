@@ -10,16 +10,11 @@
 }
 
 .left-control-dock {
-  width: 220px;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 0;
-  border-right: 3px solid #111111;
-  background: #ffffff;
+  display: none;
 }
 
 .logo-wrap {
-  padding: 0 24px;
+  display: none;
 }
 
 .nav-logo {
@@ -32,11 +27,10 @@
 }
 
 .drawer-toggle-btn {
-  margin: 24px 20px 0;
-  padding: 16px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
@@ -46,32 +40,47 @@
   border: 3px solid #111111;
   border-radius: 12px;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.drawer-toggle-btn:hover {
+  background: #ccccff;
 }
 
 .drawer-toggle-btn.active {
   background: #111111;
-  color: #fac8d5;
+  color: #ccccff;
 }
 
 .btn-icon {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .dock-user-tag {
-  margin-top: auto;
-  padding: 0 24px;
+  display: none;
 }
 
 .dashboard-drawer {
-  width: 260px;
-  background: #ffffff;
-  border-right: 3px solid #111111;
-  position: sticky;
+  position: fixed;
+  right: -260px;
   top: 0;
-  align-self: flex-start;
+  width: 260px;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 3px solid #111111;
+  transition: right 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.dashboard-drawer.open {
+  right: 0;
 }
 
 .drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 24px;
   border-bottom: 2px solid #111111;
 }
@@ -82,6 +91,27 @@
   font-weight: 700;
   text-transform: uppercase;
   color: #111111;
+}
+
+.drawer-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111111;
+  transition: color 0.15s;
+}
+
+.drawer-close-btn:hover {
+  color: #ccccff;
+}
+
+.drawer-close-btn svg {
+  width: 24px;
+  height: 24px;
 }
 
 .drawer-sub {
@@ -110,12 +140,12 @@
 }
 
 .drawer-link:hover {
-  background: #fac8d5;
+  background: #ccccff;
 }
 
 .drawer-link.active {
   background: #111111;
-  color: #fac8d5;
+  color: #ccccff;
 }
 
 .drawer-link.drawer-bottom {
@@ -128,8 +158,15 @@
   background: #ffffff;
 }
 
-.greeting {
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 24px;
+}
+
+.greeting {
+  flex: 1;
   padding-bottom: 20px;
   border-bottom: 3px solid #111111;
   background: #ffffff;
@@ -157,7 +194,7 @@
 }
 
 .stat {
-  background: #fac8d5;
+  background: #ccccff;
   border: 3px solid #111111;
   box-shadow: 4px 4px 0 #111111;
   border-radius: 16px;
@@ -227,6 +264,22 @@
   padding: 12px 0;
 }
 
+.session-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid #eee;
+  font-size: 13px;
+  color: #111111;
+}
+
+.session-row:first-of-type {
+  border-top: none;
+  padding-top: 2px;
+}
+
 .log-link,
 .log-btn {
   display: inline-flex;
@@ -247,7 +300,7 @@
 
 .log-btn:hover,
 .log-link:hover {
-  background: #fac8d5;
+  background: #ccccff;
 }
 
 .log-btn.locked {
@@ -256,7 +309,7 @@
 }
 
 .log-btn-badge {
-  background: #fac8d5;
+  background: #ccccff;
   color: #111111;
   padding: 8px 12px;
   border-radius: 999px;
@@ -272,7 +325,7 @@
   gap: 12px;
   padding: 18px;
   background: #111111;
-  color: #fac8d5;
+  color: #ccccff;
   border-radius: 14px;
 }
 
@@ -288,7 +341,7 @@
 
 .upgrade-btn {
   padding: 12px 18px;
-  background: #fac8d5;
+  background: #ccccff;
   color: #111111;
   border: none;
   border-radius: 12px;
@@ -317,7 +370,7 @@
 }
 
 .console-switch-btn.active {
-  background: #fac8d5;
+  background: #ccccff;
   color: #111111;
 }
 
@@ -339,7 +392,7 @@
 }
 
 .bar:hover {
-  background: #fac8d5;
+  background: #ccccff;
   border-color: #111111;
 }
 
@@ -393,7 +446,7 @@
 }
 
 .s-day.today {
-  background: #fac8d5;
+  background: #ccccff;
   border: 2px solid #111111;
 }
 
@@ -406,6 +459,11 @@
   .left-control-dock,
   .dashboard-drawer {
     width: 100%;
+    right: -100%;
+  }
+
+  .dashboard-drawer.open {
+    right: 0;
   }
 
   .stats-row {

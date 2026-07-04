@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WA Points Calculator — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  /* placeholder styling — swap for your black/white/lavender palette once main.css is wired up */
+  :root{
+    --wa-bg:#fff; --wa-ink:#111; --wa-lav:#A6B1E1; --wa-lav-dark:#7C89D0; --wa-grey:#f4f4f6; --wa-line:#e4e4ea;
+  }
+  .wa-wrap{max-width:640px;margin:0 auto;padding:24px 20px 60px;font-family:'Inter',sans-serif;color:var(--wa-ink);}
+  .wa-back{display:inline-flex;align-items:center;gap:6px;color:var(--wa-ink);text-decoration:none;font-weight:600;font-size:14px;margin-bottom:18px;}
+  .wa-title{font-family:'Antonio',sans-serif;font-size:32px;margin:0 0 4px;}
+  .wa-sub{color:#666;margin:0 0 24px;font-size:14px;}
+
+  .wa-toggle-row{display:flex;gap:8px;margin-bottom:16px;}
+  .wa-toggle-btn{flex:1;padding:10px;border:2px solid var(--wa-line);border-radius:10px;background:#fff;font-weight:700;font-size:14px;cursor:pointer;}
+  .wa-toggle-btn.active{background:var(--wa-lav);border-color:var(--wa-lav-dark);color:#111;}
+
+  .wa-card{background:var(--wa-grey);border-radius:14px;padding:20px;margin-bottom:16px;}
+  .wa-field-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#777;font-weight:700;margin-bottom:6px;display:block;}
+  .wa-select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--wa-line);font-size:15px;background:#fff;margin-bottom:14px;}
+
+  .wa-time-row{display:flex;gap:8px;margin-bottom:14px;}
+  .wa-time-row input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--wa-line);font-size:18px;text-align:center;font-weight:700;}
+  .wa-time-sep{display:flex;align-items:center;font-size:18px;font-weight:700;}
+
+  .wa-points-input{width:100%;padding:14px;border-radius:10px;border:1px solid var(--wa-line);font-size:22px;text-align:center;font-weight:800;margin-bottom:14px;}
+
+  .wa-result{background:var(--wa-ink);color:#fff;border-radius:14px;padding:24px;text-align:center;}
+  .wa-result-val{font-family:'Antonio',sans-serif;font-size:48px;line-height:1;color:var(--wa-lav);}
+  .wa-result-label{font-size:13px;color:#ccc;margin-top:6px;text-transform:uppercase;letter-spacing:.05em;}
+  .wa-result-sub{font-size:13px;color:#999;margin-top:12px;}
+
+  .wa-note{font-size:12px;color:#888;margin-top:20px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<div class="wa-wrap">
+  <a href="/dashboard" class="wa-back">← Back</a>
+  <h1 class="wa-title">Fina Points Calculator</h1>
+
+  <div class="wa-toggle-row">
+    <button class="wa-toggle-btn active" id="modeTime" onclick="setMode('time')">Time → Points</button>
+    <button class="wa-toggle-btn" id="modePoints" onclick="setMode('points')">Points → Time</button>
+  </div>
+
+  <div class="wa-card">
+    <div class="wa-toggle-row">
+      <button class="wa-toggle-btn active" id="poolLCM" onclick="setPool('LCM')">Long course (50m)</button>
+      <button class="wa-toggle-btn" id="poolSCM" onclick="setPool('SCM')">Short course (25m)</button>
+    </div>
+    <div class="wa-toggle-row">
+      <button class="wa-toggle-btn active" id="genderM" onclick="setGender('men')">Men</button>
+      <button class="wa-toggle-btn" id="genderF" onclick="setGender('women')">Women</button>
+    </div>
+
+    <label class="wa-field-label">Event</label>
+    <select class="wa-select" id="eventSelect" onchange="calculate()"></select>
+
+    <div id="timeInputBlock">
+      <label class="wa-field-label">Your time</label>
+      <div class="wa-time-row">
+        <input type="number" id="inMin" placeholder="Min" min="0" max="59" maxlength="2" oninput="clampInput(this,0,59); calculate()">
+        <div class="wa-time-sep">:</div>
+        <input type="number" id="inSec" placeholder="Sec" min="0" max="59" maxlength="2" oninput="clampInput(this,0,59); calculate()">
+        <div class="wa-time-sep">.</div>
+        <input type="number" id="inMs" placeholder="00" min="0" max="99" maxlength="2" oninput="clampInput(this,0,99); calculate()">
+      </div>
+    </div>
+
+    <div id="pointsInputBlock" style="display:none;">
+      <label class="wa-field-label">Target points</label>
+      <input type="number" class="wa-points-input" id="inPoints" placeholder="e.g. 600" min="0" max="1100" maxlength="4" oninput="clampInput(this,0,1100); calculate()">
+    </div>
+  </div>
+
+  <div class="wa-result">
+    <div class="wa-result-val" id="resultVal">—</div>
+    <div class="wa-result-label" id="resultLabel">Enter a time to see your points</div>
+    <div class="wa-result-sub" id="resultSub"></div>
+  </div>
+
+  <p class="wa-note">
+    Base times sourced from World Aquatics: SCM 2025 table (valid 01 Sep 2025 – 31 Aug 2026) and
+    LCM 2026 table (valid 01 Jan 2026 – 31 Dec 2026). Formula: P = 1000 × (B/T)³, where B is the
+    base time and T is your time, both in seconds.
+  </p>
+</div>
+
+<script>
+// ─── BASE TIMES (seconds) ───
+// Official World Aquatics base times. LCM 2026 events below marked NEW reflect
+// world records broken since the 2025 LCM table — verify against worldaquatics.com/swimming/points
+// if you want to double check before this goes live.
+const baseTimes = {
+  LCM: {
+    men: {
+      '50 Freestyle': 20.91, '100 Freestyle': 46.40, '200 Freestyle': 102.00,
+      '400 Freestyle': 220.07, '800 Freestyle': 452.12, '1500 Freestyle': 870.67,
+      '50 Backstroke': 23.55, '100 Backstroke': 51.60, '200 Backstroke': 111.92,
+      '50 Breaststroke': 25.95, '100 Breaststroke': 56.88, '200 Breaststroke': 125.48,
+      '50 Butterfly': 22.27, '100 Butterfly': 49.45, '200 Butterfly': 110.34,
+      '200 IM': 112.69, /* NEW 2026 */ '400 IM': 242.50
+    },
+    women: {
+      '50 Freestyle': 23.61, '100 Freestyle': 51.71, '200 Freestyle': 112.23,
+      '400 Freestyle': 234.18, /* NEW 2026 */ '800 Freestyle': 484.79, '1500 Freestyle': 920.48,
+      '50 Backstroke': 26.86, '100 Backstroke': 57.13, '200 Backstroke': 123.14,
+      '50 Breaststroke': 29.16, '100 Breaststroke': 64.13, '200 Breaststroke': 137.55,
+      '50 Butterfly': 24.43, '100 Butterfly': 54.59, /* NEW 2026 */ '200 Butterfly': 121.81,
+      '200 IM': 125.70, /* NEW 2026 */ '400 IM': 263.65 /* NEW 2026 */
+    }
+  },
+  SCM: {
+    men: {
+      '50 Freestyle': 19.90, '100 Freestyle': 44.84, '200 Freestyle': 98.61,
+      '400 Freestyle': 212.25, '800 Freestyle': 440.46, '1500 Freestyle': 846.88,
+      '50 Backstroke': 22.11, '100 Backstroke': 48.33, '200 Backstroke': 105.63,
+      '50 Breaststroke': 24.95, '100 Breaststroke': 55.28, '200 Breaststroke': 120.16,
+      '50 Butterfly': 21.32, '100 Butterfly': 47.71, '200 Butterfly': 106.85,
+      '100 IM': 49.28, '200 IM': 108.88, '400 IM': 234.81
+    },
+    women: {
+      '50 Freestyle': 22.83, '100 Freestyle': 50.25, '200 Freestyle': 110.31,
+      '400 Freestyle': 230.25, '800 Freestyle': 477.42, '1500 Freestyle': 908.24,
+      '50 Backstroke': 25.23, '100 Backstroke': 54.02, '200 Backstroke': 118.04,
+      '50 Breaststroke': 28.37, '100 Breaststroke': 62.36, '200 Breaststroke': 132.50,
+      '50 Butterfly': 23.94, '100 Butterfly': 52.71, '200 Butterfly': 119.32,
+      '100 IM': 55.11, '200 IM': 121.63, '400 IM': 255.48
+    }
+  }
+};
+
+let state = { mode:'time', pool:'LCM', gender:'men', event:null };
+
+function setMode(m){
+  state.mode = m;
+  document.getElementById('modeTime').classList.toggle('active', m==='time');
+  document.getElementById('modePoints').classList.toggle('active', m==='points');
+  document.getElementById('timeInputBlock').style.display = m==='time' ? 'block' : 'none';
+  document.getElementById('pointsInputBlock').style.display = m==='points' ? 'block' : 'none';
+  calculate();
+}
+
+function setPool(p){
+  state.pool = p;
+  document.getElementById('poolLCM').classList.toggle('active', p==='LCM');
+  document.getElementById('poolSCM').classList.toggle('active', p==='SCM');
+  populateEvents();
+  calculate();
+}
+
+function setGender(g){
+  state.gender = g;
+  document.getElementById('genderM').classList.toggle('active', g==='men');
+  document.getElementById('genderF').classList.toggle('active', g==='women');
+  calculate();
+}
+
+function populateEvents(){
+  const events = Object.keys(baseTimes[state.pool].men); // event list same shape for both genders
+  const sel = document.getElementById('eventSelect');
+  const prev = sel.value;
+  sel.innerHTML = events.map(e => `<option value="${e}">${e}</option>`).join('');
+  if(events.includes(prev)) sel.value = prev;
+  state.event = sel.value;
+}
+
+function getBaseTime(){
+  return baseTimes[state.pool][state.gender][document.getElementById('eventSelect').value];
+}
+
+function secondsToDisplay(totalSec){
+  if(!isFinite(totalSec) || totalSec <= 0) return '—';
+  const mins = Math.floor(totalSec / 60);
+  const secs = totalSec - mins*60;
+  const secStr = secs.toFixed(2).padStart(5,'0');
+  return mins > 0 ? `${mins}:${secStr}` : `${secStr}`;
+}
+
+function clampInput(el, min, max){
+  let v = el.value.replace(/[^0-9]/g, '');
+  if(v.length > 4) v = v.slice(0, 4);
+  let num = parseInt(v);
+  if(!isNaN(num)){
+    if(num > max) num = max;
+    if(num < min) num = min;
+    el.value = num;
+  } else {
+    el.value = '';
+  }
+}
+
+function calculate(){
+  const B = getBaseTime();
+  if(!B){ return; }
+
+  if(state.mode === 'time'){
+    const min = Math.min(parseInt(document.getElementById('inMin').value) || 0, 59);
+    const sec = Math.min(parseInt(document.getElementById('inSec').value) || 0, 59);
+    const ms = Math.min(parseInt(document.getElementById('inMs').value) || 0, 99);
+    const T = min*60 + sec + ms/100;
+
+    if(T <= 0){
+      document.getElementById('resultVal').textContent = '—';
+      document.getElementById('resultLabel').textContent = 'Enter a time to see your points';
+      document.getElementById('resultSub').textContent = '';
+      return;
+    }
+    let points = Math.trunc(1000 * Math.pow(B/T, 3));
+    if(points > 1100) points = 1100;
+    if(points < 0) points = 0;
+    document.getElementById('resultVal').textContent = points;
+    document.getElementById('resultLabel').textContent = 'WA points';
+    document.getElementById('resultSub').textContent = `Base time for this event: ${secondsToDisplay(B)}`;
+  } else {
+    let P = parseFloat(document.getElementById('inPoints').value);
+    if(!P || P <= 0){
+      document.getElementById('resultVal').textContent = '—';
+      document.getElementById('resultLabel').textContent = 'Enter a points target to see the time';
+      document.getElementById('resultSub').textContent = '';
+      return;
+    }
+    if(P > 1100) P = 1100;
+    const T = B / Math.pow(P/1000, 1/3);
+    document.getElementById('resultVal').textContent = secondsToDisplay(T);
+    document.getElementById('resultLabel').textContent = 'Target time';
+    document.getElementById('resultSub').textContent = `Base time for this event: ${secondsToDisplay(B)}`;
+  }
+}
+
+// init
+populateEvents();
+calculate();
+</script>
+</body>
+</html>

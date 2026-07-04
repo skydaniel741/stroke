@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STROKE — Swimming Performance Platform</title>
+<title>Stroke — a simpler way to log swimming</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -14,7 +14,7 @@
 <nav class="land-nav">
   <span class="nav-logo">STROKE</span>
   <div class="land-nav-links">
-    <a href="#features">Features</a>
+    <a href="#log">How it works</a>
     <a href="#pricing">Pricing</a>
     <a href="#coaches">Coaches</a>
     <a href="/login">Log in</a>
@@ -24,53 +24,46 @@
 
 <!-- HERO -->
 <section class="hero-wrap" id="top">
-  <canvas id="waveCanvas"></canvas>
-  <div class="hero-content">
-    <div class="hero-pill"><span class="dot"></span> Free forever.</div>
-    <h1>Log <span class="rotate-wrap"><span id="rotateWord" class="rotate-word">smarter</span></span>.<br>Swim <span class="acc">faster.</span></h1>
-    <p class="hero-sub">Track every session, scan your coach's whiteboard, and benchmark against world standards — all from your phone at the pool.</p>
-    <div class="hero-actions">
-      <a href="/signup" class="hero-btn-primary">Get started free</a>
-      <a href="#features" class="hero-btn-ghost">See how it works</a>
-    </div>
-  </div>
-  <div class="hero-stats">
-    <div class="hstat" id="hs1"><div class="hstat-num" id="cnt1">0</div><div class="hstat-label">events tracked</div></div>
-    <div class="hstat" id="hs2"><div class="hstat-num" id="cnt2">0</div><div class="hstat-label">free forever</div></div>
-    <div class="hstat" id="hs3"><div class="hstat-num" id="cnt3">0</div><div class="hstat-label">seconds to log</div></div>
+  <div class="hero-pill lreveal"><span class="dot"></span>Built poolside, not in a boardroom</div>
+  <h1 class="lreveal">A logbook that keeps up<br>with <span class="acc">your training.</span></h1>
+  <p class="hero-sub lreveal">Stroke started as a way to stop losing sets to a wet notebook. Scan the whiteboard, say the set out loud, or type it once and reuse it — then watch every best time, split and points score add up over a season.</p>
+  <div class="hero-actions lreveal">
+    <a href="/signup" class="hero-btn-primary">Get started free</a>
+    <a href="#log" class="hero-btn-ghost">See how it works</a>
   </div>
 </section>
 
-<div class="ticker-wrap">
-  <div class="ticker-track">
-    <span>Swim logging</span><span>·</span><span>PB tracking</span><span>·</span><span>World Aquatics points</span><span>·</span><span>Photo set scanner</span><span>·</span><span>Voice logging</span><span>·</span><span>AI insights</span><span>·</span><span>Offline mode</span><span>·</span>
-    <span>Swim logging</span><span>·</span><span>PB tracking</span><span>·</span><span>World Aquatics points</span><span>·</span><span>Photo set scanner</span><span>·</span><span>Voice logging</span><span>·</span><span>AI insights</span><span>·</span><span>Offline mode</span><span>·</span>
+<!-- VIDEO PANEL -->
+<section class="reel-sec">
+  <div class="reel-frame lreveal">
+    <span class="reel-badge">01 — In the water</span>
+    <video class="reel-video" autoplay muted loop playsinline>
+      <source src="{{ url_for('static', filename='videos/hero-swim.mp4') }}" type="video/mp4">
+    </video>
+    <p class="reel-caption">Every feature exists because a set got missed, mistyped, or forgotten on deck.</p>
   </div>
-</div>
+</section>
 
 <!-- THREE WAYS TO LOG -->
-<section class="lsec" id="features">
+<section class="lsec" id="log">
   <div class="lsec-inner">
     <p class="lsec-label lreveal">How you log</p>
-    <h2 class="lsec-h lreveal-l">No watch needed.<br>Log a swim in three seconds.</h2>
-    <p class="lsec-sub lreveal-r">Every competitor needs a $200 Garmin or manual typing. STROKE gives you three faster ways — straight from your phone at the pool.</p>
+    <h2 class="lsec-h lreveal-l">No watch needed.<br>No typing the same set twice.</h2>
+    <p class="lsec-sub lreveal-r">Most trackers assume you're wearing a $200 watch or want to type out every 100 by hand. Stroke assumes you're standing on deck with wet hands and thirty seconds before the next rep.</p>
     <div class="log3-grid">
       <div class="log3-card lreveal ld1">
-        <div class="log3-icon">📷</div>
         <p class="log3-title">Photo scan</p>
-        <p class="log3-desc">Point your phone at the whiteboard. We read your coach's handwriting — shorthand and all — and log the set instantly.</p>
+        <p class="log3-desc">Point your phone at the whiteboard. We read your coach's handwriting — shorthand, arrows and all — and turn it into a logged set.</p>
         <span class="log3-badge solo">Solo</span>
       </div>
       <div class="log3-card lreveal ld2">
-        <div class="log3-icon">🎙️</div>
         <p class="log3-title">Voice record</p>
-        <p class="log3-desc">Speak the set out loud — "ten by one hundred free on one thirty" — and it's logged as a structured session automatically.</p>
+        <p class="log3-desc">Say it the way your coach says it — "ten by one hundred free on one thirty" — and it lands as a structured session automatically.</p>
         <span class="log3-badge solo">Solo</span>
       </div>
       <div class="log3-card lreveal ld3">
-        <div class="log3-icon">⌨️</div>
         <p class="log3-title">Manual entry</p>
-        <p class="log3-desc">Type it in once, save as a template. Next session — one tap to reuse. Most swimmers never type the same set twice.</p>
+        <p class="log3-desc">Type it once, save it as a template. Most swimmers never type the same set twice — next time it's one tap.</p>
         <span class="log3-badge free">Free</span>
       </div>
     </div>
@@ -80,15 +73,15 @@
 <!-- FEATURES -->
 <section class="lsec lsec--alt">
   <div class="lsec-inner">
-    <p class="lsec-label lreveal">Platform features</p>
-    <h2 class="lsec-h lreveal">Everything a swimmer needs.<br>Nothing they don't.</h2>
+    <p class="lsec-label lreveal">What's inside</p>
+    <h2 class="lsec-h lreveal">Everything a swimmer actually reaches for.</h2>
     <div class="feat-grid">
-      <div class="feat-card lreveal ld1"><p class="feat-tag">Free</p><p class="feat-title">PB tracking</p><p class="feat-desc">Every swim logged, every personal best tracked across every event and distance.</p></div>
-      <div class="feat-card lreveal ld2"><p class="feat-tag">Free</p><p class="feat-title">World Aquatics points</p><p class="feat-desc">The only proper calculator built for swimmers. Compare any time, any event, instantly.</p></div>
-      <div class="feat-card lreveal ld3"><p class="feat-tag">Free</p><p class="feat-title">Offline mode</p><p class="feat-desc">Download your session before leaving home. No wifi at the pool? Everything still works.</p></div>
-      <div class="feat-card lreveal ld1"><p class="feat-tag">Solo</p><p class="feat-title">AI insights</p><p class="feat-desc">Personalised analysis of training patterns, fatigue, and what to focus on next.</p></div>
-      <div class="feat-card lreveal ld2"><p class="feat-tag">Solo</p><p class="feat-title">Goals & training plans</p><p class="feat-desc">Set a target time and meet date — STROKE builds the training blocks to get you there.</p></div>
-      <div class="feat-card lreveal ld3"><p class="feat-tag">Solo</p><p class="feat-title">Split time analysis</p><p class="feat-desc">See exactly where time is being lost — start, turn, or the back half.</p></div>
+      <div class="feat-card lreveal ld1"><p class="feat-title">Personal bests</p><p class="feat-desc">Every swim logged, every best time tracked across every event and distance — automatically.</p></div>
+      <div class="feat-card lreveal ld2"><p class="feat-title">World Aquatics points</p><p class="feat-desc">A proper points calculator built for swimmers, not spreadsheets. Compare any time, any event, instantly.</p></div>
+      <div class="feat-card lreveal ld3"><p class="feat-title">Offline mode</p><p class="feat-desc">Download your session before you leave home. No wifi on deck? Everything still works.</p></div>
+      <div class="feat-card lreveal ld1"><p class="feat-title">AI training insights</p><p class="feat-desc">A read on your training patterns and fatigue — plain language, not a dashboard full of charts.</p></div>
+      <div class="feat-card lreveal ld2"><p class="feat-title">Goals & training plans</p><p class="feat-desc">Set a target time and a meet date. Stroke lays out the blocks that get you there.</p></div>
+      <div class="feat-card lreveal ld3"><p class="feat-title">Split analysis</p><p class="feat-desc">See exactly where time is going missing — the start, the turn, or the back half.</p></div>
     </div>
   </div>
 </section>
@@ -101,15 +94,32 @@
       <div class="pts-card lreveal-l" id="ptsCard">
         <div class="pts-num" id="ptsCounter">0</div>
         <div class="pts-lbl">World Aquatics points</div>
-        <div class="pts-bars">
-          <div class="pts-row"><div class="pts-meta"><span>100m freestyle</span><span>52.34</span></div><div class="pts-bg"><div class="pts-fg" data-w="85"></div></div></div>
-          <div class="pts-row"><div class="pts-meta"><span>200m freestyle</span><span>1:54.20</span></div><div class="pts-bg"><div class="pts-fg" data-w="72"></div></div></div>
-          <div class="pts-row"><div class="pts-meta"><span>50m freestyle</span><span>24.80</span></div><div class="pts-bg"><div class="pts-fg" data-w="78"></div></div></div>
+
+        <div class="pts-mini-calc">
+          <div class="pts-mini-row">
+            <select class="pts-mini-select" id="miniPool" onchange="miniPopulate(); miniCalc()">
+              <option value="LCM">Long course (50m)</option>
+              <option value="SCM">Short course (25m)</option>
+            </select>
+            <select class="pts-mini-select" id="miniGender" onchange="miniPopulate(); miniCalc()">
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+            </select>
+          </div>
+          <select class="pts-mini-select pts-mini-full" id="miniEvent" onchange="miniCalc()"></select>
+          <div class="pts-mini-row">
+            <input type="number" class="pts-mini-input" id="miniMin" placeholder="Min" min="0" max="59" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
+            <span class="pts-mini-sep">:</span>
+            <input type="number" class="pts-mini-input" id="miniSec" placeholder="Sec" min="0" max="59" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
+            <span class="pts-mini-sep">.</span>
+            <input type="number" class="pts-mini-input" id="miniMs" placeholder="00" min="0" max="99" oninput="miniClamp(this,99); miniCalc()" onblur="miniPad(this)">
+          </div>
         </div>
       </div>
       <div class="lreveal-r">
         <h2 class="pts-copy-h">See exactly<br>where you <em>stand</em><br>globally.</h2>
-        <p class="pts-copy-p">Enter any time, any event — STROKE calculates your World Aquatics points instantly and tracks how they improve over months of training. No other free app does this properly.</p>
+        <p class="pts-copy-p">Enter any time for any event and Stroke calculates your World Aquatics points on the spot, then tracks how they move over a season of training. Try it — no account needed.</p>
+        <a href="/signup" class="hero-btn-primary" style="display:inline-block;margin-top:16px;">Track this over time</a>
       </div>
     </div>
   </div>
@@ -119,19 +129,19 @@
 <section class="lsec" id="pricing">
   <div class="lsec-inner">
     <p class="lsec-label lreveal">Pricing</p>
-    <h2 class="lsec-h lreveal-l">Simple pricing.<br>Serious results.</h2>
-    <p class="lsec-sub lreveal-r">Start completely free. Upgrade when you're ready to go deeper.</p>
+    <h2 class="lsec-h lreveal-l">Simple pricing.<br>No surprises.</h2>
+    <p class="lsec-sub lreveal-r">Start free. Upgrade only if you want the smarter logging and analysis.</p>
     <div class="price-grid">
       <div class="price-card lreveal ld1">
         <p class="price-tier">Free</p>
         <p class="price-val">$0</p>
         <p class="price-per">forever</p>
-        <p class="price-desc">Everything you need to log and track your swimming seriously.</p>
+        <p class="price-desc">Everything you need to log and track your swimming properly.</p>
         <hr class="price-divider">
         <ul class="price-feats">
-          <li>Swim logging — manual entry</li>
+          <li>Manual swim logging</li>
           <li>Saved templates & copy last session</li>
-          <li>PB tracking across all events</li>
+          <li>Personal bests across every event</li>
           <li>World Aquatics points calculator</li>
           <li>Offline mode</li>
         </ul>
@@ -142,13 +152,13 @@
         <p class="price-tier">Solo</p>
         <p class="price-val">$12</p>
         <p class="price-per">per month</p>
-        <p class="price-desc">Smart logging and AI analysis for swimmers serious about improving.</p>
+        <p class="price-desc">Smart logging and analysis for swimmers serious about improving.</p>
         <hr class="price-divider">
         <ul class="price-feats">
-          <li>Everything in free</li>
+          <li>Everything in Free</li>
           <li>Photo set scanner</li>
           <li>Voice set logging</li>
-          <li>AI performance insights</li>
+          <li>AI training insights</li>
           <li>Goals & auto training plans</li>
           <li>Split time analysis</li>
         </ul>
@@ -162,12 +172,13 @@
 <section class="coach-sec" id="coaches">
   <div class="coach-inner">
     <p class="lsec-label lreveal">For coaches</p>
-    <h2 class="lsec-h lreveal"> THE COACH<br>is coming soon.</h2>
+    <h2 class="lsec-h lreveal">The coach side is<br>coming next.</h2>
+    <p class="lsec-sub coach-sub lreveal">A view of the whole squad's sets, times and points — built with feedback from actual coaches, not a guess at what they'd want.</p>
     <form class="coach-form lreveal">
       <input type="email" class="coach-input" placeholder="you@example.com" required>
       <button type="submit" class="coach-submit">Join waitlist</button>
     </form>
-    <p class="coach-note">No spam. We'll only email you when it's ready.</p>
+    <p class="coach-note">No spam. One email, when it's ready.</p>
   </div>
 </section>
 
@@ -176,8 +187,8 @@
   <div class="cta-ring cta-ring--small"></div>
   <div class="cta-ring cta-ring--medium"></div>
   <div class="cta-ring cta-ring--large"></div>
-  <h2 class="cta-h lreveal">Start swimming<br>smarter today.</h2>
-  <p class="cta-sub lreveal">No credit card. No watch. Set up in two minutes.</p>
+  <h2 class="cta-h lreveal">Start logging<br>your swimming today.</h2>
+  <p class="cta-sub lreveal">No credit card. No watch. Set up while you're still on deck.</p>
   <div class="cta-btns lreveal">
     <a href="/signup" class="hero-btn-primary">Get started free</a>
   </div>
@@ -189,7 +200,7 @@
     <p class="lfooter-sub">Built in New Zealand. For swimmers everywhere.</p>
   </div>
   <div class="lfooter-links">
-    <a href="#features">Features</a>
+    <a href="#log">How it works</a>
     <a href="#pricing">Pricing</a>
     <a href="#coaches">Coaches</a>
     <a href="/login">Log in</a>
@@ -197,50 +208,69 @@
 </footer>
 
 <script>
+const miniBaseTimes = {
+  LCM: {
+    men: {'50 Freestyle':20.91,'100 Freestyle':46.40,'200 Freestyle':102.00,'400 Freestyle':220.07,'800 Freestyle':452.12,'1500 Freestyle':870.67,'50 Backstroke':23.55,'100 Backstroke':51.60,'200 Backstroke':111.92,'50 Breaststroke':25.95,'100 Breaststroke':56.88,'200 Breaststroke':125.48,'50 Butterfly':22.27,'100 Butterfly':49.45,'200 Butterfly':110.34,'200 IM':112.69,'400 IM':242.50},
+    women: {'50 Freestyle':23.61,'100 Freestyle':51.71,'200 Freestyle':112.23,'400 Freestyle':234.18,'800 Freestyle':484.79,'1500 Freestyle':920.48,'50 Backstroke':26.86,'100 Backstroke':57.13,'200 Backstroke':123.14,'50 Breaststroke':29.16,'100 Breaststroke':64.13,'200 Breaststroke':137.55,'50 Butterfly':24.43,'100 Butterfly':54.59,'200 Butterfly':121.81,'200 IM':125.70,'400 IM':263.65}
+  },
+  SCM: {
+    men: {'50 Freestyle':19.90,'100 Freestyle':44.84,'200 Freestyle':98.61,'400 Freestyle':212.25,'800 Freestyle':440.46,'1500 Freestyle':846.88,'50 Backstroke':22.11,'100 Backstroke':48.33,'200 Backstroke':105.63,'50 Breaststroke':24.95,'100 Breaststroke':55.28,'200 Breaststroke':120.16,'50 Butterfly':21.32,'100 Butterfly':47.71,'200 Butterfly':106.85,'100 IM':49.28,'200 IM':108.88,'400 IM':234.81},
+    women: {'50 Freestyle':22.83,'100 Freestyle':50.25,'200 Freestyle':110.31,'400 Freestyle':230.25,'800 Freestyle':477.42,'1500 Freestyle':908.24,'50 Backstroke':25.23,'100 Backstroke':54.02,'200 Backstroke':118.04,'50 Breaststroke':28.37,'100 Breaststroke':62.36,'200 Breaststroke':132.50,'50 Butterfly':23.94,'100 Butterfly':52.71,'200 Butterfly':119.32,'100 IM':55.11,'200 IM':121.63,'400 IM':255.48}
+  }
+};
+
+function miniClamp(el, max){
+  let v = el.value.replace(/[^0-9]/g, '');
+  if(v.length > 2) v = v.slice(0,2);
+  let num = parseInt(v);
+  if(!isNaN(num)){
+    if(num > max) num = max;
+    el.value = num;
+  } else {
+    el.value = '';
+  }
+}
+
+function miniPad(el){
+  if(el.value === '') return;
+  const num = parseInt(el.value);
+  el.value = num.toString().padStart(2, '0');
+}
+
+function miniPopulate(){
+  const pool = document.getElementById('miniPool').value;
+  const gender = document.getElementById('miniGender').value;
+  const events = Object.keys(miniBaseTimes[pool][gender]);
+  const sel = document.getElementById('miniEvent');
+  const prev = sel.value;
+  sel.innerHTML = events.map(e => `<option value="${e}">${e}</option>`).join('');
+  if(events.includes(prev)) sel.value = prev;
+}
+
+function miniCalc(){
+  const pool = document.getElementById('miniPool').value;
+  const gender = document.getElementById('miniGender').value;
+  const event = document.getElementById('miniEvent').value;
+  const B = miniBaseTimes[pool][gender][event];
+  if(!B) return;
+
+  const min = Math.min(parseInt(document.getElementById('miniMin').value) || 0, 59);
+  const sec = Math.min(parseInt(document.getElementById('miniSec').value) || 0, 59);
+  const ms = Math.min(parseInt(document.getElementById('miniMs').value) || 0, 99);
+  const T = min*60 + sec + ms/100;
+
+  const counter = document.getElementById('ptsCounter');
+  if(T <= 0){
+    counter.textContent = '0';
+    return;
+  }
+  let points = Math.trunc(1000 * Math.pow(B/T, 3));
+  if(points > 1100) points = 1100;
+  if(points < 0) points = 0;
+  counter.textContent = points;
+}
+
 (function(){
-const cv=document.getElementById('waveCanvas'),ctx=cv.getContext('2d');
-let W,H,pts;
-function resize(){W=cv.width=cv.offsetWidth;H=cv.height=cv.offsetHeight;buildPts()}
-function buildPts(){pts=Array.from({length:30},()=>({x:Math.random()*W,y:Math.random()*H,vy:.3+Math.random()*.5,r:1.4+Math.random()*2.2,wave:Math.random()*Math.PI*2,ws:.008+Math.random()*.015,wa:14+Math.random()*30}))}
-function draw(t){
-  ctx.clearRect(0,0,W,H);
-  pts.forEach(p=>{
-    p.wave+=p.ws;p.y+=p.vy;if(p.y>H+8)p.y=-8;
-    const px=p.x+Math.sin(p.wave)*p.wa;
-    ctx.beginPath();ctx.arc(((px%W)+W)%W,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle='rgba(17,17,17,0.10)';ctx.fill();
-  });
-  [0,1,2].forEach(i=>{
-    const wy=H*0.78+i*20+Math.sin(t*0.0006+i)*10;
-    ctx.strokeStyle=i===0?'rgba(17,17,17,0.85)':'rgba(17,17,17,'+(0.18-i*0.04)+')';
-    ctx.lineWidth=i===0?2.5:1.5;
-    ctx.beginPath();
-    for(let x=0;x<=W;x+=4){
-      const y=wy+Math.sin((x/W)*Math.PI*4+t*0.0009+i*0.6)*14;
-      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-    }
-    ctx.stroke();
-  });
-}
-function loop(t){draw(t);requestAnimationFrame(loop)}
-resize();window.addEventListener('resize',resize);requestAnimationFrame(loop);
-
-function countUp(el,target,dur,suffix=''){
-  if(!el)return;
-  const s=performance.now();
-  (function step(now){
-    const p=Math.min((now-s)/dur,1),e=1-Math.pow(1-p,3);
-    el.textContent=Math.round(e*target)+suffix;
-    if(p<1)requestAnimationFrame(step);
-  })(s);
-}
-setTimeout(()=>{
-  countUp(document.getElementById('cnt1'),50,1100,'+');
-  document.getElementById('cnt2').textContent='100%';
-  countUp(document.getElementById('cnt3'),3,800);
-  ['hs1','hs2','hs3'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('on'),650+i*150));
-},500);
-
 const io=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')});
 },{threshold:.12});
@@ -249,8 +279,11 @@ document.querySelectorAll('.lreveal,.lreveal-l,.lreveal-r').forEach(el=>io.obser
 const ptsIo=new IntersectionObserver(entries=>{
   entries.forEach(e=>{
     if(e.isIntersecting){
-      countUp(document.getElementById('ptsCounter'),847,1300);
-      document.querySelectorAll('.pts-fg').forEach(b=>{b.style.width=b.dataset.w+'%'});
+      miniPopulate();
+      document.getElementById('miniMin').value = 0;
+      document.getElementById('miniSec').value = 52;
+      document.getElementById('miniMs').value = 34;
+      miniCalc();
     }
   });
 },{threshold:.3});
@@ -258,35 +291,9 @@ const pc=document.getElementById('ptsCard');if(pc)ptsIo.observe(pc);
 
 document.querySelector('.coach-form').addEventListener('submit',function(e){
   e.preventDefault();
-  this.innerHTML='<p style="font-weight:800;color:#111;font-size:14px">You\'re on the list! 🎉</p>';
+  this.innerHTML='<p style="font-weight:800;color:#111;font-size:14px">You\'re on the list.</p>';
 });
 })();
-
-const rotateWords = ["smarter", "faster", "better", "consistently"];
-let rIndex = 0;
-const rEl = document.getElementById('rotateWord');
-
-function rotateHeroWord(){
-  if(!rEl) return;
-  rEl.classList.remove('rotate-in');
-  rEl.classList.add('rotate-out');
-
-  setTimeout(()=>{
-    rIndex = (rIndex + 1) % rotateWords.length;
-    rEl.textContent = rotateWords[rIndex];
-    rEl.classList.remove('rotate-out');
-    rEl.classList.add('rotate-in');
-  }, 380);
-}
-
-setTimeout(()=>{
-  setInterval(rotateHeroWord, 2200);
-}, 1500);
-
-
-
-
-
 </script>
 
 </body>
