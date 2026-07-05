@@ -8,93 +8,83 @@
 <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
 <body>
 
 <div class="app-container">
-  
+
   <!-- MAIN HARDWARE CONTENT PANEL -->
   <main class="main-workspace">
     <div class="workspace-header">
       <div class="greeting">
-        <h1>Good morning, {{ current_user.username }}.</h1>
-        <p>Hey, {{ current_user.username }} Welcome back to your swimming studio workspace</p>
+        <p class="greeting-date" id="greetingDate"></p>
+        <h1>Good to see you, {{ current_user.username }}.</h1>
       </div>
-      <button class="drawer-toggle-btn" id="menuToggle">
-        <span class="btn-icon">☰</span>
-        <span class="btn-text">MENU</span>
-      </button>
+      <div class="workspace-actions">
+        <a href="/log" class="quick-log-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Log a swim
+        </a>
+        <button class="drawer-toggle-btn" id="menuToggle">
+          <span class="btn-icon">☰</span>
+          <span class="btn-text">MENU</span>
+        </button>
+      </div>
     </div>
 
     <!-- STATS BLOCKS -->
     <div class="stats-row">
       <div class="stat">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+        </div>
         <div class="stat-label">This week</div>
-        <div class="stat-val">{{ sessions_this_week }}</div>
-        <div class="stat-sub">sessions logged</div>
+        <div class="stat-val" data-count="{{ sessions_this_week }}">0</div>
+        <div class="stat-sub">session{{ 's' if sessions_this_week != 1 else '' }} logged</div>
       </div>
-      <div class="stat">
+      <div class="stat stat--dark">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c1.5-1.5 3.5-1.5 5 0s3.5 1.5 5 0 3.5-1.5 5 0 3.5 1.5 5 0"></path><path d="M2 18c1.5-1.5 3.5-1.5 5 0s3.5 1.5 5 0 3.5-1.5 5 0 3.5 1.5 5 0"></path><path d="M2 6c1.5-1.5 3.5-1.5 5 0s3.5 1.5 5 0 3.5-1.5 5 0 3.5 1.5 5 0"></path></svg>
+        </div>
         <div class="stat-label">Volume</div>
-        <div class="stat-val">{{ volume_this_week }}<span class="unit-label">m</span></div>
+        <div class="stat-val"><span data-count="{{ volume_this_week }}">0</span><span class="unit-label">m</span></div>
         <div class="stat-sub">total this week</div>
       </div>
       <div class="stat">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        </div>
         <div class="stat-label">PBs</div>
-        <div class="stat-val">{{ personal_bests|length }}</div>
+        <div class="stat-val" data-count="{{ personal_bests|length }}">0</div>
         <div class="stat-sub">{{ 'events tracked' if personal_bests else 'log a swim to start' }}</div>
       </div>
-      <div class="stat">
+      <div class="stat stat--lav">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 2.5-2.5c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7.5 7.5 0 1 1-15 0c0-1.153.433-2.294 1-3 1.789 1.789 3-.5 3-2.5z"></path></svg>
+        </div>
         <div class="stat-label">Streak</div>
-        <div class="stat-val">{{ streak }}<span class="unit-label">d</span></div>
+        <div class="stat-val"><span data-count="{{ streak }}">0</span><span class="unit-label">d</span></div>
         <div class="stat-sub">{{ 'in a row' if streak else 'log your first swim' }}</div>
       </div>
     </div>
 
-    <!-- MAIN DASHBOARD UTILITIES -->
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-label">Personal bests <span class="panel-action">View all →</span></div>
-        {% if personal_bests %}
-          {% for pb in personal_bests %}
-            <div class="session-row">
-              <span>{{ pb.event }}</span>
-              <span>{{ pb.pool }}</span>
-              <span>{{ pb.time }}</span>
-            </div>
-          {% endfor %}
-        {% else %}
-          <p class="panel-note">No swims logged yet. Log your first swim to start tracking PBs.</p>
-          <a href="/log" class="log-btn no-underline mt-8"> Log your first swim</a>
-        {% endif %}
-      </div>
-
-      <div class="panel">
-        <div class="panel-label">Log a swim</div>
-        <a href="/log" class="log-btn"> Type manually <span class="log-btn-badge">Free</span></a>
-        <button class="log-btn locked" disabled> Scan whiteboard <span class="log-btn-badge">Solo</span></button>
-        <button class="log-btn locked" disabled> Voice log <span class="log-btn-badge">Solo</span></button>
-        <div class="upgrade-banner">
-          <div>
-            <div class="upgrade-text">Upgrade to Solo</div>
-            <div class="upgrade-sub">Scan any whiteboard. Speak any set.</div>
+    <!-- CHART + QUICK LOG -->
+    <div class="grid-main">
+      <div class="panel panel--chart">
+        <div class="panel-label">
+          Training volume — last 8 weeks
+          <div class="console-switch-group">
+            <button class="console-switch-btn active" data-metric="volume">Metres</button>
+            <button class="console-switch-btn" data-metric="sessions">Sessions</button>
           </div>
-          <button class="upgrade-btn">$12/mo →</button>
         </div>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-label">Volume — last 8 weeks</div>
-        <div class="console-switch-group">
-          <button class="console-switch-btn active">Metres</button>
-          <button class="console-switch-btn">Sessions</button>
-          <button class="console-switch-btn">Points</button>
-        </div>
-        <div class="chart-bars">
+        <div class="chart-bars" id="chartBars">
           {% for v in weekly_volume %}
-          <div class="bar {{ 'active' if loop.last else '' }}" style="height:{{ [(v / max_week * 100)|round(0, 'floor')|int, 4]|max }}%" title="{{ v }}m"></div>
+          <div class="bar {{ 'active' if loop.last else '' }}"
+               data-volume="{{ [(v / max_week * 100)|round(0, 'floor')|int, 4]|max }}"
+               data-sessions="{{ [(weekly_sessions[loop.index0] / max_week_sessions * 100)|round(0, 'floor')|int, 4]|max }}"
+               style="height:{{ [(v / max_week * 100)|round(0, 'floor')|int, 4]|max }}%"
+               title="{{ v }}m · {{ weekly_sessions[loop.index0] }} session{{ 's' if weekly_sessions[loop.index0] != 1 else '' }}"></div>
           {% endfor %}
         </div>
         <div class="chart-labels">
@@ -105,36 +95,92 @@
           <div class="chart-lbl">Wk 5</div>
           <div class="chart-lbl">Wk 6</div>
           <div class="chart-lbl">Wk 7</div>
-          <div class="chart-lbl">Wk 8</div>
+          <div class="chart-lbl">This wk</div>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-label">Goal</div>
-        <p class="panel-note">No goal set yet. Set a target time and meet date to get started.</p>
-        <a href="/goals" class="log-btn no-underline">Set a goal</a>
+      <div class="panel panel--log">
+        <div class="panel-label">Log a swim</div>
+        <a href="/log" class="log-btn"> Type manually <span class="log-btn-badge">Free</span></a>
+        <button class="log-btn locked" disabled> Scan whiteboard <span class="log-btn-badge">Solo</span></button>
+        <button class="log-btn locked" disabled> Voice log <span class="log-btn-badge">Solo</span></button>
+        <a href="/sets" class="log-btn"> Browse set library <span class="log-btn-badge">Free</span></a>
+        <div class="upgrade-banner">
+          <div>
+            <div class="upgrade-text">Upgrade to Solo</div>
+            <div class="upgrade-sub">Scan any whiteboard. Speak any set.</div>
+          </div>
+          <a href="/#pricing" class="upgrade-btn">$12/mo →</a>
+        </div>
       </div>
     </div>
 
     <div class="grid-2">
       <div class="panel">
-        <div class="panel-label">Recent sessions <span class="panel-action">View all →</span></div>
+        <div class="panel-label">Personal bests</div>
+        {% if personal_bests %}
+          {% for pb in personal_bests %}
+            <div class="session-row">
+              <span class="session-row-main">{{ pb.event }}</span>
+              <span class="session-row-tag">{{ pb.pool }}</span>
+              <span class="session-row-time">{{ pb.time }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="panel-note">No swims logged yet. Log your first swim to start tracking PBs.</p>
+          <a href="/log" class="log-btn no-underline mt-8"> Log your first swim</a>
+        {% endif %}
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Recent sessions</div>
         {% if recent_activity %}
           {% for a in recent_activity %}
             <div class="session-row">
-              <span>{{ a.kind }} — {{ a.label }}</span>
-              <span>{{ a.pool }}</span>
-              <span>{{ a.logged_at.strftime('%d %b') }}</span>
+              <span class="session-row-main">{{ a.kind }} — {{ a.label }}</span>
+              <span class="session-row-tag">{{ a.pool }}</span>
+              <span class="session-row-time">{{ a.logged_at.strftime('%d %b') }}</span>
             </div>
           {% endfor %}
         {% else %}
           <p class="panel-note">No sessions yet. Log your first swim to see it here.</p>
         {% endif %}
       </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel panel--ring">
+        <div class="panel-label">Pool split</div>
+        {% if has_pool_data %}
+        <div class="ring-row">
+          <div class="ring-wrap" style="--p25:{{ pool_split_25 }}">
+            <div class="ring-center">
+              <span class="ring-center-val">{{ pool_split_25 }}%</span>
+              <span class="ring-center-lbl">25m</span>
+            </div>
+          </div>
+          <div class="ring-legend">
+            <div class="ring-legend-row">
+              <span class="ring-dot ring-dot--ink"></span>
+              <span class="ring-legend-lbl">Short course (25m)</span>
+              <span class="ring-legend-val">{{ pool_split_25 }}%</span>
+            </div>
+            <div class="ring-legend-row">
+              <span class="ring-dot ring-dot--lav"></span>
+              <span class="ring-legend-lbl">Long course (50m)</span>
+              <span class="ring-legend-val">{{ pool_split_50 }}%</span>
+            </div>
+          </div>
+        </div>
+        {% else %}
+          <p class="panel-note">Log a session in either pool to see your split here.</p>
+          <a href="/log" class="log-btn no-underline mt-8"> Log a swim</a>
+        {% endif %}
+      </div>
 
       <div class="panel">
         <div class="panel-label">Streak</div>
-        <div class="points-big">{{ streak }}</div>
+        <div class="points-big"><span data-count="{{ streak }}">0</span><span class="unit-label">d</span></div>
         <div class="points-label">days in a row</div>
         <div class="streak-grid">
           {% for day in streak_days %}
@@ -175,29 +221,28 @@
         <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
         Log swim
       </a>
-      <a href="/pbs" class="drawer-link {{ 'active' if request.path == '/pbs' else '' }}">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
-        Personal bests
-      </a>
-      <a href="/goals" class="drawer-link {{ 'active' if request.path == '/goals' else '' }}">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
-        Goals
-      </a>
       <a href="/sets" class="drawer-link {{ 'active' if request.path == '/sets' else '' }}">
         <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
         Set library
       </a>
-      <a href="/progress" class="drawer-link {{ 'active' if request.path == '/progress' else '' }}">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-        Progress
-      </a>
       <a href="/wa-points" class="drawer-link {{ 'active' if request.path == '/wa-points' else '' }}">
         <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-        Fina Points
+        Points & CSS
       </a>
-      <a href="/settings" class="drawer-link drawer-bottom {{ 'active' if request.path == '/settings' else '' }}">
+      <a href="#" class="drawer-link drawer-link--soon">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        Personal bests
+        <span class="drawer-soon-tag">Soon</span>
+      </a>
+      <a href="#" class="drawer-link drawer-link--soon">
+        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+        Goals
+        <span class="drawer-soon-tag">Soon</span>
+      </a>
+      <a href="#" class="drawer-link drawer-link--soon drawer-bottom">
         <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
         Settings
+        <span class="drawer-soon-tag">Soon</span>
       </a>
       <a href="/logout" class="drawer-link drawer-logout">
         <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -210,6 +255,9 @@
 
 <!-- COMPONENT INTERACTION SCRIPTS -->
 <script>
+// Live date in the greeting
+document.getElementById('greetingDate').textContent = new Date().toLocaleDateString('en-NZ', { weekday:'long', day:'numeric', month:'long' });
+
 // Toggle Console Drawer Display
 const menuToggle = document.getElementById('menuToggle');
 const dashDrawer = document.getElementById('dashDrawer');
@@ -235,7 +283,6 @@ menuToggle.addEventListener('click', () => {
 closeDrawer.addEventListener('click', closeDrawerMenu);
 drawerBackdrop.addEventListener('click', closeDrawerMenu);
 
-// Close drawer when clicking outside
 document.addEventListener('click', (e) => {
   if(!dashDrawer.contains(e.target) && !menuToggle.contains(e.target)){
     if(dashDrawer.classList.contains('open')){
@@ -244,20 +291,40 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Close drawer on escape key
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape' && dashDrawer.classList.contains('open')){
     closeDrawerMenu();
   }
 });
 
-// Metric Switcher Options
+// Volume / Sessions chart switcher — both backed by real data
+const chartBars = document.querySelectorAll('#chartBars .bar');
 document.querySelectorAll('.console-switch-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.console-switch-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
+    const metric = this.dataset.metric;
+    chartBars.forEach(bar => {
+      bar.style.height = bar.dataset[metric] + '%';
+    });
   });
 });
+
+// Count-up animation for stat numbers
+function animateCount(el){
+  const target = parseInt(el.dataset.count, 10) || 0;
+  const duration = 900;
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * eased);
+    if(p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+document.querySelectorAll('[data-count]').forEach(animateCount);
 </script>
 
 </body>

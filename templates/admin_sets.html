@@ -137,8 +137,13 @@
 
   .block-row {
     display: grid;
-    grid-template-columns: 0.7fr 1fr 1.1fr 0.9fr auto;
+    grid-template-columns: 1fr 0.7fr 1fr 1.1fr 0.9fr;
     gap: 8px;
+  }
+
+  .block-row-note {
+    grid-template-columns: 1fr auto;
+    margin-top: 8px;
   }
 
   .block-row input,
@@ -318,11 +323,33 @@
             </select>
           </div>
         </div>
-        
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select name="category">
+              {% for c in categories %}
+              <option value="{{ c.key }}">{{ c.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Description (shown to swimmers)</label>
+            <input type="text" name="description" placeholder="e.g., Inspired by broken-swim work used in elite IM training">
+          </div>
+        </div>
+
         <div class="form-group">
           <label>Blocks</label>
           <div class="block-builder">
             <div class="block-row">
+              <select id="blkSection">
+                <option value="Warm up">Warm up</option>
+                <option value="Pre set">Pre set</option>
+                <option value="Main set" selected>Main set</option>
+                <option value="Sub set">Sub set</option>
+                <option value="Cool down">Cool down</option>
+              </select>
               <input type="number" id="blkReps" placeholder="Reps" min="1">
               <input type="number" id="blkDist" placeholder="Distance (m)" min="25" step="25">
               <select id="blkStroke">
@@ -336,6 +363,9 @@
                 <option value="Drill">Drill</option>
               </select>
               <input type="text" id="blkRest" placeholder="Rest (e.g. 1:30)">
+            </div>
+            <div class="block-row block-row-note">
+              <input type="text" id="blkNote" placeholder="Coaching note (e.g. descend 1-4, build each 50) — optional">
               <button type="button" class="btn-add-block" onclick="addBlock()">+ Add block</button>
             </div>
             <div class="block-list" id="blockList">
@@ -358,6 +388,7 @@
           <thead>
             <tr>
               <th>Name</th>
+              <th>Category</th>
               <th>Pool</th>
               <th>Type</th>
               <th>Distance (m)</th>
@@ -369,6 +400,7 @@
             {% for s in sets %}
             <tr>
               <td><strong>{{ s.name }}</strong></td>
+              <td>{{ s.category or 'Fitness' }}</td>
               <td>{{ s.pool }}</td>
               <td>{{ s.session_type }}</td>
               <td>{{ s.total_distance() }}</td>
@@ -404,7 +436,7 @@ function renderBlocks(){
   } else {
     list.innerHTML = blocks.map((b, i) => `
       <div class="block-chip">
-        <span>${b.reps} × ${b.dist}m ${strokeLabels[b.stroke] || b.stroke}${b.rest ? ' · Rest ' + b.rest : ''}</span>
+        <span><strong>${b.section}</strong> — ${b.reps} × ${b.dist}m ${strokeLabels[b.stroke] || b.stroke}${b.rest ? ' · Rest ' + b.rest : ''}${b.note ? ' · ' + b.note : ''}</span>
         <button type="button" class="block-chip-remove" onclick="removeBlock(${i})">✕</button>
       </div>
     `).join('');
@@ -413,20 +445,23 @@ function renderBlocks(){
 }
 
 function addBlock(){
+  const section = document.getElementById('blkSection').value;
   const reps = parseInt(document.getElementById('blkReps').value);
   const dist = parseInt(document.getElementById('blkDist').value);
   const stroke = document.getElementById('blkStroke').value;
   const rest = document.getElementById('blkRest').value.trim();
+  const note = document.getElementById('blkNote').value.trim();
 
   if(!reps || !dist){
     alert('Reps and distance are required for a block.');
     return;
   }
 
-  blocks.push({ reps, dist, stroke, rest });
+  blocks.push({ section, reps, dist, stroke, rest, note });
   document.getElementById('blkReps').value = '';
   document.getElementById('blkDist').value = '';
   document.getElementById('blkRest').value = '';
+  document.getElementById('blkNote').value = '';
   renderBlocks();
 }
 

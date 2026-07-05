@@ -196,114 +196,29 @@
   color:#aaa;
 }
 
-#savedSetsList{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.saved-item{
+/* ---------- LIBRARY LINK-OUT ---------- */
+.library-link{
   display:flex;
   align-items:center;
-  gap:12px;
-  padding:14px 16px;
-  border:3px solid #111;
+  justify-content:space-between;
+  background:#f7f7ff;
+  border:2.5px solid #111;
   border-radius:14px;
-  background:#fff;
-  box-shadow:4px 4px 0 #111;
-  transition:transform .15s,box-shadow .15s;
-}
-
-.saved-item:hover{
-  transform:translate(-2px,-2px);
-  box-shadow:6px 6px 0 #111;
-}
-
-.saved-item-num{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  background:#111;
-  color:#ccccff;
-  font-family:'Antonio',sans-serif;
-  font-size:14px;
-  font-weight:700;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-shrink:0;
-}
-
-.saved-item-body{
-  flex:1;
-  min-width:0;
-}
-
-.saved-name{
-  font-size:14px;
-  font-weight:800;
-  color:#111;
-}
-
-.saved-meta{
-  font-size:11px;
-  font-weight:600;
-  color:#777;
-  margin-top:2px;
-}
-
-.saved-actions{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-shrink:0;
-}
-
-.use-badge{
-  font-size:10px;
+  padding:14px 18px;
+  margin-bottom:16px;
+  font-size:13px;
   font-weight:800;
   text-transform:uppercase;
   letter-spacing:.03em;
-  padding:6px 12px;
-  background:#ccccff;
   color:#111;
-  border:2px solid #111;
-  border-radius:20px;
-  flex-shrink:0;
-  cursor:pointer;
-  transition:transform .15s;
+  text-decoration:none;
+  box-shadow:4px 4px 0 #ccccff;
+  transition:transform .15s,box-shadow .15s;
 }
 
-.edit-badge{
-  background:#fff;
-}
-
-.use-badge:hover{
-  transform:translateY(-1px);
-}
-
-.saved-delete-form{
-  display:flex;
-}
-
-.saved-delete-btn{
-  width:26px;
-  height:26px;
-  border:2px solid #111;
-  border-radius:50%;
-  background:#fff;
-  color:#777;
-  cursor:pointer;
-  font-size:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition:all .15s;
-}
-
-.saved-delete-btn:hover{
-  background:#111;
-  color:#fff;
+.library-link:hover{
+  transform:translate(-2px,-2px);
+  box-shadow:6px 6px 0 #ccccff;
 }
 
 .screen-title{

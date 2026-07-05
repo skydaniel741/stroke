@@ -2,3 +2,6 @@ Flask
 Flask-SQLAlchemy
 Flask-Bcrypt
 Flask-Login
+Authlib
+python-dotenv
+resend

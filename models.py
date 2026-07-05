@@ -99,6 +99,8 @@ class SavedSet(db.Model):
     pool = db.Column(db.String(10), default='25m')
     session_type = db.Column(db.String(50), default='Training')
     sets_data = db.Column(db.Text)  # JSON string, same shape as sessionSets in log.html
+    category = db.Column(db.String(30), default='Fitness')
+    description = db.Column(db.Text)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

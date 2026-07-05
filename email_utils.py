@@ -25,28 +25,32 @@ def send_verification_email(to_email, username, code):
 
     resend.api_key = api_key or os.getenv('RESEND_API_KEY')
 
+    # Styles are inlined — many email clients strip <style> blocks.
+    # Palette matches the site: lavender #ccccff, ink #111, white cards,
+    # hard borders + offset shadows.
     html_content = f"""
     <!DOCTYPE html>
     <html>
-    <head>
-        <style>
-            body {{ font-family: Inter, sans-serif; background: #ccccff; color: #EAF5FF; margin: 0; padding: 0; }}
-            .wrap {{ max-width: 480px; margin: 40px auto; padding: 40px; background: #0c1c30; border-radius: 14px; border: 0.5px solid rgba(160,221,255,0.1); }}
-            .logo {{ font-size: 18px; font-weight: 500; letter-spacing: 0.16em; color: #A0DDFF; margin-bottom: 28px; }}
-            h1 {{ font-size: 22px; font-weight: 400; color: #EAF5FF; margin-bottom: 12px; }}
-            p {{ font-size: 14px; color: rgba(234,245,255,0.55); line-height: 1.7; margin-bottom: 24px; }}
-            .code {{ font-size: 42px; font-weight: 300; letter-spacing: 8px; color: #A0DDFF; text-align: center; padding: 24px; background: rgba(160,221,255,0.06); border-radius: 10px; border: 0.5px solid rgba(160,221,255,0.15); margin: 24px 0; }}
-            .footer {{ font-size: 12px; color: rgba(234,245,255,0.25); margin-top: 28px; }}
-        </style>
-    </head>
-    <body>
-        <div class="wrap">
-            <div class="logo">STROKE</div>
-            <h1>Verify your email</h1>
-            <p>Hey {username}, welcome to STROKE. Enter this code to verify your email and activate your account.</p>
-            <div class="code">{code}</div>
-            <p>This code expires in 15 minutes. If you didn't sign up for STROKE, ignore this email.</p>
-            <div class="footer">stroke.app · Built in New Zealand</div>
+    <body style="margin:0; padding:0; background:#ccccff; font-family:Inter,'Segoe UI',Arial,sans-serif;">
+        <div style="max-width:480px; margin:0 auto; padding:40px 16px;">
+
+            <div style="text-align:center; margin-bottom:24px;">
+                <span style="display:inline-block; font-family:'Arial Black',Arial,sans-serif; font-size:24px; font-weight:900; letter-spacing:0.08em; color:#111111; text-transform:uppercase;">STROKE</span>
+            </div>
+
+            <div style="background:#ffffff; border:3px solid #111111; border-radius:16px; padding:36px 32px; box-shadow:6px 6px 0 #111111;">
+                <p style="font-size:11px; font-weight:800; letter-spacing:0.14em; text-transform:uppercase; color:#8f8ff0; margin:0 0 10px;">Email verification</p>
+                <h1 style="font-family:'Arial Black',Arial,sans-serif; font-size:26px; font-weight:900; text-transform:uppercase; color:#111111; margin:0 0 14px; line-height:1.15;">Verify your email</h1>
+                <p style="font-size:14px; color:#555555; line-height:1.7; margin:0 0 26px;">Hey {username}, welcome to STROKE. Enter this code to verify your email and activate your account.</p>
+
+                <div style="background:#111111; border-radius:12px; padding:26px 20px; text-align:center; margin:0 0 26px;">
+                    <span style="font-family:'Arial Black',Arial,sans-serif; font-size:38px; font-weight:900; letter-spacing:10px; color:#ccccff;">{code}</span>
+                </div>
+
+                <p style="font-size:13px; color:#888888; line-height:1.7; margin:0;">This code expires in <strong style="color:#111111;">15 minutes</strong>. If you didn't sign up for STROKE, you can safely ignore this email.</p>
+            </div>
+
+            <p style="font-size:11px; font-weight:700; color:#333333; text-align:center; margin:26px 0 0; text-transform:uppercase; letter-spacing:0.06em;">Built in New Zealand. For swimmers everywhere.</p>
         </div>
     </body>
     </html>

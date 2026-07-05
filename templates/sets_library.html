@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set Library — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sets.css') }}">
+</head>
+<body>
+
+{% from '_set_icons.html' import set_icon %}
+
+<nav class="sets-nav">
+  <a href="/dashboard" class="sets-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back
+  </a>
+  <a href="/" class="sets-nav-logo">STROKE</a>
+  <div class="sets-nav-spacer"></div>
+</nav>
+
+<div class="sets-wrap">
+  <p class="sets-eyebrow">Set library</p>
+  <h1 class="sets-h1">Find your next set.</h1>
+  <p class="sets-sub">Every set here is written and organised by category, so you can pick exactly the kind of work you need today — then read it, use it, or print it for the pool deck.</p>
+
+  <div class="sets-cat-grid">
+    {% for c in categories %}
+    <a href="/sets/category/{{ c.slug }}" class="sets-cat-card" style="--cat-color:{{ c.color }}">
+      <div class="sets-cat-top">
+        <div class="sets-cat-icon">{{ set_icon(c.icon) }}</div>
+        <span class="sets-cat-count">{{ c.count }} set{{ 's' if c.count != 1 else '' }}</span>
+      </div>
+      <p class="sets-cat-name">{{ c.label }}</p>
+      <p class="sets-cat-blurb">{{ c.blurb }}</p>
+      <span class="sets-cat-cta">Browse {{ c.label|lower }} →</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+</body>
+</html>

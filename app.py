@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask
-from extension import db, bcrypt, login_manager  # Imported from extensions
+from extension import db, bcrypt, login_manager, oauth  # Imported from extensions
 from dotenv import load_dotenv
 import os
 
@@ -22,6 +22,38 @@ def create_app():
     bcrypt.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'main.login'
+
+    # ── Social sign-in (config-gated: providers only register when
+    #    credentials exist in .env) ──
+    oauth.init_app(app)
+    app.config['GOOGLE_AUTH_ENABLED'] = False
+    app.config['APPLE_AUTH_ENABLED'] = False
+
+    if os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET'):
+        oauth.register(
+            name='google',
+            client_id=os.getenv('GOOGLE_CLIENT_ID'),
+            client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+            server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+            client_kwargs={'scope': 'openid email profile'},
+        )
+        app.config['GOOGLE_AUTH_ENABLED'] = True
+
+    if os.getenv('APPLE_CLIENT_ID') and os.getenv('APPLE_CLIENT_SECRET'):
+        oauth.register(
+            name='apple',
+            client_id=os.getenv('APPLE_CLIENT_ID'),
+            client_secret=os.getenv('APPLE_CLIENT_SECRET'),
+            authorize_url='https://appleid.apple.com/auth/authorize',
+            access_token_url='https://appleid.apple.com/auth/token',
+            jwks_uri='https://appleid.apple.com/auth/keys',
+            client_kwargs={
+                'scope': 'openid email name',
+                'response_mode': 'form_post',
+                'token_endpoint_auth_method': 'client_secret_post',
+            },
+        )
+        app.config['APPLE_AUTH_ENABLED'] = True
 
     with app.app_context():
         from models import User

@@ -282,6 +282,57 @@
   line-height:1.6;
 }
 
+/* ---------- CRITICAL SWIM SPEED ---------- */
+.css-title{
+  margin-top:48px;
+  padding-top:32px;
+  border-top:3px solid #ccccff;
+}
+
+.css-zone-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:10px;
+}
+
+.css-zone-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  background:#fff;
+  border:2px solid #111;
+  border-radius:10px;
+}
+
+.css-zone-name{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#111;
+  flex-shrink:0;
+  min-width:130px;
+}
+
+.css-zone-desc{
+  font-size:11px;
+  font-weight:600;
+  color:#777;
+  flex:1;
+}
+
+.css-zone-pace{
+  font-family:'Antonio',sans-serif;
+  font-size:18px;
+  font-weight:700;
+  color:#111;
+  flex-shrink:0;
+}
+
 @media(max-width:480px){
   .wa-toggle-row{flex-wrap:wrap;}
+  .css-zone-row{flex-wrap:wrap;gap:4px 12px;}
+  .css-zone-desc{flex-basis:100%;order:3;}
 }

@@ -76,6 +76,42 @@
     base time and T is your time, both in seconds. World record details are long course (50m) only
     for now — short course records are coming soon.
   </p>
+
+  <!-- ═══ CRITICAL SWIM SPEED ═══ -->
+  <h2 class="wa-title css-title">Critical Swim Speed</h2>
+  <p class="wa-sub">The triathlete's threshold pace — like FTP, but for swimming. Swim an all-out 400 and 200 (from a push, 5 min recovery between), enter both times, and train off the zones.</p>
+
+  <div class="wa-card">
+    <label class="wa-field-label">400m time trial</label>
+    <div class="wa-time-row">
+      <input type="number" id="css400Min" placeholder="Min" min="0" max="59" oninput="cssCalc()">
+      <div class="wa-time-sep">:</div>
+      <input type="number" id="css400Sec" placeholder="Sec" min="0" max="59" oninput="cssCalc()">
+    </div>
+
+    <label class="wa-field-label">200m time trial</label>
+    <div class="wa-time-row">
+      <input type="number" id="css200Min" placeholder="Min" min="0" max="59" oninput="cssCalc()">
+      <div class="wa-time-sep">:</div>
+      <input type="number" id="css200Sec" placeholder="Sec" min="0" max="59" oninput="cssCalc()">
+    </div>
+  </div>
+
+  <div class="wa-result">
+    <div class="wa-result-val" id="cssResultVal">—</div>
+    <div class="wa-result-label" id="cssResultLabel">Enter both times to get your CSS pace</div>
+  </div>
+
+  <div class="wr-card" id="cssZonesCard" style="display:none">
+    <p class="wr-label">Your training zones (per 100m)</p>
+    <div class="css-zone-list" id="cssZoneList"></div>
+  </div>
+
+  <p class="wa-note">
+    CSS per 100m = (400 time − 200 time) ÷ 2. Your CSS approximates the pace you could hold for a
+    maximal 1500m — threshold sets (like the CSS Threshold 100s in the Set Library) are swum at this
+    pace with short rest. Retest every 6–8 weeks.
+  </p>
 </div>
 
 <script>
@@ -288,6 +324,55 @@ function renderWorldRecord(){
     <p class="wr-meta">${wr.meet}, ${wr.location} — ${wr.date}</p>
     <a class="wr-video-btn" href="${videoUrl}" target="_blank" rel="noopener">${videoLabel} →</a>
   `;
+}
+
+// ─── CRITICAL SWIM SPEED ───
+function fmtPace(sec){
+  const m = Math.floor(sec / 60);
+  const s = sec - m * 60;
+  return m + ':' + s.toFixed(1).padStart(4, '0');
+}
+
+function cssCalc(){
+  const t400 = (parseInt(document.getElementById('css400Min').value) || 0) * 60
+             + (parseInt(document.getElementById('css400Sec').value) || 0);
+  const t200 = (parseInt(document.getElementById('css200Min').value) || 0) * 60
+             + (parseInt(document.getElementById('css200Sec').value) || 0);
+  const val = document.getElementById('cssResultVal');
+  const label = document.getElementById('cssResultLabel');
+  const zonesCard = document.getElementById('cssZonesCard');
+
+  if(t400 <= 0 || t200 <= 0){
+    val.textContent = '—';
+    label.textContent = 'Enter both times to get your CSS pace';
+    zonesCard.style.display = 'none';
+    return;
+  }
+  if(t400 <= t200){
+    val.textContent = '—';
+    label.textContent = 'Your 400 time should be slower than your 200';
+    zonesCard.style.display = 'none';
+    return;
+  }
+
+  const css = (t400 - t200) / 2; // seconds per 100m
+  val.textContent = fmtPace(css) + ' /100m';
+  label.textContent = 'Your Critical Swim Speed';
+
+  const zones = [
+    { name: 'Easy / recovery',  pace: css + 15, desc: 'warm ups, cool downs, easy days' },
+    { name: 'Endurance',        pace: css + 8,  desc: 'long steady swims, aerobic base' },
+    { name: 'Threshold (CSS)',  pace: css,      desc: '100–400m repeats, short rest' },
+    { name: 'VO2 max',          pace: css - 5,  desc: '50–200m repeats, hard' },
+  ];
+  document.getElementById('cssZoneList').innerHTML = zones.map(z => `
+    <div class="css-zone-row">
+      <span class="css-zone-name">${z.name}</span>
+      <span class="css-zone-desc">${z.desc}</span>
+      <span class="css-zone-pace">${fmtPace(Math.max(z.pace, 1))}</span>
+    </div>
+  `).join('');
+  zonesCard.style.display = 'block';
 }
 
 // init

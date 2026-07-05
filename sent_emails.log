@@ -14,3 +14,27 @@ HTML_LENGTH: 1504
 FROM: onboarding@resend.dev
 HTML_LENGTH: 1504
 --------------------------------------------------------------------------------
+[2026-07-05T02:10:00.973527] TO: ['previewtester@example.com'] SUBJECT: 483518 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 1514
+--------------------------------------------------------------------------------
+[2026-07-05T02:26:55.511078] TO: ['previewtester2@example.com'] SUBJECT: 538305 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 1515
+--------------------------------------------------------------------------------
+[2026-07-05T02:39:25.687995] TO: ['previewtester3@example.com'] SUBJECT: 434427 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 1515
+--------------------------------------------------------------------------------
+[2026-07-05T02:52:36.818162] TO: ['previewtester4@example.com'] SUBJECT: 514333 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 1515
+--------------------------------------------------------------------------------
+[2026-07-05T08:57:38.162127] TO: ['previewtester5@example.com'] SUBJECT: 657050 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 2024
+--------------------------------------------------------------------------------
+[2026-07-05T09:36:43.665968] TO: ['previewtester6@example.com'] SUBJECT: 897865 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 2024
+--------------------------------------------------------------------------------

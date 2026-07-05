@@ -270,51 +270,113 @@
 .main-workspace {
   flex: 1;
   padding: 32px;
-  background: #ffffff;
+  background: #fafafd;
 }
 
 .workspace-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  align-items: flex-end;
+  margin-bottom: 28px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.greeting {
-  flex: 1;
-  padding-bottom: 20px;
-  border-bottom: 3px solid #111111;
-  background: #ffffff;
+.greeting-date {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8f8ff0;
+  margin-bottom: 8px;
 }
 
 .greeting h1 {
   font-family: 'Antonio', sans-serif;
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #111111;
+}
+
+.workspace-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.quick-log-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #111111;
+  color: #ccccff;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 12px;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.greeting p {
-  font-size: 15px;
-  color: #555;
+.quick-log-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 #ccccff;
 }
 
+.quick-log-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ---------- STAT TILES ---------- */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .stat {
-  background: #ccccff;
+  position: relative;
+  background: #ffffff;
   border: 3px solid #111111;
   box-shadow: 4px 4px 0 #111111;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 22px;
+  transition: transform 0.18s, box-shadow 0.18s;
 }
+
+.stat:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #111111;
+}
+
+.stat--dark {
+  background: #111111;
+  color: #ffffff;
+}
+
+.stat--dark .stat-label { color: #ccccff; }
+.stat--dark .stat-sub { color: #999; }
+.stat--dark .stat-icon { background: rgba(204,204,255,0.14); color: #ccccff; }
+
+.stat--lav { background: #ccccff; }
+
+.stat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f3f3ff;
+  color: #8f8ff0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.stat-icon svg { width: 17px; height: 17px; }
 
 .stat-label {
   font-size: 11px;
@@ -326,14 +388,25 @@
 
 .stat-val {
   font-family: 'Antonio', sans-serif;
-  font-size: 42px;
+  font-size: 40px;
   font-weight: 700;
-  margin: 12px 0;
+  margin: 10px 0 4px;
+  line-height: 1;
 }
 
 .stat-sub {
-  font-size: 13px;
+  font-size: 12.5px;
   color: #555;
+  font-weight: 500;
+}
+
+/* ---------- GRID LAYOUTS ---------- */
+.grid-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: stretch;
 }
 
 .grid-2 {
@@ -346,31 +419,28 @@
 .panel {
   background: #ffffff;
   border: 3px solid #111111;
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 24px;
   box-shadow: 4px 4px 0 #111111;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .panel-label {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   font-family: 'Antonio', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: #111111;
   border-bottom: 2px solid #111111;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
   margin-bottom: 16px;
-}
-
-.panel-action {
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .panel-note {
@@ -383,8 +453,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding: 10px 0;
+  gap: 10px;
+  padding: 12px 0;
   border-top: 1px solid #eee;
   font-size: 13px;
   color: #111111;
@@ -395,11 +465,39 @@
   padding-top: 2px;
 }
 
+.session-row-main {
+  flex: 1;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-row-tag {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f3f3ff;
+  color: #8f8ff0;
+  padding: 4px 9px;
+  border-radius: 20px;
+}
+
+.session-row-time {
+  flex-shrink: 0;
+  font-family: 'Antonio', sans-serif;
+  font-weight: 700;
+  color: #111111;
+}
+
 .log-link,
 .log-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 14px 18px;
   border: 3px solid #111111;
@@ -411,6 +509,7 @@
   text-transform: uppercase;
   text-decoration: none;
   transition: background 0.15s, transform 0.15s;
+  margin-bottom: 10px;
 }
 
 .log-btn:hover,
@@ -432,8 +531,10 @@
   font-weight: 700;
 }
 
+.panel--log { justify-content: flex-start; }
+
 .upgrade-banner {
-  margin-top: 20px;
+  margin-top: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -461,12 +562,21 @@
   border: none;
   border-radius: 12px;
   font-weight: 800;
+  font-size: 13px;
+  text-decoration: none;
   cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s;
 }
+
+.upgrade-btn:hover { transform: translateY(-1px); }
+
+/* ---------- CHART ---------- */
+.panel--chart { min-width: 0; }
 
 .console-switch-group {
   display: inline-flex;
-  background: #111111;
+  background: #f3f3ff;
   padding: 4px;
   border-radius: 12px;
   border: 2px solid #111111;
@@ -475,35 +585,37 @@
 .console-switch-btn {
   border: none;
   background: transparent;
-  color: #ffffff;
-  padding: 10px 18px;
+  color: #111111;
+  padding: 8px 16px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
 
 .console-switch-btn.active {
-  background: #ccccff;
-  color: #111111;
+  background: #111111;
+  color: #ccccff;
 }
 
 .chart-bars {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 8px;
-  margin: 20px 0 12px;
+  margin: 24px 0 12px;
   align-items: end;
+  height: 180px;
 }
 
 .bar {
   width: 100%;
-  height: 10%;
-  background: #f5f5f5;
-  border: 1.5px solid #ddd;
-  border-radius: 12px;
-  transition: background 0.15s, border-color 0.15s;
+  height: 4%;
+  background: #f0f0f8;
+  border: 1.5px solid #e2e2f0;
+  border-radius: 8px 8px 4px 4px;
+  transition: height 0.5s cubic-bezier(.22,1,.36,1), background 0.15s, border-color 0.15s;
 }
 
 .bar:hover {
@@ -512,7 +624,7 @@
 }
 
 .bar.active {
-  background: #111111;
+  background: linear-gradient(180deg, #ccccff 0%, #8f8ff0 100%);
   border-color: #111111;
 }
 
@@ -520,39 +632,138 @@
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 8px;
-  font-size: 11px;
-  color: #555;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #999;
 }
 
 .chart-lbl {
   text-align: center;
 }
 
+/* ---------- POOL SPLIT RING ---------- */
+.panel--ring { justify-content: center; }
+
+.ring-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.ring-wrap {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: conic-gradient(#111111 0% calc(var(--p25) * 1%), #ccccff calc(var(--p25) * 1%) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.ring-center {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.ring-center-val {
+  display: block;
+  font-family: 'Antonio', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111111;
+}
+
+.ring-center-lbl {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #999;
+  margin-top: 2px;
+}
+
+.ring-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.ring-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ring-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid #111111;
+}
+
+.ring-dot--ink { background: #111111; }
+.ring-dot--lav { background: #ccccff; }
+
+.ring-legend-lbl {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.ring-legend-val {
+  font-family: 'Antonio', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111111;
+  flex-shrink: 0;
+}
+
+/* ---------- STREAK ---------- */
 .points-big {
   font-family: 'Antonio', sans-serif;
-  font-size: 60px;
+  font-size: 56px;
   font-weight: 700;
-  margin: 20px 0 8px;
+  margin: 4px 0 6px;
+  line-height: 1;
 }
 
 .points-label {
-  font-size: 14px;
+  font-size: 13px;
   color: #555;
+  font-weight: 500;
 }
 
 .streak-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
+  gap: 7px;
+  margin-top: 18px;
   margin-bottom: 12px;
 }
 
 .s-day {
-  min-height: 48px;
-  border: 1.5px solid #ddd;
-  border-radius: 10px;
-  background: #f5f5f5;
+  min-height: 40px;
+  border: 1.5px solid #eee;
+  border-radius: 9px;
+  background: #f7f7fb;
+  transition: transform 0.15s;
 }
 
 .s-day.done {
@@ -565,10 +776,44 @@
   border: 2px solid #111111;
 }
 
+.streak-label {
+  font-size: 12.5px;
+  color: #777;
+  font-weight: 500;
+}
+
+/* ---------- DRAWER "SOON" LINKS ---------- */
+.drawer-link--soon {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.drawer-link--soon:hover {
+  background: transparent;
+}
+
+.drawer-soon-tag {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f0f0f0;
+  color: #999;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
 @media(max-width: 960px) {
   .app-container,
-  .grid-2 {
+  .grid-2,
+  .grid-main {
     display: block;
+  }
+
+  .grid-main .panel,
+  .grid-2 .panel {
+    margin-bottom: 20px;
   }
 
   .left-control-dock,

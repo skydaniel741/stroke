@@ -55,32 +55,14 @@
 
   <div class="divider-row">
     <div class="divider-line"></div>
-    <span class="divider-text">saved sets</span>
+    <span class="divider-text">or</span>
     <div class="divider-line"></div>
   </div>
 
-  <div id="savedSetsList">
-    {% for s in saved_sets %}
-    <div class="saved-item" data-id="{{ s.id }}" data-pool="{{ s.pool }}" data-type="{{ s.session_type }}" data-sets='{{ s.sets_data }}'>
-      <div class="saved-item-num">{{ loop.index }}</div>
-      <div class="saved-item-body">
-        <p class="saved-name">{{ s.name }}</p>
-        <p class="saved-meta">{{ s.total_distance() }}m · {{ s.pool }} pool · {{ s.session_type }}</p>
-      </div>
-      <div class="saved-actions">
-        <span class="use-badge edit-badge" onclick="useSaved({{ s.id }},'edit')">Edit</span>
-        <span class="use-badge" onclick="useSaved({{ s.id }},'use')">Use</span>
-        {% if s.created_by == current_user.id or current_user.is_admin %}
-        <form method="POST" action="/sets/delete/{{ s.id }}" class="saved-delete-form">
-          <button type="submit" class="saved-delete-btn" title="Delete set" onclick="return confirm('Delete this saved set?')">✕</button>
-        </form>
-        {% endif %}
-      </div>
-    </div>
-    {% else %}
-    <div class="sets-empty">No saved sets yet. Build a training session and save it as a reusable set.</div>
-    {% endfor %}
-  </div>
+  <a href="/sets" class="library-link">
+    <span>Browse the Set Library</span>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
 </div>
 
 <!-- ═══════════════════════════════════
@@ -158,6 +140,9 @@
       <label class="meta-label">Session type</label>
       <select class="meta-select" id="sessionType">
         <option>Training</option>
+        <option>Endurance</option>
+        <option>Speed</option>
+        <option>Technique</option>
         <option>Race warm up</option>
         <option>Time trial</option>
         <option>Recovery</option>
@@ -309,22 +294,14 @@ function repeatLast(){
   prepSessionConfirm();
 }
 
-function useSaved(id, mode){
-  const card = document.querySelector(`.saved-item[data-id="${id}"]`);
-  if(!card) return;
-  let sets;
-  try{ sets = JSON.parse(card.dataset.sets || '[]'); }catch(e){ sets = []; }
-
-  sessionSets = sets.map((s,i)=>({id:'set_'+Date.now()+i, ...s}));
-  document.getElementById('sessionPool').value = card.dataset.pool;
-  document.getElementById('sessionType').value = card.dataset.type;
+// ─── LOAD A SET FROM THE LIBRARY (/log?use=<id>) ───
+function loadLibrarySet(preload){
+  if(!preload || !preload.blocks || !preload.blocks.length) return;
+  sessionSets = preload.blocks.map((s,i)=>({id:'set_'+Date.now()+i, ...s}));
+  document.getElementById('sessionPool').value = preload.pool;
+  document.getElementById('sessionType').value = preload.session_type;
+  goTo(3);
   renderSetsSummary();
-
-  if(mode === 'edit'){
-    goTo(3);
-  } else {
-    prepSessionConfirm();
-  }
 }
 
 // ─── SAVE SESSION AS REUSABLE SET ───
@@ -361,41 +338,12 @@ function confirmSaveTemplate(){
     .then(r=>r.json())
     .then(data=>{
       if(data.ok){
-        status.textContent = `Saved as "${data.name}" — find it under Saved sets.`;
-        addSavedItemToList(data.id, data.name, document.getElementById('sessionPool').value, document.getElementById('sessionType').value, sessionSets);
+        status.textContent = `Saved as "${data.name}" — find it in the Set Library.`;
       } else {
         status.textContent = data.error || 'Could not save set.';
       }
     })
     .catch(()=>{ status.textContent = 'Could not save set — try again.'; });
-}
-
-function addSavedItemToList(id, name, pool, type, sets){
-  const list = document.getElementById('savedSetsList');
-  const empty = list.querySelector('.sets-empty');
-  if(empty) empty.remove();
-  const dist = sets.reduce((t,s)=>t+((parseInt(s.reps)||0)*(parseInt(s.dist)||0)),0);
-  const num = list.querySelectorAll('.saved-item').length + 1;
-  const div = document.createElement('div');
-  div.className = 'saved-item';
-  div.dataset.id = id;
-  div.dataset.pool = pool;
-  div.dataset.type = type;
-  div.dataset.sets = JSON.stringify(sets);
-  div.innerHTML = `
-    <div class="saved-item-num">${num}</div>
-    <div class="saved-item-body">
-      <p class="saved-name">${name}</p>
-      <p class="saved-meta">${dist}m · ${pool} pool · ${type}</p>
-    </div>
-    <div class="saved-actions">
-      <span class="use-badge edit-badge" onclick="useSaved(${id},'edit')">Edit</span>
-      <span class="use-badge" onclick="useSaved(${id},'use')">Use</span>
-      <form method="POST" action="/sets/delete/${id}" class="saved-delete-form">
-        <button type="submit" class="saved-delete-btn" title="Delete set" onclick="return confirm('Delete this saved set?')">✕</button>
-      </form>
-    </div>`;
-  list.appendChild(div);
 }
 
 // ─── PB POOL ───
@@ -675,6 +623,9 @@ function submitLog(){
 // init
 initEventGrid();
 renderSetsSummary();
+{% if preload_set %}
+loadLibrarySet({{ preload_set|tojson }});
+{% endif %}
 </script>
 </body>
 </html>

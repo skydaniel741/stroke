@@ -1,0 +1,688 @@
+/* ============================================================
+   SET LIBRARY STYLES
+   Covers the library home, category listing, and set detail
+   pages — matches the bold, playful visual system used across
+   the rest of STROKE (Antonio, lavender, hard borders + offset
+   shadows), but built for wide desktop viewing as well as mobile.
+   ============================================================ */
+
+.sets-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 24px;
+  height:60px;
+  background:#fff;
+  border-bottom:3px solid #ccccff;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.sets-nav-back{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:#111;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.sets-nav-logo{
+  font-family:'Antonio',sans-serif;
+  font-size:22px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:#111;
+  text-decoration:none;
+}
+
+.sets-nav-spacer{width:70px}
+
+.sets-print-btn{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:#111;
+  color:#ccccff;
+  border:none;
+  border-radius:10px;
+  padding:9px 16px;
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  cursor:pointer;
+  transition:transform .15s;
+}
+
+.sets-print-btn:hover{transform:translateY(-1px)}
+
+.sets-wrap{
+  max-width:1080px;
+  margin:0 auto;
+  padding:40px 24px 90px;
+}
+
+.sets-eyebrow{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#8f8ff0;
+  margin-bottom:10px;
+}
+
+.sets-h1{
+  font-family:'Antonio',sans-serif;
+  font-size:clamp(32px,5vw,52px);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  line-height:1.05;
+  color:#111;
+}
+
+.sets-sub{
+  font-size:15px;
+  font-weight:500;
+  color:#666;
+  line-height:1.7;
+  max-width:640px;
+  margin-top:14px;
+}
+
+/* ---------- LIBRARY HOME: CATEGORY GRID ---------- */
+.sets-cat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:20px;
+  margin-top:44px;
+}
+
+.sets-cat-card{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  background:#fff;
+  border:3px solid #111;
+  border-radius:18px;
+  padding:24px;
+  text-decoration:none;
+  box-shadow:5px 5px 0 var(--cat-color,#111);
+  transition:transform .18s,box-shadow .18s;
+  min-height:200px;
+}
+
+.sets-cat-card:hover{
+  transform:translate(-3px,-3px);
+  box-shadow:8px 8px 0 var(--cat-color,#111);
+}
+
+.sets-cat-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:18px;
+}
+
+.sets-cat-icon{
+  width:34px;
+  height:34px;
+  color:var(--cat-color,#111);
+}
+
+.sets-cat-icon svg{width:100%;height:100%}
+
+.sets-cat-count{
+  background:#111;
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  padding:4px 11px;
+  border-radius:20px;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+
+.sets-cat-name{
+  font-family:'Antonio',sans-serif;
+  font-size:22px;
+  font-weight:700;
+  text-transform:uppercase;
+  color:#111;
+  line-height:1.1;
+}
+
+.sets-cat-blurb{
+  font-size:13px;
+  font-weight:600;
+  color:#777;
+  margin-top:6px;
+  line-height:1.5;
+  flex:1;
+}
+
+.sets-cat-cta{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:var(--cat-color,#111);
+  margin-top:16px;
+}
+
+/* ---------- CATEGORY PAGE HEADER ---------- */
+.cat-header{
+  display:flex;
+  align-items:center;
+  gap:22px;
+  padding-bottom:12px;
+}
+
+.cat-header-icon{
+  width:64px;
+  height:64px;
+  flex-shrink:0;
+  color:var(--cat-color,#111);
+  background:#fff;
+  border:3px solid #111;
+  border-radius:18px;
+  padding:14px;
+  box-shadow:5px 5px 0 var(--cat-color,#111);
+}
+
+.cat-header-icon svg{width:100%;height:100%}
+
+/* ---------- CATEGORY PAGE: SET CARD GRID ---------- */
+.sets-card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:18px;
+  margin-top:44px;
+}
+
+.set-card{
+  display:flex;
+  flex-direction:column;
+  background:#fff;
+  border:3px solid #111;
+  border-radius:16px;
+  padding:22px;
+  text-decoration:none;
+  box-shadow:4px 4px 0 #111;
+  transition:transform .18s,box-shadow .18s;
+}
+
+.set-card:hover{
+  transform:translate(-2px,-2px);
+  box-shadow:6px 6px 0 #111;
+}
+
+.set-card-cat{
+  align-self:flex-start;
+  background:var(--cat-color,#ccccff);
+  color:#111;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  padding:4px 10px;
+  border-radius:20px;
+  margin-bottom:12px;
+}
+
+.set-card-name{
+  font-family:'Antonio',sans-serif;
+  font-size:20px;
+  font-weight:700;
+  text-transform:uppercase;
+  color:#111;
+  line-height:1.15;
+}
+
+.set-card-meta{
+  font-size:12px;
+  font-weight:700;
+  color:#8f8ff0;
+  margin-top:6px;
+}
+
+.set-card-desc{
+  font-size:13px;
+  font-weight:500;
+  color:#666;
+  line-height:1.6;
+  margin-top:10px;
+  flex:1;
+}
+
+.set-card-cta{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#111;
+  margin-top:16px;
+}
+
+.sets-empty{
+  grid-column:1/-1;
+  text-align:center;
+  padding:60px 20px;
+  color:#999;
+  font-size:14px;
+  font-weight:600;
+}
+
+/* ---------- SET DETAIL PAGE ---------- */
+.set-detail-wrap{max-width:760px}
+
+.print-only{display:none}
+
+.set-detail-cat{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:var(--cat-color,#ccccff);
+  color:#111;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  padding:6px 14px;
+  border-radius:20px;
+  margin-bottom:18px;
+}
+
+.set-detail-cat-icon{width:16px;height:16px}
+.set-detail-cat-icon svg{width:100%;height:100%}
+
+.set-detail-h1{
+  font-family:'Antonio',sans-serif;
+  font-size:clamp(30px,5vw,46px);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  line-height:1.08;
+  color:#111;
+}
+
+.set-detail-desc{
+  font-size:16px;
+  font-weight:500;
+  color:#444;
+  line-height:1.8;
+  margin-top:16px;
+  max-width:640px;
+}
+
+.set-stat-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-top:32px;
+}
+
+.set-stat{
+  background:#f7f7ff;
+  border:2.5px solid #111;
+  border-radius:14px;
+  padding:16px 10px;
+  text-align:center;
+}
+
+.set-stat-val{
+  display:block;
+  font-family:'Antonio',sans-serif;
+  font-size:22px;
+  font-weight:700;
+  color:#111;
+  text-transform:uppercase;
+  line-height:1.1;
+}
+
+.set-stat-unit{font-size:13px}
+
+.set-stat-label{
+  display:block;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#8f8ff0;
+  margin-top:6px;
+}
+
+.set-blocks-label{
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#555;
+  margin-top:44px;
+  margin-bottom:16px;
+}
+
+/* ---------- WORKOUT SECTIONS (screen) ---------- */
+.set-section{margin-top:36px}
+
+.set-section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:3px solid #111;
+  padding-bottom:8px;
+  margin-bottom:14px;
+}
+
+.set-section-name{
+  font-family:'Antonio',sans-serif;
+  font-size:20px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#111;
+}
+
+.set-section-dist{
+  font-size:12px;
+  font-weight:800;
+  color:#8f8ff0;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+
+.set-block-stroke-inline{
+  font-size:16px;
+  color:#8f8ff0;
+}
+
+.set-block-note{
+  display:block;
+  font-size:13px;
+  font-weight:500;
+  color:#666;
+  margin-top:4px;
+  line-height:1.5;
+}
+
+.set-block-list{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.set-block{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  background:#fff;
+  border:3px solid #111;
+  border-radius:16px;
+  padding:18px 20px;
+  box-shadow:4px 4px 0 #ccccff;
+}
+
+.set-block-num{
+  width:40px;
+  height:40px;
+  flex-shrink:0;
+  border-radius:50%;
+  background:#111;
+  color:#ccccff;
+  font-family:'Antonio',sans-serif;
+  font-size:16px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.set-block-body{flex:1;min-width:0}
+
+.set-block-main{
+  font-family:'Antonio',sans-serif;
+  font-size:26px;
+  font-weight:700;
+  color:#111;
+  line-height:1.1;
+}
+
+.set-block-x{color:#8f8ff0}
+.set-block-unit{font-size:16px}
+
+.set-block-stroke{
+  display:inline-block;
+  margin-top:6px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color:#8f8ff0;
+}
+
+.set-block-rest{
+  flex-shrink:0;
+  text-align:right;
+}
+
+.set-block-rest-label{
+  display:block;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:#999;
+}
+
+.set-block-rest-val{
+  display:block;
+  font-family:'Antonio',sans-serif;
+  font-size:20px;
+  font-weight:700;
+  color:#111;
+  margin-top:2px;
+}
+
+.set-detail-actions{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-top:44px;
+}
+
+.set-use-btn{
+  background:#ccccff;
+  color:#111;
+  padding:16px 28px;
+  border:2.5px solid #111;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  text-decoration:none;
+  box-shadow:4px 4px 0 #111;
+  transition:transform .15s,box-shadow .15s;
+}
+
+.set-use-btn:hover{
+  transform:translate(-2px,-2px);
+  box-shadow:6px 6px 0 #111;
+}
+
+.set-print-btn-secondary{
+  background:#fff;
+  color:#111;
+  padding:16px 28px;
+  border:2.5px solid #111;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+  transition:transform .15s;
+}
+
+.set-print-btn-secondary:hover{transform:translateY(-2px)}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:640px){
+  .sets-wrap{padding:28px 18px 70px}
+  .set-stat-row{grid-template-columns:1fr 1fr}
+  .set-block{flex-wrap:wrap}
+  .set-block-rest{margin-left:58px}
+  .cat-header{flex-wrap:wrap;gap:14px}
+  .cat-header-icon{width:52px;height:52px;padding:12px}
+}
+
+/* ---------- PRINT ---------- */
+@media print{
+  .sets-nav, .no-print{display:none !important}
+  .print-only{display:block}
+  body{background:#fff}
+  .sets-wrap{max-width:100%;padding:0}
+  .set-detail-wrap{max-width:100%}
+
+  /* Coach's practice card — clean, readable type a 5-year-old or a
+     95-year-old can follow on the pool deck. */
+  .print-sheet{
+    font-family:'Inter','Segoe UI',Arial,sans-serif;
+    color:#000;
+    max-width:660px;
+  }
+
+  .print-head{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    border-bottom:3px solid #000;
+    padding-bottom:10px;
+    margin-bottom:20px;
+  }
+
+  .print-brand{
+    font-family:'Antonio',sans-serif;
+    font-size:20px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+
+  .print-brand-sub{
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:#444;
+  }
+
+  .print-title{
+    font-family:'Antonio',sans-serif;
+    font-size:30px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    line-height:1.1;
+    margin-bottom:6px;
+  }
+
+  .print-meta{
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:14px;
+  }
+
+  .print-desc{
+    font-size:13px;
+    font-weight:400;
+    line-height:1.65;
+    margin-bottom:8px;
+    max-width:580px;
+    color:#222;
+  }
+
+  .print-section{
+    margin-top:22px;
+    break-inside:avoid;
+  }
+
+  .print-section-head{
+    font-family:'Antonio',sans-serif;
+    font-size:17px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    border-bottom:2px solid #000;
+    padding-bottom:5px;
+    margin-bottom:10px;
+  }
+
+  .print-section-dist{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    text-transform:none;
+    letter-spacing:0;
+    color:#444;
+  }
+
+  .print-line{
+    padding:5px 0 5px 14px;
+    break-inside:avoid;
+  }
+
+  .print-line-main{
+    font-size:16px;
+    font-weight:700;
+    line-height:1.45;
+  }
+
+  .print-line-rest{
+    font-weight:500;
+    color:#333;
+  }
+
+  .print-line-note{
+    font-size:13px;
+    font-weight:400;
+    font-style:italic;
+    color:#444;
+    line-height:1.5;
+    margin-top:1px;
+  }
+
+  .print-notes-box{
+    margin-top:28px;
+    border:2px solid #000;
+    border-radius:6px;
+    min-height:110px;
+    padding:10px 14px;
+    break-inside:avoid;
+  }
+
+  .print-notes-label{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#444;
+  }
+
+  .print-footer{
+    margin-top:22px;
+    padding-top:10px;
+    border-top:1px solid #000;
+    font-size:10px;
+    letter-spacing:.03em;
+    color:#444;
+  }
+}

@@ -162,6 +162,55 @@
   text-decoration-color:#ccccff;
 }
 
+/* ---------- SOCIAL SIGN-IN ---------- */
+.auth-divider{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:22px 0 16px;
+}
+
+.auth-divider::before,
+.auth-divider::after{
+  content:'';
+  flex:1;
+  height:2px;
+  background:#eee;
+}
+
+.auth-divider span{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:#aaa;
+}
+
+.social-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  width:100%;
+  padding:13px;
+  margin-bottom:10px;
+  background:#fff;
+  border:2.5px solid #111;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#111;
+  text-decoration:none;
+  transition:transform .15s,box-shadow .15s;
+}
+
+.social-btn:hover{
+  transform:translate(-1px,-1px);
+  box-shadow:3px 3px 0 #ccccff;
+}
+
 .auth-wrap--compact{
   min-height:auto;
   padding:0;

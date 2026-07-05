@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ category.label }} — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sets.css') }}">
+</head>
+<body>
+
+{% from '_set_icons.html' import set_icon %}
+
+<nav class="sets-nav">
+  <a href="/sets" class="sets-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Library
+  </a>
+  <a href="/" class="sets-nav-logo">STROKE</a>
+  <div class="sets-nav-spacer"></div>
+</nav>
+
+<div class="sets-wrap">
+  <div class="cat-header" style="--cat-color:{{ category.color }}">
+    <div class="cat-header-icon">{{ set_icon(category.icon) }}</div>
+    <div>
+      <p class="sets-eyebrow">Set library</p>
+      <h1 class="sets-h1">{{ category.label }}</h1>
+      <p class="sets-sub">{{ category.blurb }} — {{ sets|length }} set{{ 's' if sets|length != 1 else '' }} in this category.</p>
+    </div>
+  </div>
+
+  <div class="sets-card-grid">
+    {% for s in sets %}
+    <a href="/sets/view/{{ s.id }}" class="set-card" style="--cat-color:{{ category.color }}">
+      <span class="set-card-cat">{{ category.label }}</span>
+      <p class="set-card-name">{{ s.name }}</p>
+      <p class="set-card-meta">{{ s.total_distance() }}m · {{ s.pool }} pool · {{ s.session_type }}</p>
+      {% if s.description %}<p class="set-card-desc">{{ s.description }}</p>{% endif %}
+      <span class="set-card-cta">Read set →</span>
+    </a>
+    {% else %}
+    <div class="sets-empty">No sets in this category yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+</body>
+</html>
