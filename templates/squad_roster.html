@@ -4,6 +4,7 @@
 {% block page_title %}{{ squad.name }}{% endblock %}
 {% block page_sub %}<p class="coach-header-sub">Invite code: <strong>{{ squad.invite_code }}</strong> · Join link: /coach/join/{{ squad.invite_code }}</p>{% endblock %}
 {% block page_actions %}
+  <a href="/coach/squad/{{ squad.id }}/calendar" class="coach-btn">🗓️ Calendar</a>
   <a href="/coach/squad/{{ squad.id }}/announcements" class="coach-btn">📣 Announcements</a>
   <a href="/coach/squad/{{ squad.id }}/report" class="coach-btn">📄 Report</a>
   <a href="/coach/squad/{{ squad.id }}/billing" class="coach-btn">💳 Billing</a>
@@ -32,7 +33,11 @@
       {% for r in rows %}
       <div class="sq-row">
         <span class="sq-row-name">
-          {{ r.membership.swimmer.username if r.membership.swimmer else r.membership.invited_email }}
+          {% if r.membership.user_id %}
+          <a href="/coach/squad/{{ squad.id }}/swimmer/{{ r.membership.user_id }}" class="sq-row-link">{{ r.membership.swimmer.username }}</a>
+          {% else %}
+          {{ r.membership.invited_email }}
+          {% endif %}
           {% if r.met_standards %}<div class="sq-row-standards">✓ {{ r.met_standards|join(', ') }}</div>{% endif %}
         </span>
         <span class="sq-row-tag {{ r.membership.status }}">{{ r.membership.status.replace('_',' ') }}</span>
@@ -71,6 +76,8 @@
 
   .sq-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #eee;flex-wrap:wrap;}
   .sq-row-name{font-weight:700;flex:1;min-width:140px;}
+  .sq-row-link{color:#111;text-decoration:none;border-bottom:2px solid #ccccff;}
+  .sq-row-link:hover{color:#4b52c4;}
   .sq-row-tag{font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 8px;border-radius:20px;background:#f3f3ff;color:#4b52c4;}
   .sq-row-tag.active{background:#e3f7e9;color:#1a7a3d;}
   .sq-row-tag.pending_consent{background:#fff4e0;color:#a86400;}

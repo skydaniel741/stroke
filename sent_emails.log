@@ -46,3 +46,7 @@ HTML_LENGTH: 2021
 FROM: onboarding@resend.dev
 HTML_LENGTH: 2018
 --------------------------------------------------------------------------------
+[2026-07-06T05:50:09.462570] TO: ['otheruser1@example.com'] SUBJECT: 993821 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 2020
+--------------------------------------------------------------------------------

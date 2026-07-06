@@ -1,5 +1,5 @@
 import json
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 
@@ -246,8 +246,13 @@ def logout():
 @login_required
 def dashboard():
     from app import db
-    from models import Swim, Session, Announcement, SquadMembership
+    from models import Swim, Session, Announcement, SquadMembership, AthleteProfile
     from datetime import timedelta
+
+    needs_ai_onboarding = False
+    if current_user.plan == 'solo':
+        has_profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+        needs_ai_onboarding = has_profile is None
 
     site_announcement = (
         db.session.query(Announcement)
@@ -341,6 +346,8 @@ def dashboard():
                 'label': s.event,
                 'pool': s.pool or '—',
                 'logged_at': s.logged_at,
+                'type': 'swim',
+                'id': s.id,
             } for s in swims
         ] + [
             {
@@ -348,6 +355,8 @@ def dashboard():
                 'label': f"{len(s.get_sets())} set" + ('s' if len(s.get_sets()) != 1 else '') if s.get_sets() else (s.session_type or 'Session'),
                 'pool': s.pool or '—',
                 'logged_at': s.logged_at,
+                'type': 'session',
+                'id': s.id,
             } for s in sessions
         ],
         key=lambda x: x['logged_at'],
@@ -402,7 +411,8 @@ def dashboard():
         streak_days=streak_days,
         has_pool_data=has_pool_data,
         pool_split_25=pool_split_25,
-        pool_split_50=pool_split_50
+        pool_split_50=pool_split_50,
+        needs_ai_onboarding=needs_ai_onboarding,
     )
 
 
@@ -468,6 +478,7 @@ def log():
 
     preload_set = None
     use_id = request.args.get('use')
+    use_session_id = request.args.get('use_session')
     if use_id:
         picked = db.session.query(SavedSet).get(use_id)
         if picked:
@@ -479,6 +490,14 @@ def log():
                 'pool': picked.pool,
                 'session_type': picked.session_type,
                 'blocks': blocks
+            }
+    elif use_session_id:
+        picked_session = db.session.query(Session).get(use_session_id)
+        if picked_session and picked_session.user_id == current_user.id:
+            preload_set = {
+                'pool': picked_session.pool,
+                'session_type': picked_session.session_type,
+                'blocks': picked_session.get_sets(),
             }
 
     return render_template(
@@ -607,6 +626,84 @@ def sets_delete(set_id):
 @login_required
 def wa_points():
     return render_template('wa_points.html')
+
+
+@main.route('/history')
+@login_required
+def history():
+    from app import db
+    from models import Swim, Session
+
+    swims = db.session.query(Swim).filter_by(user_id=current_user.id).all()
+    sessions = db.session.query(Session).filter_by(user_id=current_user.id).all()
+
+    entries = sorted(
+        [
+            {
+                'type': 'swim',
+                'id': s.id,
+                'kind': 'PB',
+                'label': s.event,
+                'pool': s.pool or '—',
+                'tag': s.tag or 'practice',
+                'logged_at': s.logged_at,
+            } for s in swims
+        ] + [
+            {
+                'type': 'session',
+                'id': s.id,
+                'kind': s.session_type or 'Session',
+                'label': f"{len(s.get_sets())} set" + ('s' if len(s.get_sets()) != 1 else '') if s.get_sets() else (s.session_type or 'Session'),
+                'pool': s.pool or '—',
+                'distance': s.total_distance(),
+                'logged_at': s.logged_at,
+            } for s in sessions
+        ],
+        key=lambda x: x['logged_at'],
+        reverse=True,
+    )
+
+    PER_PAGE = 25
+    page = max(1, request.args.get('page', 1, type=int))
+    total_pages = max(1, (len(entries) + PER_PAGE - 1) // PER_PAGE)
+    page = min(page, total_pages)
+    start = (page - 1) * PER_PAGE
+    page_entries = entries[start:start + PER_PAGE]
+
+    return render_template(
+        'history.html',
+        entries=page_entries,
+        page=page,
+        total_pages=total_pages,
+        total_count=len(entries),
+    )
+
+
+@main.route('/history/session/<int:session_id>')
+@login_required
+def history_session(session_id):
+    from app import db
+    from models import Session
+
+    session_log = db.session.query(Session).get(session_id)
+    if not session_log or session_log.user_id != current_user.id:
+        abort(404)
+
+    blocks = session_log.get_sets()
+    sections = []
+    for b in blocks:
+        sec_name = b.get('section', 'Main set')
+        if sections and sections[-1]['name'] == sec_name:
+            sections[-1]['blocks'].append(b)
+            sections[-1]['distance'] += int(b.get('reps', 0)) * int(b.get('dist', 0))
+        else:
+            sections.append({
+                'name': sec_name,
+                'blocks': [b],
+                'distance': int(b.get('reps', 0)) * int(b.get('dist', 0)),
+            })
+
+    return render_template('history_session.html', s=session_log, sections=sections, stroke_labels=STROKE_LABELS)
 
 
 @main.route('/personal-bests')
@@ -851,7 +948,6 @@ def goals_delete(goal_id):
     return redirect(url_for('main.goals'))
 
 
-from flask import abort
 from auth_utils import admin_required
 
 
@@ -874,7 +970,9 @@ def _log_admin_action(action, target_type=None, target_id=None, detail=None):
 @admin_required
 def admin_dashboard():
     from app import db
-    from models import User, Swim, Session, SavedSet, Announcement
+    from models import User, Swim, Session, SavedSet, Announcement, Club
+
+    pending_clubs_count = db.session.query(Club).filter_by(status='pending').count()
 
     total_users = db.session.query(User).count()
     verified_users = db.session.query(User).filter_by(is_verified=True).count()
@@ -924,6 +1022,7 @@ def admin_dashboard():
         weekly_signups=weekly_signups,
         max_week_signups=max_week_signups,
         site_announcement=site_announcement,
+        pending_clubs_count=pending_clubs_count,
     )
 
 
@@ -1003,6 +1102,52 @@ def admin_audit():
     )
     admins = {u.id: u.username for u in db.session.query(User).all()}
     return render_template('admin_audit.html', logs=logs, admins=admins)
+
+
+@main.route('/admin/clubs')
+@login_required
+@admin_required
+def admin_clubs():
+    from app import db
+    from models import Club, User
+
+    clubs = db.session.query(Club).order_by(Club.created_at.desc()).all()
+    owners = {u.id: u.username for u in db.session.query(User).all()}
+    return render_template('admin_clubs.html', clubs=clubs, owners=owners)
+
+
+@main.route('/admin/clubs/<int:club_id>/approve', methods=['POST'])
+@login_required
+@admin_required
+def admin_clubs_approve(club_id):
+    from app import db
+    from models import Club
+
+    club = db.session.query(Club).get(club_id)
+    if club:
+        club.status = 'active'
+        club.approved_at = datetime.utcnow()
+        db.session.commit()
+        _log_admin_action('approve_club', 'Club', club.id, club.name)
+        flash(f'"{club.name}" approved.', 'success')
+    return redirect(url_for('main.admin_clubs'))
+
+
+@main.route('/admin/clubs/<int:club_id>/reject', methods=['POST'])
+@login_required
+@admin_required
+def admin_clubs_reject(club_id):
+    from app import db
+    from models import Club
+
+    club = db.session.query(Club).get(club_id)
+    if club:
+        name = club.name
+        db.session.delete(club)
+        db.session.commit()
+        _log_admin_action('reject_club', 'Club', club_id, name)
+        flash(f'"{name}" rejected and removed.', 'success')
+    return redirect(url_for('main.admin_clubs'))
 
 
 @main.route('/admin/standards')

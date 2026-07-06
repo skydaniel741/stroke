@@ -126,6 +126,45 @@ class Goal(db.Model):
             return None
 
 
+class AthleteProfile(db.Model):
+    """The Solo-tier onboarding questionnaire answers plus the AI-generated
+    training program built from them. One row per user -- redoing the
+    questionnaire overwrites it (see routes_solo.solo_onboarding)."""
+    __tablename__ = 'athlete_profile'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    level = db.Column(db.String(30))  # Beginner/Intermediate/Advanced/Competitive
+    age = db.Column(db.Integer)
+    training_days_per_week = db.Column(db.Integer)
+    fitness_ability = db.Column(db.String(30))  # self-rated: Low/Moderate/Good/High
+    primary_stroke = db.Column(db.String(20))
+    main_goal = db.Column(db.Text)
+    program_json = db.Column(db.Text)  # AI-generated program, see ai_utils.generate_training_program
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def get_program(self):
+        try:
+            return json.loads(self.program_json or '{}')
+        except (ValueError, TypeError):
+            return {}
+
+
+class CheckIn(db.Model):
+    """A swimmer's periodic (typically daily) reflection: how training felt
+    and what could improve, plus an AI-generated insight in response."""
+    __tablename__ = 'check_in'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    checkin_date = db.Column(db.Date, nullable=False)
+    feeling_rating = db.Column(db.Integer)  # 1-5
+    notes = db.Column(db.Text)
+    ai_insight = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Standard(db.Model):
     """A public qualifying-standard reference time, e.g. a NAG cut or a
     club/regional qualifying time. Admin-managed. Used both for free-tier
@@ -199,12 +238,19 @@ class TrainingProgram(db.Model):
 
 
 class Club(db.Model):
-    """Groups multiple squads under one club-level owner (multi-squad admin view)."""
+    """Groups multiple squads under one club-level owner (multi-squad admin view).
+    A coach's first club is auto-active; any club after that needs admin approval
+    (status='pending') before the coach can use it -- see routes_coach.club_create."""
     __tablename__ = 'club'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    age_range = db.Column(db.String(50))
+    contact_email = db.Column(db.String(150))
+    newsletter_url = db.Column(db.String(255))
+    status = db.Column(db.String(20), default='active')  # 'active' or 'pending'
+    approved_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     squads = db.relationship('Squad', backref='club', lazy=True)
@@ -286,6 +332,21 @@ class StatusFlag(db.Model):
     note = db.Column(db.Text)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+
+class SquadEvent(db.Model):
+    """A scheduled practice/meet/event on a squad's coach-facing calendar."""
+    __tablename__ = 'squad_event'
+
+    id = db.Column(db.Integer, primary_key=True)
+    squad_id = db.Column(db.Integer, db.ForeignKey('squad.id'), nullable=False)
+    title = db.Column(db.String(150), nullable=False)
+    event_date = db.Column(db.Date, nullable=False)
+    event_time = db.Column(db.String(20))  # free text, e.g. '6:00 AM'
+    event_type = db.Column(db.String(20), default='practice')  # practice/meet/other
+    notes = db.Column(db.Text)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class SavedSet(db.Model):

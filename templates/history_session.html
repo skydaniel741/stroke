@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ s.session_type or 'Session' }} — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sets.css') }}">
+</head>
+<body>
+
+<nav class="sets-nav no-print">
+  <a href="/history" class="sets-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Training history
+  </a>
+  <a href="/" class="sets-nav-logo">STROKE</a>
+  <button class="sets-print-btn" onclick="window.print()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+    Print
+  </button>
+</nav>
+
+<div class="sets-wrap set-detail-wrap">
+
+  <h1 class="set-detail-h1 no-print">{{ s.session_type or 'Training session' }}</h1>
+  <p class="set-detail-desc no-print">{{ s.logged_at.strftime('%A %d %B %Y') }}</p>
+
+  {% if s.notes %}
+  <p class="set-detail-desc no-print">"{{ s.notes }}"</p>
+  {% endif %}
+
+  <div class="set-stat-row no-print">
+    <div class="set-stat">
+      <span class="set-stat-val">{{ s.total_distance() }}<span class="set-stat-unit">m</span></span>
+      <span class="set-stat-label">Total distance</span>
+    </div>
+    <div class="set-stat">
+      <span class="set-stat-val">{{ s.pool }}</span>
+      <span class="set-stat-label">Pool</span>
+    </div>
+    <div class="set-stat">
+      <span class="set-stat-val">{{ sections|length }}</span>
+      <span class="set-stat-label">Section{{ 's' if sections|length != 1 else '' }}</span>
+    </div>
+  </div>
+
+  <div class="no-print">
+    {% for sec in sections %}
+    <div class="set-section">
+      <div class="set-section-head">
+        <span class="set-section-name">{{ sec.name }}</span>
+        <span class="set-section-dist">{{ sec.distance }}m</span>
+      </div>
+      <div class="set-block-list">
+        {% for b in sec.blocks %}
+        <div class="set-block">
+          <div class="set-block-num">{{ loop.index }}</div>
+          <div class="set-block-body">
+            <p class="set-block-main">{{ b.reps }} <span class="set-block-x">×</span> {{ b.dist }}<span class="set-block-unit">m</span> <span class="set-block-stroke-inline">{{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}</span></p>
+            {% if b.note %}<span class="set-block-note">{{ b.note }}</span>{% endif %}
+          </div>
+          <div class="set-block-rest">
+            {% if b.rest and b.rest not in ['0', '0:00'] %}
+            <span class="set-block-rest-label">Rest</span>
+            <span class="set-block-rest-val">{{ b.rest }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="sets-empty">This session has no sets recorded.</div>
+    {% endfor %}
+  </div>
+
+  <div class="set-detail-actions no-print">
+    <a href="/log?use_session={{ s.id }}" class="set-use-btn">Repeat this session</a>
+    <button class="set-print-btn-secondary" onclick="window.print()">Print this session</button>
+  </div>
+
+  <!-- ═══ PRINT-ONLY SHEET ═══ -->
+  <div class="print-only print-sheet">
+    <div class="print-head">
+      <p class="print-brand">STROKE</p>
+      <p class="print-brand-sub">Training history</p>
+    </div>
+
+    <p class="print-title">{{ s.session_type or 'Training session' }}</p>
+    <p class="print-meta">{{ s.logged_at.strftime('%d %b %Y') }} &nbsp;·&nbsp; {{ s.pool }} pool &nbsp;·&nbsp; {{ s.total_distance() }}m total</p>
+
+    {% if s.notes %}
+    <p class="print-desc">"{{ s.notes }}"</p>
+    {% endif %}
+
+    {% for sec in sections %}
+    <div class="print-section">
+      <p class="print-section-head">{{ sec.name }} <span class="print-section-dist">— {{ sec.distance }}m</span></p>
+      {% for b in sec.blocks %}
+      <div class="print-line">
+        <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">@ {{ b.rest }} rest</span>{% endif %}</p>
+        {% if b.note %}<p class="print-line-note">{{ b.note }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    <p class="print-footer">Printed from STROKE — the simpler swimming logbook</p>
+  </div>
+</div>
+
+</body>
+</html>

@@ -215,3 +215,150 @@ def extract_set_from_image(image_bytes, api_key, model):
     session_type = (data.get('session_type') or 'Training').strip() or 'Training'
 
     return {'ok': True, 'blocks': blocks, 'pool': pool, 'session_type': session_type}
+
+
+# ============================================================
+# SOLO-TIER AI COACHING: onboarding -> program, and daily check-ins
+# ============================================================
+
+PROGRAM_TOOL_SCHEMA = {
+    "name": "create_training_program",
+    "description": "Build a personalized weekly swim training program from a swimmer's onboarding answers.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "overview": {
+                "type": "string",
+                "description": (
+                    "2-4 sentence summary of the training approach for this swimmer specifically -- "
+                    "reference their level, goal and training frequency so it clearly isn't generic."
+                ),
+            },
+            "sessions": {
+                "type": "array",
+                "description": "Exactly one entry per training day they said they can train each week.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "day_label": {"type": "string", "description": "e.g. 'Session 1', 'Session 2'."},
+                        "focus": {"type": "string", "description": "e.g. 'Aerobic base', 'Speed & technique', 'Recovery'."},
+                        "summary": {
+                            "type": "string",
+                            "description": (
+                                "3-5 sentences describing what this session should cover: rough total distance, "
+                                "stroke/drill emphasis, and effort level, all pitched at this swimmer's level."
+                            ),
+                        },
+                    },
+                    "required": ["day_label", "focus", "summary"],
+                },
+            },
+            "progression_tips": {
+                "type": "string",
+                "description": "2-3 sentences on how to progress this program over the coming weeks as they adapt.",
+            },
+            "insights": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "4-6 specific, personalized coaching insights -- things this exact swimmer should know or "
+                    "watch for given their age, level, goal and fitness ability. Avoid generic filler; make each "
+                    "one clearly tied to something they told you."
+                ),
+            },
+        },
+        "required": ["overview", "sessions", "insights"],
+    },
+}
+
+
+def generate_training_program(profile, api_key, model):
+    """Call Claude to turn a swimmer's onboarding answers into a structured
+    weekly program. `profile` is an AthleteProfile instance. Returns
+    {'ok': True, 'program': {...}} or {'ok': False, 'error': '...'}."""
+    prompt = (
+        "You are an experienced swim coach building a personalized training program. "
+        "Here is what the swimmer told you about themselves:\n\n"
+        f"- Level: {profile.level or 'not specified'}\n"
+        f"- Age: {profile.age or 'not specified'}\n"
+        f"- Can train {profile.training_days_per_week or 'an unspecified number of'} days per week\n"
+        f"- Self-rated fitness ability: {profile.fitness_ability or 'not specified'}\n"
+        f"- Primary/favourite stroke: {profile.primary_stroke or 'not specified'}\n"
+        f"- Main goal: {profile.main_goal or 'not specified'}\n\n"
+        "Call the create_training_program tool with a program tailored to exactly this swimmer. "
+        "Create one session per training day they specified. Go heavy on the insights -- that's the "
+        "most valuable part for them."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=2048,
+            tools=[PROGRAM_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "create_training_program"},
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception:
+        return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input:
+        return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
+
+    return {'ok': True, 'program': tool_use.input}
+
+
+INSIGHT_TOOL_SCHEMA = {
+    "name": "give_checkin_insight",
+    "description": "Respond to a swimmer's daily training check-in with a short, specific insight.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "insight": {
+                "type": "string",
+                "description": (
+                    "2-4 sentences responding directly to how they say they felt and what they wrote. "
+                    "Be specific and encouraging but honest -- reference their actual words and, if a recent "
+                    "trend is visible across their check-ins, mention it. No generic platitudes."
+                ),
+            },
+        },
+        "required": ["insight"],
+    },
+}
+
+
+def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, api_key, model):
+    """Call Claude to respond to a single check-in with a short personalized insight.
+    `recent_checkins` is a list of {'date', 'feeling_rating', 'notes'} dicts, most recent
+    last, excluding the one just submitted. Returns a plain string insight, or a
+    friendly fallback string on any failure -- never raises."""
+    history_lines = "\n".join(
+        f"- {c['date']}: felt {c['feeling_rating']}/5 — \"{c['notes']}\"" for c in recent_checkins
+    ) or "No previous check-ins."
+
+    prompt = (
+        "You are a swim coach reviewing a swimmer's daily training check-in.\n\n"
+        f"Swimmer level: {profile.level or 'not specified'}, goal: {profile.main_goal or 'not specified'}.\n\n"
+        f"Recent check-in history:\n{history_lines}\n\n"
+        f"Today's check-in: felt {feeling_rating}/5 — \"{notes}\"\n\n"
+        "Call the give_checkin_insight tool with your response."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=512,
+            tools=[INSIGHT_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "give_checkin_insight"},
+            messages=[{"role": "user", "content": prompt}],
+        )
+        tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+        if tool_use and tool_use.input and tool_use.input.get('insight'):
+            return tool_use.input['insight']
+    except Exception:
+        pass
+
+    return "Logged — keep it up. Come back tomorrow and check in again to start building a trend I can learn from."

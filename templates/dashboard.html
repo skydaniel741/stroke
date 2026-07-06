@@ -11,7 +11,7 @@
 </head>
 <body>
 
-{% set is_solo = current_user.plan in ('solo', 'coach') or current_user.is_admin %}
+{% set is_solo = current_user.plan == 'solo' or current_user.is_admin %}
 
 <div class="app-container">
 
@@ -34,8 +34,23 @@
       </div>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
     {% if site_announcement %}
     <div class="site-announce-banner">📣 {{ site_announcement.message }}</div>
+    {% endif %}
+
+    {% if needs_ai_onboarding %}
+    <a href="/solo/onboarding" class="ai-onboard-banner">
+      <span>✨ Set up your personalized AI training program — a few questions and it's ready.</span>
+      <span class="ai-onboard-banner-arrow">→</span>
+    </a>
     {% endif %}
 
     {% if show_rest_nudge %}
@@ -141,7 +156,7 @@
         <button class="mobile-tab-btn" data-tab-target="panel-sessions">Recent sessions</button>
       </div>
       <div class="panel mobile-tab-panel active" id="panel-pb">
-        <div class="panel-label">Personal bests</div>
+        <div class="panel-label">Personal bests {% if personal_bests %}<a href="/personal-bests" class="panel-link">View all</a>{% endif %}</div>
         {% if personal_bests %}
           {% for pb in personal_bests %}
             <div class="session-row">
@@ -157,14 +172,22 @@
       </div>
 
       <div class="panel mobile-tab-panel" id="panel-sessions">
-        <div class="panel-label">Recent sessions</div>
+        <div class="panel-label">Recent sessions {% if recent_activity %}<a href="/history" class="panel-link">View all</a>{% endif %}</div>
         {% if recent_activity %}
           {% for a in recent_activity %}
+            {% if a.type == 'session' %}
+            <a href="/history/session/{{ a.id }}" class="session-row session-row-link">
+              <span class="session-row-main">{{ a.kind }} — {{ a.label }}</span>
+              <span class="session-row-tag">{{ a.pool }}</span>
+              <span class="session-row-time">{{ a.logged_at.strftime('%d %b') }}</span>
+            </a>
+            {% else %}
             <div class="session-row">
               <span class="session-row-main">{{ a.kind }} — {{ a.label }}</span>
               <span class="session-row-tag">{{ a.pool }}</span>
               <span class="session-row-time">{{ a.logged_at.strftime('%d %b') }}</span>
             </div>
+            {% endif %}
           {% endfor %}
         {% else %}
           <p class="panel-note">No sessions yet. Log your first swim to see it here.</p>
@@ -290,12 +313,26 @@
         <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg></span>
         Personal bests
       </a>
+      <a href="/history" class="drawer-link {{ 'active' if request.path == '/history' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
+        Training history
+      </a>
       <a href="/goals" class="drawer-link {{ 'active' if request.path == '/goals' else '' }}">
         <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg></span>
         Goals
       </a>
 
       <div class="drawer-section-divider"><span>Solo</span></div>
+      <a href="{{ ('/solo/program' if is_solo else '#') }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/program' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"></path></svg></span>
+        AI Program
+        {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
+      </a>
+      <a href="{{ '/solo/checkin' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/checkin' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
+        Daily check-in
+        {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
+      </a>
       <a href="{{ '/solo/dryland' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/dryland' else '' }}">
         <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M4 6.5l1-3h14l1 3M4 17.5l1 3h14l1-3"></path></svg></span>
         Dryland

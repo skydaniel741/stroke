@@ -61,6 +61,7 @@
   <span class="adm-logo">STROKE Admin</span>
   <div>
     <a href="/admin">Overview</a>
+    <a href="/admin/clubs">Clubs</a>
     <a href="/admin/sets">Swim sets</a>
     <a href="/admin/standards">Standards</a>
     <a href="/admin/programs">Programs</a>
@@ -80,6 +81,13 @@
       {% endfor %}
     {% endif %}
   {% endwith %}
+
+  {% if pending_clubs_count %}
+  <div class="alert" style="background:#fff4e0;color:#7a4b00;border:1px solid #a86400;">
+    ⏳ {{ pending_clubs_count }} club{{ 's' if pending_clubs_count != 1 else '' }} waiting on approval.
+    <a href="/admin/clubs" style="color:#7a4b00;font-weight:800;">Review now →</a>
+  </div>
+  {% endif %}
 
   <div class="adm-stats">
     <div class="adm-stat"><div class="adm-stat-num">{{ total_users }}</div><div class="adm-stat-lbl">Total users</div></div>

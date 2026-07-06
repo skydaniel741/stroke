@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily check-in — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  .ci-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .ci-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
+  .ci-nav-logo{font-family:'Antonio',sans-serif;font-size:20px;margin-left:auto;color:#111;text-decoration:none;}
+  .ci-wrap{max-width:560px;margin:0 auto;padding:16px 24px 90px;}
+  .ci-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
+  .ci-h1{font-family:'Antonio',sans-serif;font-size:32px;margin:0 0 8px;}
+  .ci-sub{color:#666;font-size:14px;margin:0 0 24px;}
+
+  .ci-scale{display:flex;gap:8px;margin-bottom:20px;}
+  .ci-scale-opt{flex:1;padding:14px 4px;border:2.5px solid #111;border-radius:12px;text-align:center;cursor:pointer;font-weight:800;background:#fff;}
+  .ci-scale-opt.selected{background:#ccccff;box-shadow:2px 2px 0 #111;}
+  .ci-scale-opt-emoji{display:block;font-size:20px;margin-bottom:4px;}
+  .ci-scale-opt-label{display:block;font-size:9px;text-transform:uppercase;color:#777;}
+
+  .ci-field textarea{width:100%;padding:12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;min-height:90px;resize:vertical;box-sizing:border-box;}
+  .ci-btn{width:100%;padding:15px;background:#ccccff;border:2.5px solid #111;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;margin-top:14px;}
+
+  .ci-today-card{border:2.5px solid #111;border-radius:14px;padding:18px;background:#fff;margin-bottom:28px;}
+  .ci-today-rating{font-family:'Antonio',sans-serif;font-size:24px;margin-bottom:8px;}
+  .ci-today-notes{font-size:13px;color:#555;font-style:italic;margin-bottom:12px;}
+  .ci-insight{background:#f3f3ff;border:2px solid #ccccff;border-radius:12px;padding:12px 14px;font-size:13px;color:#333;line-height:1.5;}
+  .ci-insight-label{font-size:10px;font-weight:800;text-transform:uppercase;color:#8f8ff0;margin-bottom:6px;}
+
+  .ci-history-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;}
+  .ci-history-date{font-family:'Antonio',sans-serif;font-weight:700;font-size:13px;min-width:52px;}
+  .ci-history-rating{font-size:11px;font-weight:800;background:#f3f3ff;color:#4b52c4;padding:3px 8px;border-radius:20px;flex-shrink:0;}
+  .ci-history-notes{flex:1;font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<nav class="ci-nav">
+  <a href="/dashboard" class="ci-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/" class="ci-nav-logo">STROKE</a>
+</nav>
+
+<div class="ci-wrap">
+  <p class="ci-eyebrow">Daily check-in</p>
+  <h1 class="ci-h1">How did training go?</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% if todays_checkin %}
+    <div class="ci-today-card">
+      <div class="ci-today-rating">{{ todays_checkin.feeling_rating }}/5</div>
+      {% if todays_checkin.notes %}<p class="ci-today-notes">"{{ todays_checkin.notes }}"</p>{% endif %}
+      {% if todays_checkin.ai_insight %}
+      <div class="ci-insight">
+        <div class="ci-insight-label">Coach's insight</div>
+        {{ todays_checkin.ai_insight }}
+      </div>
+      {% endif %}
+    </div>
+    <p class="ci-sub">You've already checked in today — come back tomorrow, or update it below.</p>
+  {% else %}
+    <p class="ci-sub">Rate how it felt and jot down what could've gone better — the AI will respond with something specific to you.</p>
+  {% endif %}
+
+  <form method="POST" action="/solo/checkin" id="checkinForm">
+    <input type="hidden" name="feeling_rating" id="feelingRatingInput" value="{{ todays_checkin.feeling_rating if todays_checkin else '' }}">
+    <div class="ci-scale" id="feelingScale">
+      {% for n, emoji, label in [(1,'😫','Rough'), (2,'😕','Meh'), (3,'🙂','OK'), (4,'😃','Good'), (5,'🔥','Great')] %}
+      <div class="ci-scale-opt {{ 'selected' if todays_checkin and todays_checkin.feeling_rating == n }}" data-val="{{ n }}">
+        <span class="ci-scale-opt-emoji">{{ emoji }}</span>
+        <span class="ci-scale-opt-label">{{ label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="ci-field">
+      <textarea name="notes" placeholder="What could have gone better? How did it feel?">{{ todays_checkin.notes if todays_checkin else '' }}</textarea>
+    </div>
+
+    <button type="submit" class="ci-btn" id="checkinSubmit">{{ 'Update check-in' if todays_checkin else 'Save check-in' }}</button>
+  </form>
+
+  {% if history %}
+  <div class="ci-eyebrow" style="margin-top:32px">Recent check-ins</div>
+  {% for c in history %}
+  <div class="ci-history-row">
+    <span class="ci-history-date">{{ c.checkin_date.strftime('%d %b') }}</span>
+    <span class="ci-history-rating">{{ c.feeling_rating }}/5</span>
+    <span class="ci-history-notes">{{ c.notes or '—' }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<script>
+  document.querySelectorAll('.ci-scale-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.ci-scale-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      document.getElementById('feelingRatingInput').value = opt.dataset.val;
+    });
+  });
+
+  document.getElementById('checkinForm').addEventListener('submit', function(e){
+    if (!document.getElementById('feelingRatingInput').value) {
+      e.preventDefault();
+      alert('Pick how you felt first.');
+      return;
+    }
+    const btn = document.getElementById('checkinSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+  });
+</script>
+
+</body>
+</html>

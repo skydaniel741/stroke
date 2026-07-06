@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build your program — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  .ob-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .ob-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
+  .ob-nav-logo{font-family:'Antonio',sans-serif;font-size:20px;margin-left:auto;color:#111;text-decoration:none;}
+  .ob-wrap{max-width:560px;margin:0 auto;padding:16px 24px 90px;}
+  .ob-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
+  .ob-h1{font-family:'Antonio',sans-serif;font-size:32px;margin:0 0 8px;}
+  .ob-sub{color:#666;font-size:14px;margin:0 0 28px;line-height:1.5;}
+
+  .ob-field{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
+  .ob-field label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#777;}
+  .ob-field select, .ob-field input, .ob-field textarea{padding:12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;background:#fff;}
+  .ob-field textarea{min-height:80px;resize:vertical;}
+  .ob-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+  .ob-btn{width:100%;padding:15px;background:#ccccff;border:2.5px solid #111;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;margin-top:6px;}
+  .ob-btn:disabled{opacity:.6;cursor:wait;}
+  .ob-btn-sub{text-align:center;font-size:12px;color:#999;margin-top:10px;}
+</style>
+</head>
+<body>
+
+<nav class="ob-nav">
+  <a href="/dashboard" class="ob-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/" class="ob-nav-logo">STROKE</a>
+</nav>
+
+<div class="ob-wrap">
+  <p class="ob-eyebrow">Solo · AI Coaching</p>
+  <h1 class="ob-h1">{{ 'Rebuild your program' if profile else "Let's build your program" }}</h1>
+  <p class="ob-sub">Answer a few questions and the AI will write a training program tailored to you — a weekly structure, a progression plan, and coaching insights specific to your answers.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" action="/solo/onboarding" id="onboardingForm">
+    <div class="ob-field">
+      <label>What's your level?</label>
+      <select name="level" required>
+        <option value="Beginner" {{ 'selected' if profile and profile.level=='Beginner' }}>Beginner — still building comfort and technique</option>
+        <option value="Intermediate" {{ 'selected' if profile and profile.level=='Intermediate' }}>Intermediate — solid technique, building fitness</option>
+        <option value="Advanced" {{ 'selected' if profile and profile.level=='Advanced' }}>Advanced — trains regularly, chasing times</option>
+        <option value="Competitive" {{ 'selected' if profile and profile.level=='Competitive' }}>Competitive — races and trains seriously</option>
+      </select>
+    </div>
+
+    <div class="ob-grid">
+      <div class="ob-field">
+        <label>Age</label>
+        <input type="number" name="age" min="5" max="99" value="{{ profile.age if profile else '' }}" required>
+      </div>
+      <div class="ob-field">
+        <label>Days per week</label>
+        <select name="training_days_per_week" required>
+          {% for n in range(1, 8) %}
+          <option value="{{ n }}" {{ 'selected' if profile and profile.training_days_per_week==n }}>{{ n }} day{{ 's' if n != 1 else '' }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="ob-field">
+      <label>How's your fitness right now?</label>
+      <select name="fitness_ability" required>
+        <option value="Low" {{ 'selected' if profile and profile.fitness_ability=='Low' }}>Low — coming back from a break, or just starting</option>
+        <option value="Moderate" {{ 'selected' if profile and profile.fitness_ability=='Moderate' }}>Moderate — training somewhat consistently</option>
+        <option value="Good" {{ 'selected' if profile and profile.fitness_ability=='Good' }}>Good — solid aerobic base</option>
+        <option value="High" {{ 'selected' if profile and profile.fitness_ability=='High' }}>High — very fit, high training load</option>
+      </select>
+    </div>
+
+    <div class="ob-field">
+      <label>Favourite / strongest stroke</label>
+      <select name="primary_stroke" required>
+        <option value="Freestyle" {{ 'selected' if profile and profile.primary_stroke=='Freestyle' }}>Freestyle</option>
+        <option value="Backstroke" {{ 'selected' if profile and profile.primary_stroke=='Backstroke' }}>Backstroke</option>
+        <option value="Breaststroke" {{ 'selected' if profile and profile.primary_stroke=='Breaststroke' }}>Breaststroke</option>
+        <option value="Butterfly" {{ 'selected' if profile and profile.primary_stroke=='Butterfly' }}>Butterfly</option>
+        <option value="IM" {{ 'selected' if profile and profile.primary_stroke=='IM' }}>IM / all-rounder</option>
+      </select>
+    </div>
+
+    <div class="ob-field">
+      <label>What's your main goal?</label>
+      <textarea name="main_goal" placeholder="e.g. Break 1:00 for 100m free, swim my first triathlon, just get fitter and more consistent…" required>{{ profile.main_goal if profile else '' }}</textarea>
+    </div>
+
+    <button type="submit" class="ob-btn" id="onboardingSubmit">Generate my program</button>
+    <p class="ob-btn-sub" id="onboardingStatus"></p>
+  </form>
+</div>
+
+<script>
+  document.getElementById('onboardingForm').addEventListener('submit', function(){
+    const btn = document.getElementById('onboardingSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Building your program…';
+    document.getElementById('onboardingStatus').textContent = 'This takes a few seconds — the AI is writing it just for you.';
+  });
+</script>
+
+</body>
+</html>

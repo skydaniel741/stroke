@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your program — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+  .pr-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .pr-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
+  .pr-nav-logo{font-family:'Antonio',sans-serif;font-size:20px;margin-left:auto;color:#111;text-decoration:none;}
+  .pr-wrap{max-width:680px;margin:0 auto;padding:16px 24px 90px;}
+  .pr-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
+  .pr-h1{font-family:'Antonio',sans-serif;font-size:32px;margin:0 0 12px;}
+  .pr-overview{font-size:14px;color:#333;line-height:1.6;margin-bottom:24px;}
+  .pr-meta-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;}
+  .pr-meta-chip{font-size:11px;font-weight:800;text-transform:uppercase;background:#f3f3ff;color:#4b52c4;padding:6px 12px;border-radius:20px;}
+
+  .pr-section-label{font-family:'Antonio',sans-serif;font-size:18px;text-transform:uppercase;letter-spacing:.03em;margin:28px 0 12px;}
+
+  .pr-session{border:2.5px solid #111;border-radius:14px;padding:16px 18px;margin-bottom:12px;background:#fff;}
+  .pr-session-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .pr-session-label{font-weight:800;font-size:13px;}
+  .pr-session-focus{font-size:11px;font-weight:800;text-transform:uppercase;color:#8f8ff0;}
+  .pr-session-summary{font-size:13px;color:#444;line-height:1.5;}
+
+  .pr-progression{background:#f3f3ff;border:2px solid #ccccff;border-radius:14px;padding:16px 18px;font-size:13px;color:#333;line-height:1.5;margin-bottom:12px;}
+
+  .pr-insight{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #eee;}
+  .pr-insight:last-child{border-bottom:none;}
+  .pr-insight-icon{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#111;color:#ccccff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
+  .pr-insight-text{font-size:13px;color:#333;line-height:1.5;}
+
+  .pr-actions{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;}
+  .pr-btn{padding:12px 18px;border:2.5px solid #111;border-radius:10px;font-weight:800;text-transform:uppercase;font-size:12px;text-decoration:none;color:#111;background:#fff;}
+  .pr-btn-primary{background:#ccccff;}
+</style>
+</head>
+<body>
+
+<nav class="pr-nav">
+  <a href="/dashboard" class="pr-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/" class="pr-nav-logo">STROKE</a>
+</nav>
+
+<div class="pr-wrap">
+  <p class="pr-eyebrow">Your AI training program</p>
+  <h1 class="pr-h1">Built for you</h1>
+
+  <div class="pr-meta-row">
+    <span class="pr-meta-chip">{{ profile.level }}</span>
+    <span class="pr-meta-chip">{{ profile.training_days_per_week }} days/week</span>
+    <span class="pr-meta-chip">{{ profile.primary_stroke }}</span>
+  </div>
+
+  <p class="pr-overview">{{ program.overview }}</p>
+
+  {% if program.sessions %}
+  <div class="pr-section-label">Weekly structure</div>
+  {% for s in program.sessions %}
+  <div class="pr-session">
+    <div class="pr-session-head">
+      <span class="pr-session-label">{{ s.day_label }}</span>
+      <span class="pr-session-focus">{{ s.focus }}</span>
+    </div>
+    <p class="pr-session-summary">{{ s.summary }}</p>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if program.progression_tips %}
+  <div class="pr-section-label">Progression</div>
+  <div class="pr-progression">{{ program.progression_tips }}</div>
+  {% endif %}
+
+  {% if program.insights %}
+  <div class="pr-section-label">Coaching insights</div>
+  {% for insight in program.insights %}
+  <div class="pr-insight">
+    <span class="pr-insight-icon">{{ loop.index }}</span>
+    <span class="pr-insight-text">{{ insight }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="pr-actions">
+    <a href="/solo/checkin" class="pr-btn pr-btn-primary">Log today's check-in</a>
+    <a href="/solo/onboarding" class="pr-btn">Rebuild program</a>
+  </div>
+</div>
+
+</body>
+</html>

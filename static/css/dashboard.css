@@ -559,6 +559,33 @@
   color: #111111;
 }
 
+.session-row-link {
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  transition: background 0.15s;
+}
+
+.session-row-link:hover {
+  background: #f7f7fd;
+}
+
+.panel-link {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8f8ff0;
+  text-decoration: none;
+}
+
+.panel-link:hover {
+  color: #4b52c4;
+}
+
 .log-link,
 .log-btn {
   display: inline-flex;
@@ -607,6 +634,33 @@
   font-size: 13px;
   font-weight: 700;
   margin-bottom: 14px;
+}
+
+.ai-onboard-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ccccff;
+  border: 2.5px solid #111111;
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111111;
+  text-decoration: none;
+  margin-bottom: 14px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ai-onboard-banner:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 #111111;
+}
+
+.ai-onboard-banner-arrow {
+  flex-shrink: 0;
+  font-size: 16px;
 }
 
 .rest-nudge-banner {

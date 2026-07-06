@@ -47,6 +47,7 @@
         {% if squad and squad.id == sq.id %}
         <div class="coach-subnav">
           <a href="/coach/squad/{{ sq.id }}" class="coach-subnav-link {{ 'active' if request.path == '/coach/squad/' ~ sq.id|string else '' }}">Roster</a>
+          <a href="/coach/squad/{{ sq.id }}/calendar" class="coach-subnav-link {{ 'active' if request.path.endswith('/calendar') else '' }}">Calendar</a>
           <a href="/coach/squad/{{ sq.id }}/announcements" class="coach-subnav-link {{ 'active' if request.path.endswith('/announcements') else '' }}">Announcements</a>
           <a href="/coach/squad/{{ sq.id }}/report" class="coach-subnav-link {{ 'active' if request.path.endswith('/report') else '' }}">End-of-term report</a>
           <a href="/coach/squad/{{ sq.id }}/billing" class="coach-subnav-link {{ 'active' if request.path.endswith('/billing') else '' }}">Billing estimate</a>
@@ -67,6 +68,10 @@
       <a href="/dashboard" class="coach-exit-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"></path></svg>
         Back to swimmer app
+      </a>
+      <a href="/logout" class="coach-exit-link coach-logout-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        Log out
       </a>
     </div>
   </aside>

@@ -53,17 +53,22 @@ def coach_dashboard():
 @coach_required
 def squad_create():
     from app import db
-    from models import Squad
+    from models import Squad, Club
 
     name = request.form.get('name', '').strip()
     if not name:
         flash('Squad needs a name.', 'error')
         return redirect(url_for('coach.coach_dashboard'))
 
+    club_id = request.form.get('club_id') or None
+    if club_id:
+        club = db.session.query(Club).filter_by(id=club_id, owner_id=current_user.id, status='active').first()
+        club_id = club.id if club else None
+
     squad = Squad(
         name=name,
         coach_id=current_user.id,
-        club_id=request.form.get('club_id') or None,
+        club_id=club_id,
         invite_code=secrets.token_urlsafe(6),
     )
     db.session.add(squad)
@@ -84,9 +89,27 @@ def club_create():
         flash('Club needs a name.', 'error')
         return redirect(url_for('coach.coach_dashboard'))
 
-    club = Club(name=name, owner_id=current_user.id)
+    # A coach's very first club is instantly usable. Any club after that needs
+    # a site admin to approve it before it can hold squads.
+    already_has_club = db.session.query(Club).filter_by(owner_id=current_user.id).count() > 0
+    status = 'pending' if already_has_club else 'active'
+
+    club = Club(
+        name=name,
+        owner_id=current_user.id,
+        age_range=request.form.get('age_range', '').strip(),
+        contact_email=request.form.get('contact_email', '').strip(),
+        newsletter_url=request.form.get('newsletter_url', '').strip(),
+        status=status,
+        approved_at=None if status == 'pending' else datetime.utcnow(),
+    )
     db.session.add(club)
     db.session.commit()
+
+    if status == 'pending':
+        flash(f'Club "{name}" submitted — an admin needs to approve it before you can add squads to it.', 'success')
+        return redirect(url_for('coach.coach_dashboard'))
+
     flash(f'Club "{name}" created.', 'success')
     return redirect(url_for('coach.club_overview', club_id=club.id))
 
@@ -335,6 +358,84 @@ def squad_swimmer_note(squad_id, swimmer_id):
     return redirect(url_for('coach.squad_roster', squad_id=squad.id))
 
 
+@coach.route('/squad/<int:squad_id>/swimmer/<int:swimmer_id>')
+@login_required
+@coach_required
+def squad_swimmer_profile(squad_id, swimmer_id):
+    from app import db
+    from models import SquadMembership, Swim, Session, User, CoachNote, StatusFlag, Standard
+
+    squad = _squad_or_404(squad_id)
+    membership = (
+        db.session.query(SquadMembership)
+        .filter_by(squad_id=squad.id, user_id=swimmer_id)
+        .first()
+    )
+    swimmer = db.session.query(User).get(swimmer_id)
+    if not membership or not swimmer:
+        abort(404)
+
+    swims = db.session.query(Swim).filter_by(user_id=swimmer_id).order_by(Swim.logged_at.desc()).all()
+    sessions = db.session.query(Session).filter_by(user_id=swimmer_id).order_by(Session.logged_at.desc()).all()
+
+    best_by_event = {}
+    for s in swims:
+        secs = s.time_in_seconds()
+        if secs is None:
+            continue
+        current = best_by_event.get(s.event)
+        if current is None or secs < current['secs']:
+            best_by_event[s.event] = {'event': s.event, 'time': s.time, 'pool': s.pool, 'secs': secs}
+    personal_bests = sorted(best_by_event.values(), key=lambda x: x['event'])
+
+    recent_activity = sorted(
+        [
+            {'kind': 'PB', 'label': s.event, 'pool': s.pool or '—', 'logged_at': s.logged_at}
+            for s in swims
+        ] + [
+            {
+                'kind': s.session_type or 'Session',
+                'label': f"{len(s.get_sets())} set" + ('s' if len(s.get_sets()) != 1 else '') if s.get_sets() else (s.session_type or 'Session'),
+                'pool': s.pool or '—',
+                'logged_at': s.logged_at,
+            }
+            for s in sessions
+        ],
+        key=lambda x: x['logged_at'],
+        reverse=True,
+    )[:10]
+
+    standards = db.session.query(Standard).all()
+
+    def _pool_key(p):
+        return '50' if str(p or '25').startswith('50') else '25'
+
+    met_standards = []
+    for st in standards:
+        cutoff = st.cutoff_seconds()
+        best = best_by_event.get(st.event, {}).get('secs')
+        if cutoff is not None and best is not None and _pool_key(st.pool) == '25' and best <= cutoff:
+            met_standards.append(st.name)
+
+    status = db.session.query(StatusFlag).filter_by(squad_id=squad.id, swimmer_id=swimmer_id).first()
+    note_count = db.session.query(CoachNote).filter_by(squad_id=squad.id, swimmer_id=swimmer_id).count()
+    total_distance = sum(s.total_distance() for s in sessions) + sum(s.distance() for s in swims)
+
+    return render_template(
+        'coach_swimmer_profile.html',
+        squad=squad,
+        swimmer=swimmer,
+        membership=membership,
+        personal_bests=personal_bests,
+        recent_activity=recent_activity,
+        met_standards=met_standards,
+        status=status,
+        note_count=note_count,
+        total_distance=total_distance,
+        sessions_count=len(sessions) + len(swims),
+    )
+
+
 @coach.route('/squad/<int:squad_id>/swimmer/<int:swimmer_id>/notes')
 @login_required
 @coach_required
@@ -475,6 +576,128 @@ def squad_billing(squad_id):
         return redirect(url_for('coach.squad_billing', squad_id=squad.id))
 
     return render_template('squad_billing.html', squad=squad)
+
+
+@coach.route('/squad/<int:squad_id>/calendar')
+@login_required
+@coach_required
+def squad_calendar(squad_id):
+    import calendar as cal_module
+    from app import db
+    from models import SquadEvent
+
+    squad = _squad_or_404(squad_id)
+
+    today = datetime.utcnow().date()
+    month_param = request.args.get('month', '')
+    try:
+        year, month = (int(x) for x in month_param.split('-'))
+    except (ValueError, TypeError):
+        year, month = today.year, today.month
+
+    cal = cal_module.Calendar(firstweekday=6)  # Sunday-first
+    weeks = cal.monthdatescalendar(year, month)
+
+    month_start = weeks[0][0]
+    month_end = weeks[-1][-1]
+    events = (
+        db.session.query(SquadEvent)
+        .filter(
+            SquadEvent.squad_id == squad.id,
+            SquadEvent.event_date >= month_start,
+            SquadEvent.event_date <= month_end,
+        )
+        .order_by(SquadEvent.event_time)
+        .all()
+    )
+    events_by_date = {}
+    for e in events:
+        events_by_date.setdefault(e.event_date, []).append(e)
+
+    calendar_weeks = [
+        [{
+            'date': d,
+            'in_month': d.month == month,
+            'is_today': d == today,
+            'events': events_by_date.get(d, []),
+        } for d in week]
+        for week in weeks
+    ]
+
+    prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+    upcoming = (
+        db.session.query(SquadEvent)
+        .filter(SquadEvent.squad_id == squad.id, SquadEvent.event_date >= today)
+        .order_by(SquadEvent.event_date, SquadEvent.event_time)
+        .limit(8)
+        .all()
+    )
+
+    return render_template(
+        'squad_calendar.html',
+        squad=squad,
+        calendar_weeks=calendar_weeks,
+        month_label=f'{cal_module.month_name[month]} {year}',
+        prev_month=f'{prev_month[0]}-{prev_month[1]:02d}',
+        next_month=f'{next_month[0]}-{next_month[1]:02d}',
+        current_month=f'{year}-{month:02d}',
+        upcoming=upcoming,
+        today=today,
+    )
+
+
+@coach.route('/squad/<int:squad_id>/calendar/create', methods=['POST'])
+@login_required
+@coach_required
+def squad_calendar_create(squad_id):
+    from app import db
+    from models import SquadEvent
+
+    squad = _squad_or_404(squad_id)
+
+    title = request.form.get('title', '').strip()
+    date_str = request.form.get('event_date', '').strip()
+    if not title or not date_str:
+        flash('An event needs a title and a date.', 'error')
+        return redirect(url_for('coach.squad_calendar', squad_id=squad.id))
+
+    try:
+        event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        flash('That date didn\'t make sense.', 'error')
+        return redirect(url_for('coach.squad_calendar', squad_id=squad.id))
+
+    db.session.add(SquadEvent(
+        squad_id=squad.id,
+        title=title,
+        event_date=event_date,
+        event_time=request.form.get('event_time', '').strip(),
+        event_type=request.form.get('event_type', 'practice'),
+        notes=request.form.get('notes', '').strip(),
+        created_by=current_user.id,
+    ))
+    db.session.commit()
+    flash(f'"{title}" added to the calendar.', 'success')
+    return redirect(url_for('coach.squad_calendar', squad_id=squad.id, month=f'{event_date.year}-{event_date.month:02d}'))
+
+
+@coach.route('/squad/<int:squad_id>/calendar/<int:event_id>/delete', methods=['POST'])
+@login_required
+@coach_required
+def squad_calendar_delete(squad_id, event_id):
+    from app import db
+    from models import SquadEvent
+
+    squad = _squad_or_404(squad_id)
+    event = db.session.query(SquadEvent).get(event_id)
+    month = request.form.get('month', '')
+    if event and event.squad_id == squad.id:
+        db.session.delete(event)
+        db.session.commit()
+        flash('Event removed.', 'success')
+    return redirect(url_for('coach.squad_calendar', squad_id=squad.id, month=month))
 
 
 @coach.route('/club/<int:club_id>')

@@ -259,6 +259,14 @@
   color: #ffffff;
 }
 
+.coach-logout-link {
+  color: #e08a8a;
+}
+
+.coach-logout-link:hover {
+  color: #ff6b6b;
+}
+
 /* ---------- MAIN AREA ---------- */
 .coach-main {
   flex: 1;

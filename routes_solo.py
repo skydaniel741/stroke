@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify, current_app
 from flask_login import login_required, current_user
 
@@ -34,6 +36,152 @@ def scan_whiteboard():
         current_app.config['ANTHROPIC_MODEL'],
     )
     return jsonify(result), (200 if result.get('ok') else 422)
+
+
+@solo.route('/onboarding', methods=['GET', 'POST'])
+@login_required
+@solo_required
+def onboarding():
+    from app import db
+    from models import AthleteProfile
+
+    existing = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+
+    if request.method == 'POST':
+        if not current_app.config.get('ANTHROPIC_API_KEY'):
+            flash("AI program generation isn't set up yet.", 'error')
+            return redirect(url_for('solo.onboarding'))
+
+        try:
+            age = int(request.form.get('age') or 0) or None
+        except ValueError:
+            age = None
+        try:
+            training_days = int(request.form.get('training_days_per_week') or 0) or None
+        except ValueError:
+            training_days = None
+
+        profile = existing or AthleteProfile(user_id=current_user.id)
+        profile.level = request.form.get('level', '').strip()
+        profile.age = age
+        profile.training_days_per_week = training_days
+        profile.fitness_ability = request.form.get('fitness_ability', '').strip()
+        profile.primary_stroke = request.form.get('primary_stroke', '').strip()
+        profile.main_goal = request.form.get('main_goal', '').strip()
+        profile.updated_at = datetime.utcnow()
+
+        from ai_utils import generate_training_program
+        result = generate_training_program(
+            profile,
+            current_app.config['ANTHROPIC_API_KEY'],
+            current_app.config['ANTHROPIC_MODEL'],
+        )
+        if not result.get('ok'):
+            flash(result.get('error', "Couldn't generate a program — try again."), 'error')
+            return redirect(url_for('solo.onboarding'))
+
+        import json
+        profile.program_json = json.dumps(result['program'])
+        if not existing:
+            db.session.add(profile)
+        db.session.commit()
+        flash('Your personalized program is ready.', 'success')
+        return redirect(url_for('solo.program'))
+
+    return render_template('solo_onboarding.html', profile=existing)
+
+
+@solo.route('/program')
+@login_required
+@solo_required
+def program():
+    from app import db
+    from models import AthleteProfile
+
+    profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+    if not profile or not profile.program_json:
+        return redirect(url_for('solo.onboarding'))
+
+    return render_template('solo_program.html', profile=profile, program=profile.get_program())
+
+
+@solo.route('/checkin', methods=['GET', 'POST'])
+@login_required
+@solo_required
+def checkin():
+    from app import db
+    from models import AthleteProfile, CheckIn
+
+    profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+    today = datetime.utcnow().date()
+
+    if request.method == 'POST':
+        if not profile:
+            flash('Set up your training program first.', 'error')
+            return redirect(url_for('solo.onboarding'))
+
+        try:
+            feeling = int(request.form.get('feeling_rating') or 0)
+        except ValueError:
+            feeling = 0
+        notes = request.form.get('notes', '').strip()
+        if feeling < 1 or feeling > 5:
+            flash('Rate how you felt from 1 to 5.', 'error')
+            return redirect(url_for('solo.checkin'))
+
+        recent = (
+            db.session.query(CheckIn)
+            .filter_by(user_id=current_user.id)
+            .order_by(CheckIn.checkin_date.desc())
+            .limit(7)
+            .all()
+        )
+        recent_for_ai = [
+            {'date': c.checkin_date.isoformat(), 'feeling_rating': c.feeling_rating, 'notes': c.notes or ''}
+            for c in reversed(recent)
+        ]
+
+        from ai_utils import generate_checkin_insight
+        insight = generate_checkin_insight(
+            profile, feeling, notes, recent_for_ai,
+            current_app.config['ANTHROPIC_API_KEY'],
+            current_app.config['ANTHROPIC_MODEL'],
+        )
+
+        existing_today = (
+            db.session.query(CheckIn)
+            .filter_by(user_id=current_user.id, checkin_date=today)
+            .first()
+        )
+        entry = existing_today or CheckIn(user_id=current_user.id, checkin_date=today)
+        entry.feeling_rating = feeling
+        entry.notes = notes
+        entry.ai_insight = insight
+        if not existing_today:
+            db.session.add(entry)
+        db.session.commit()
+        flash('Check-in saved.', 'success')
+        return redirect(url_for('solo.checkin'))
+
+    todays_checkin = (
+        db.session.query(CheckIn)
+        .filter_by(user_id=current_user.id, checkin_date=today)
+        .first()
+    )
+    history = (
+        db.session.query(CheckIn)
+        .filter_by(user_id=current_user.id)
+        .order_by(CheckIn.checkin_date.desc())
+        .limit(14)
+        .all()
+    )
+
+    return render_template(
+        'solo_checkin.html',
+        profile=profile,
+        todays_checkin=todays_checkin,
+        history=history,
+    )
 
 
 @solo.route('/dryland')

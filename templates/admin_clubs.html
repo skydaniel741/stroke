@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clubs — STROKE Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  body{font-family:'Inter',sans-serif;background:#f7f7fa;margin:0;color:#111;}
+  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#111;color:#fff;}
+  .adm-nav a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;margin-left:20px;}
+  .adm-logo{font-family:'Antonio',sans-serif;font-size:20px;}
+  .adm-wrap{max-width:1000px;margin:0 auto;padding:32px 20px 60px;}
+  .adm-title{font-family:'Antonio',sans-serif;font-size:30px;margin:0 0 20px;}
+  .adm-panel{background:#fff;border-radius:14px;border:1px solid #eee;overflow:hidden;margin-bottom:24px;}
+  .adm-panel-head{padding:16px 20px;border-bottom:1px solid #eee;font-weight:800;font-size:15px;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:12px 20px;border-bottom:1px solid #eee;}
+  td{padding:12px 20px;border-bottom:1px solid #f2f2f4;font-size:14px;vertical-align:top;}
+  .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge.pending{background:#fff4e0;color:#a86400;}
+  .badge.active{background:#e3f7e9;color:#1a7a3d;}
+  .btn-approve{background:#1a7a3d;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:12px;}
+  .btn-approve:hover{background:#145c2e;}
+  .btn-delete{background:#ff6b6b;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:12px;}
+  .btn-delete:hover{background:#d63031;}
+  .row-actions{display:flex;gap:8px;}
+  .row-actions form{display:inline;}
+  .empty-state{text-align:center;padding:40px;color:#888;font-size:14px;}
+  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;}
+  .alert-success{background:#e3f7e9;color:#1a7a3d;border:1px solid #1a7a3d;}
+  .alert-error{background:#fbe9e9;color:#b23b3b;border:1px solid #b23b3b;}
+  .club-meta{font-size:11px;color:#999;margin-top:2px;}
+</style>
+</head>
+<body>
+
+<nav class="adm-nav">
+  <span class="adm-logo">STROKE Admin</span>
+  <div>
+    <a href="/admin">Overview</a>
+    <a href="/admin/clubs">Clubs</a>
+    <a href="/admin/sets">Swim sets</a>
+    <a href="/admin/standards">Standards</a>
+    <a href="/admin/programs">Programs</a>
+    <a href="/admin/audit">Audit log</a>
+    <a href="/dashboard">Back to app</a>
+    <a href="/logout">Log out</a>
+  </div>
+</nav>
+
+<div class="adm-wrap">
+  <p class="adm-title">Clubs</p>
+  <p style="color:#777;margin-top:-14px">A coach's first club is auto-approved. Any club after that needs your sign-off before they can add squads to it.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">All clubs</div>
+    {% if clubs %}
+    <table>
+      <thead>
+        <tr><th>Club</th><th>Owner</th><th>Age range</th><th>Contact</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for c in clubs %}
+        <tr>
+          <td>
+            {{ c.name }}
+            <div class="club-meta">Created {{ c.created_at.strftime('%d %b %Y') }}</div>
+          </td>
+          <td>{{ owners.get(c.owner_id, '—') }}</td>
+          <td>{{ c.age_range or '—' }}</td>
+          <td>
+            {{ c.contact_email or '—' }}
+            {% if c.newsletter_url %}<div class="club-meta"><a href="{{ c.newsletter_url }}" target="_blank" rel="noopener">Newsletter link</a></div>{% endif %}
+          </td>
+          <td><span class="badge {{ c.status }}">{{ c.status }}</span></td>
+          <td>
+            <div class="row-actions">
+              {% if c.status == 'pending' %}
+              <form method="POST" action="/admin/clubs/{{ c.id }}/approve">
+                <button type="submit" class="btn-approve">Approve</button>
+              </form>
+              <form method="POST" action="/admin/clubs/{{ c.id }}/reject">
+                <button type="submit" class="btn-delete" onclick="return confirm('Reject and delete this club?')">Reject</button>
+              </form>
+              {% else %}
+              —
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No clubs created yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+</body>
+</html>

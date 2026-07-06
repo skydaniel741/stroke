@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training history — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+  .hi-wrap{max-width:760px;margin:0 auto;padding:36px 24px 90px;}
+  .hi-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .hi-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
+  .hi-nav-logo{font-family:'Antonio',sans-serif;font-size:20px;margin-left:auto;color:#111;text-decoration:none;}
+  .hi-h1{font-family:'Antonio',sans-serif;font-size:34px;margin:0 0 4px;}
+  .hi-sub{color:#666;font-size:14px;margin:0 0 24px;}
+
+  .hi-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #eee;text-decoration:none;color:#111;}
+  .hi-row-main{flex:1;min-width:0;}
+  .hi-row-title{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hi-row-sub{font-size:12px;color:#888;margin-top:2px;}
+  .hi-row-tag{flex-shrink:0;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:#f3f3ff;color:#4b52c4;padding:4px 9px;border-radius:20px;}
+  .hi-row-date{flex-shrink:0;font-family:'Antonio',sans-serif;font-weight:700;color:#111;font-size:14px;min-width:56px;text-align:right;}
+  .hi-row-arrow{flex-shrink:0;color:#ccc;font-size:16px;}
+
+  .hi-pager{display:flex;justify-content:space-between;align-items:center;margin-top:24px;}
+  .hi-pager a, .hi-pager span{padding:10px 16px;border:2.5px solid #111;border-radius:10px;font-weight:800;font-size:12px;text-transform:uppercase;text-decoration:none;color:#111;}
+  .hi-pager .disabled{opacity:.35;pointer-events:none;}
+  .hi-pager-label{font-size:12px;color:#888;font-weight:700;}
+</style>
+</head>
+<body>
+
+<nav class="hi-nav">
+  <a href="/dashboard" class="hi-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/" class="hi-nav-logo">STROKE</a>
+</nav>
+
+<div class="hi-wrap">
+  <h1 class="hi-h1">Training history</h1>
+  <p class="hi-sub">Every swim and session you've ever logged, newest first — {{ total_count }} total.</p>
+
+  {% if entries %}
+    {% for e in entries %}
+      {% if e.type == 'session' %}
+      <a href="/history/session/{{ e.id }}" class="hi-row">
+        <div class="hi-row-main">
+          <div class="hi-row-title">{{ e.kind }} — {{ e.label }}</div>
+          <div class="hi-row-sub">{{ e.pool }} pool · {{ e.distance }}m</div>
+        </div>
+        <span class="hi-row-tag">Session</span>
+        <span class="hi-row-date">{{ e.logged_at.strftime('%d %b') }}</span>
+        <span class="hi-row-arrow">→</span>
+      </a>
+      {% else %}
+      <div class="hi-row">
+        <div class="hi-row-main">
+          <div class="hi-row-title">{{ e.label }}</div>
+          <div class="hi-row-sub">{{ e.pool }} pool · {{ e.tag|capitalize }}</div>
+        </div>
+        <span class="hi-row-tag">PB</span>
+        <span class="hi-row-date">{{ e.logged_at.strftime('%d %b') }}</span>
+      </div>
+      {% endif %}
+    {% endfor %}
+
+    <div class="hi-pager">
+      {% if page > 1 %}
+        <a href="/history?page={{ page - 1 }}">← Newer</a>
+      {% else %}
+        <span class="disabled">← Newer</span>
+      {% endif %}
+      <span class="hi-pager-label">Page {{ page }} of {{ total_pages }}</span>
+      {% if page < total_pages %}
+        <a href="/history?page={{ page + 1 }}">Older →</a>
+      {% else %}
+        <span class="disabled">Older →</span>
+      {% endif %}
+    </div>
+  {% else %}
+    <p class="panel-note">Nothing logged yet. <a href="/log">Log your first swim</a> to start building your history.</p>
+  {% endif %}
+</div>
+
+</body>
+</html>

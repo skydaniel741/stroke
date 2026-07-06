@@ -1,0 +1,80 @@
+{% extends 'coach_base.html' %}
+{% block title %}{{ swimmer.username }}{% endblock %}
+{% set header_eyebrow = 'Squad · ' ~ squad.name %}
+{% block page_title %}{{ swimmer.username }}{% endblock %}
+{% block page_sub %}
+  <p class="coach-header-sub">
+    {{ membership.lane_group or 'No lane group' }}
+    {% if status %} · <span class="sq-row-tag {{ status.status }}">{{ status.status }}</span>{% endif %}
+  </p>
+{% endblock %}
+{% block page_actions %}
+  <a href="/coach/squad/{{ squad.id }}/swimmer/{{ swimmer.id }}/notes" class="coach-btn">Notes ({{ note_count }})</a>
+  <a href="/coach/squad/{{ squad.id }}" class="coach-btn">Back to roster</a>
+{% endblock %}
+
+{% block content %}
+  <div class="swp-stats">
+    <div class="swp-stat"><div class="swp-stat-num">{{ (total_distance / 1000)|round(1) if total_distance >= 1000 else total_distance }}{{ 'km' if total_distance >= 1000 else 'm' }}</div><div class="swp-stat-lbl">Total volume</div></div>
+    <div class="swp-stat"><div class="swp-stat-num">{{ sessions_count }}</div><div class="swp-stat-lbl">Sessions logged</div></div>
+    <div class="swp-stat"><div class="swp-stat-num">{{ personal_bests|length }}</div><div class="swp-stat-lbl">Events with a PB</div></div>
+  </div>
+
+  {% if met_standards %}
+  <div class="swp-standards">
+    {% for name in met_standards %}
+    <span class="swp-standard-badge">✓ {{ name }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="swp-grid">
+    <div class="panel">
+      <div class="panel-label">Personal bests</div>
+      {% if personal_bests %}
+        {% for pb in personal_bests %}
+        <div class="session-row">
+          <span class="session-row-main">{{ pb.event }}</span>
+          <span class="session-row-tag">{{ pb.pool }}</span>
+          <span class="session-row-time">{{ pb.time }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="panel-note">No swims logged yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Recent activity</div>
+      {% if recent_activity %}
+        {% for a in recent_activity %}
+        <div class="session-row">
+          <span class="session-row-main">{{ a.kind }} — {{ a.label }}</span>
+          <span class="session-row-tag">{{ a.pool }}</span>
+          <span class="session-row-time">{{ a.logged_at.strftime('%d %b') }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="panel-note">No sessions logged yet.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .swp-stats{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+  .swp-stat{border:2.5px solid #111;border-radius:14px;padding:14px 20px;background:#fff;}
+  .swp-stat-num{font-family:'Antonio',sans-serif;font-size:26px;}
+  .swp-stat-lbl{font-size:11px;color:#777;text-transform:uppercase;font-weight:700;}
+  .swp-standards{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .swp-standard-badge{font-size:12px;font-weight:800;color:#1a7a3d;background:#e3f7e9;border-radius:20px;padding:6px 12px;}
+  .swp-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:760px){.swp-grid{grid-template-columns:1fr;}}
+
+  .sq-row-tag{font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 8px;border-radius:20px;background:#f3f3ff;color:#4b52c4;}
+  .sq-row-tag.available{background:#e3f7e9;color:#1a7a3d;}
+  .sq-row-tag.injured{background:#fbe9e9;color:#b23b3b;}
+  .sq-row-tag.limited{background:#fff4e0;color:#a86400;}
+</style>
+{% endblock %}

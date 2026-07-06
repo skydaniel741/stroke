@@ -13,6 +13,13 @@ NEW_COLUMNS = {
         ("tag", "VARCHAR(10) DEFAULT 'practice'"),
         ("splits", "TEXT"),
     ],
+    'club': [
+        ("age_range", "VARCHAR(50)"),
+        ("contact_email", "VARCHAR(150)"),
+        ("newsletter_url", "VARCHAR(255)"),
+        ("status", "VARCHAR(20) DEFAULT 'active'"),
+        ("approved_at", "DATETIME"),
+    ],
 }
 
 

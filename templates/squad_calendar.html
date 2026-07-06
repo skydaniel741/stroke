@@ -1,0 +1,113 @@
+{% extends 'coach_base.html' %}
+{% block title %}Calendar — {{ squad.name }}{% endblock %}
+{% set header_eyebrow = 'Squad · ' ~ squad.name %}
+{% block page_title %}Calendar{% endblock %}
+{% block page_sub %}<p class="coach-header-sub">Schedule practices, meets and other squad events.</p>{% endblock %}
+
+{% block content %}
+  <div class="panel" style="margin-bottom:24px">
+    <div class="panel-label">Add an event</div>
+    <form class="cal-form" method="POST" action="/coach/squad/{{ squad.id }}/calendar/create">
+      <input type="text" name="title" placeholder="e.g. Saturday morning practice" required>
+      <input type="date" name="event_date" required>
+      <input type="text" name="event_time" placeholder="Time, e.g. 6:00 AM (optional)">
+      <select name="event_type">
+        <option value="practice">Practice</option>
+        <option value="meet">Meet</option>
+        <option value="other">Other</option>
+      </select>
+      <input type="text" name="notes" placeholder="Notes (optional)">
+      <button type="submit">Add event</button>
+    </form>
+  </div>
+
+  <div class="cal-grid-wrap">
+    <div class="cal-nav">
+      <a href="/coach/squad/{{ squad.id }}/calendar?month={{ prev_month }}" class="cal-nav-btn">←</a>
+      <span class="cal-month-label">{{ month_label }}</span>
+      <a href="/coach/squad/{{ squad.id }}/calendar?month={{ next_month }}" class="cal-nav-btn">→</a>
+    </div>
+
+    <div class="cal-weekday-row">
+      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+    </div>
+
+    {% for week in calendar_weeks %}
+    <div class="cal-week-row">
+      {% for day in week %}
+      <div class="cal-day {{ '' if day.in_month else 'cal-day-out' }} {{ 'cal-day-today' if day.is_today else '' }}">
+        <span class="cal-day-num">{{ day.date.day }}</span>
+        {% for e in day.events %}
+        <div class="cal-event cal-event-{{ e.event_type }}" title="{{ e.notes or '' }}">
+          {{ e.event_time + ' ' if e.event_time }}{{ e.title }}
+          <form method="POST" action="/coach/squad/{{ squad.id }}/calendar/{{ e.id }}/delete" class="cal-event-del-form">
+            <input type="hidden" name="month" value="{{ current_month }}">
+            <button type="submit" class="cal-event-del" title="Remove" onclick="return confirm('Remove this event?')">×</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="panel-label" style="margin:24px 0 12px">Upcoming</div>
+  {% if upcoming %}
+    {% for e in upcoming %}
+    <div class="cal-upcoming-row">
+      <span class="cal-upcoming-date">{{ e.event_date.strftime('%d %b') }}</span>
+      <span class="cal-upcoming-title">{{ e.title }}{% if e.event_time %} · {{ e.event_time }}{% endif %}</span>
+      <span class="cal-event-tag cal-event-tag-{{ e.event_type }}">{{ e.event_type }}</span>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="panel-note">Nothing scheduled yet — add an event above.</p>
+  {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cal-form{display:flex;gap:10px;flex-wrap:wrap;}
+  .cal-form input, .cal-form select{padding:10px 14px;border:2.5px solid #111;border-radius:10px;font-size:13px;font-weight:600;}
+  .cal-form button{padding:10px 18px;background:#ccccff;border:2.5px solid #111;border-radius:10px;font-weight:800;text-transform:uppercase;font-size:12px;cursor:pointer;}
+
+  .cal-grid-wrap{border:2.5px solid #111;border-radius:16px;overflow:hidden;background:#fff;}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:2px solid #111;background:#fafafd;}
+  .cal-nav-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:2px solid #111;border-radius:8px;text-decoration:none;color:#111;font-weight:800;}
+  .cal-nav-btn:hover{background:#ccccff;}
+  .cal-month-label{font-family:'Antonio',sans-serif;font-size:18px;text-transform:uppercase;letter-spacing:.03em;}
+
+  .cal-weekday-row{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:2px solid #111;}
+  .cal-weekday-row span{padding:8px 4px;text-align:center;font-size:10px;font-weight:800;text-transform:uppercase;color:#999;}
+
+  .cal-week-row{display:grid;grid-template-columns:repeat(7,1fr);}
+  .cal-day{min-height:84px;padding:6px;border-right:1px solid #eee;border-bottom:1px solid #eee;display:flex;flex-direction:column;gap:3px;}
+  .cal-week-row .cal-day:last-child{border-right:none;}
+  .cal-day-out{background:#fafafa;}
+  .cal-day-out .cal-day-num{color:#ccc;}
+  .cal-day-today{background:#f3f3ff;}
+  .cal-day-num{font-size:12px;font-weight:700;color:#444;}
+  .cal-day-today .cal-day-num{color:#4b52c4;}
+
+  .cal-event{position:relative;font-size:10px;font-weight:700;padding:3px 16px 3px 6px;border-radius:6px;background:#e6e8fb;color:#4b52c4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cal-event-meet{background:#fff4e0;color:#a86400;}
+  .cal-event-other{background:#f0f0f0;color:#555;}
+  .cal-event-del-form{position:absolute;top:0;right:0;height:100%;display:flex;align-items:center;}
+  .cal-event-del{background:none;border:none;cursor:pointer;color:inherit;font-size:12px;font-weight:800;padding:0 5px;line-height:1;}
+  .cal-event-del:hover{color:#b23b3b;}
+
+  .cal-upcoming-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #eee;}
+  .cal-upcoming-date{font-family:'Antonio',sans-serif;font-weight:700;font-size:14px;min-width:56px;}
+  .cal-upcoming-title{flex:1;font-weight:600;font-size:13px;}
+  .cal-event-tag{font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:#e6e8fb;color:#4b52c4;}
+  .cal-event-tag-meet{background:#fff4e0;color:#a86400;}
+  .cal-event-tag-other{background:#f0f0f0;color:#555;}
+
+  @media (max-width: 700px){
+    .cal-day{min-height:60px;}
+    .cal-event{font-size:9px;}
+    .cal-weekday-row span{font-size:9px;}
+  }
+</style>
+{% endblock %}
