@@ -38,3 +38,11 @@ HTML_LENGTH: 2024
 FROM: onboarding@resend.dev
 HTML_LENGTH: 2024
 --------------------------------------------------------------------------------
+[2026-07-05T21:02:54.260111] TO: ['testswimmer@example.com'] SUBJECT: 268550 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 2021
+--------------------------------------------------------------------------------
+[2026-07-05T21:50:53.526151] TO: ['qatester@example.com'] SUBJECT: 846318 is your STROKE verification code
+FROM: onboarding@resend.dev
+HTML_LENGTH: 2018
+--------------------------------------------------------------------------------

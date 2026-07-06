@@ -1,0 +1,34 @@
+{% extends 'coach_base.html' %}
+{% block title %}Billing — {{ squad.name }}{% endblock %}
+{% set header_eyebrow = 'Squad · ' ~ squad.name %}
+{% block page_title %}Billing estimate{% endblock %}
+
+{% block content %}
+  <div class="bl-notice">Estimate only — billing integration coming soon. No card is charged from this page.</div>
+
+  <form method="POST" action="/coach/squad/{{ squad.id }}/billing" class="bl-form">
+    <div class="bl-field">
+      <label>Base fee (per month)</label>
+      <input type="number" step="0.01" name="base_fee" value="{{ squad.base_fee }}">
+    </div>
+    <div class="bl-field">
+      <label>Per-swimmer fee (per month)</label>
+      <input type="number" step="0.01" name="per_swimmer_fee" value="{{ squad.per_swimmer_fee }}">
+    </div>
+    <button type="submit" class="coach-btn coach-btn-primary">Save estimate</button>
+  </form>
+
+  <p class="bl-total">${{ '%.2f'|format(squad.billing_estimate()) }}<span style="font-size:14px;color:#777">/mo</span></p>
+  <p class="panel-note">{{ squad.active_member_count() }} active swimmer{{ 's' if squad.active_member_count() != 1 else '' }} × ${{ squad.per_swimmer_fee }} + ${{ squad.base_fee }} base</p>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .bl-notice{background:#fff4e0;border:1px solid #a86400;border-radius:10px;padding:12px 14px;font-size:12px;color:#7a4b00;margin-bottom:20px;max-width:480px;}
+  .bl-form{max-width:480px;}
+  .bl-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .bl-field label{font-size:12px;font-weight:700;text-transform:uppercase;color:#777;}
+  .bl-field input{padding:10px 12px;border:2px solid #ccccff;background:#fcfcff;border-radius:10px;font-size:14px;}
+  .bl-total{font-family:'Antonio',sans-serif;font-size:36px;margin:20px 0 4px;}
+</style>
+{% endblock %}

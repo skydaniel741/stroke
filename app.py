@@ -16,6 +16,9 @@ def create_app():
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['RESEND_API_KEY'] = os.getenv('RESEND_API_KEY')
+    app.config['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY')
+    app.config['ANTHROPIC_MODEL'] = os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-5')
+    app.config['AI_SCAN_ENABLED'] = bool(os.getenv('ANTHROPIC_API_KEY'))
 
     # Initialize extensions with the app
     db.init_app(app)
@@ -63,12 +66,21 @@ def create_app():
             return db.session.get(User, int(user_id))
 
         from routes import main
+        from routes_solo import solo
+        from routes_coach import coach
         app.register_blueprint(main)
+        app.register_blueprint(solo)
+        app.register_blueprint(coach)
 
         db.create_all()
+
+        from migrate import run_migrations
+        run_migrations(db)
 
     return app
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True, port=int(os.getenv('PORT', 5000)))
+    # host='0.0.0.0' so phones on the same Wi-Fi can reach this dev server --
+    # fine for local testing, don't run debug=True like this outside your own network.
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))

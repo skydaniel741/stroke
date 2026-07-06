@@ -5,3 +5,6 @@ Flask-Login
 Authlib
 python-dotenv
 resend
+anthropic
+Pillow
+pillow-heif

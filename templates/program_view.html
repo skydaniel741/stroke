@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ p.title }} — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sets.css') }}">
+</head>
+<body>
+
+<nav class="sets-nav">
+  <a href="{{ back_url }}" class="sets-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    {{ back_label }}
+  </a>
+  <a href="/" class="sets-nav-logo">STROKE</a>
+  <div class="sets-nav-spacer"></div>
+</nav>
+
+<div class="sets-wrap set-detail-wrap">
+  <span class="set-detail-cat" style="--cat-color:#8f8ff0">{{ p.category }}</span>
+  <h1 class="set-detail-h1">{{ p.title }}</h1>
+  {% if p.description %}<p class="set-detail-desc">{{ p.description }}</p>{% endif %}
+
+  <div class="set-section">
+    <div class="set-block-list">
+      {% for b in p.get_blocks() %}
+      <div class="set-block">
+        <div class="set-block-num">{{ loop.index }}</div>
+        <div class="set-block-body">
+          <p class="set-block-main">{{ b.heading }}{% if b.sets or b.reps %} <span class="set-block-x">·</span> {% if b.sets %}{{ b.sets }} sets{% endif %}{% if b.reps %} × {{ b.reps }}{% endif %}{% endif %}</p>
+          {% if b.body %}<span class="set-block-note">{{ b.body }}</span>{% endif %}
+        </div>
+        <div class="set-block-rest">
+          {% if b.rest %}
+          <span class="set-block-rest-label">Rest</span>
+          <span class="set-block-rest-val">{{ b.rest }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="sets-empty">No content added yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

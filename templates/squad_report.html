@@ -1,0 +1,64 @@
+{% extends 'coach_base.html' %}
+{% block title %}{{ squad.name }} report{% endblock %}
+{% set header_eyebrow = 'Squad · ' ~ squad.name %}
+{% block page_title %}End-of-term report{% endblock %}
+{% block page_sub %}<p class="coach-header-sub">Since {{ since.strftime('%d %b %Y') }} · {{ rows|length }} active swimmer{{ 's' if rows|length != 1 else '' }}</p>{% endblock %}
+{% block page_actions %}
+  <button class="coach-btn coach-btn-primary" onclick="window.print()">Print</button>
+{% endblock %}
+
+{% block content %}
+  <div class="no-print">
+    {% for r in rows %}
+    <div class="rp-swimmer">
+      <div class="rp-swimmer-head">
+        <span class="rp-swimmer-name">{{ r.user.username }}</span>
+        <span class="rp-swimmer-attend">{{ r.attendance }} session{{ 's' if r.attendance != 1 else '' }} logged</span>
+      </div>
+      {% if r.pbs %}
+        {% for pb in r.pbs %}
+        <div class="rp-pb-row">{{ pb.event }} — {{ pb.time }}</div>
+        {% endfor %}
+      {% else %}
+        <div class="rp-pb-row" style="color:#888">No PBs logged this period.</div>
+      {% endif %}
+    </div>
+    {% else %}
+    <p class="panel-note">No active swimmers yet.</p>
+    {% endfor %}
+  </div>
+
+  <!-- ═══ PRINT-ONLY SHEET ═══ -->
+  <div class="print-only print-sheet">
+    <div class="print-head">
+      <p class="print-brand">STROKE</p>
+      <p class="print-brand-sub">End-of-term report</p>
+    </div>
+    <p class="print-title">{{ squad.name }}</p>
+    <p class="print-meta">Since {{ since.strftime('%d %b %Y') }} &nbsp;·&nbsp; {{ rows|length }} active swimmer{{ 's' if rows|length != 1 else '' }}</p>
+
+    {% for r in rows %}
+    <div class="print-section">
+      <p class="print-section-head">{{ r.user.username }} <span class="print-section-dist">— {{ r.attendance }} session{{ 's' if r.attendance != 1 else '' }}</span></p>
+      {% for pb in r.pbs %}
+      <div class="print-line"><p class="print-line-main">{{ pb.event }} — {{ pb.time }}</p></div>
+      {% else %}
+      <div class="print-line"><p class="print-line-note">No PBs logged this period.</p></div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    <p class="print-footer">Printed from STROKE — the simpler swimming logbook</p>
+  </div>
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sets.css') }}">
+<style>
+  .rp-swimmer{margin-top:14px;break-inside:avoid;}
+  .rp-swimmer-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:8px;}
+  .rp-swimmer-name{font-family:'Antonio',sans-serif;font-size:18px;text-transform:uppercase;}
+  .rp-swimmer-attend{font-size:12px;font-weight:700;color:#444;}
+  .rp-pb-row{font-size:13px;padding:3px 0;}
+</style>
+{% endblock %}

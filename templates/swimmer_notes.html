@@ -1,0 +1,32 @@
+{% extends 'coach_base.html' %}
+{% block title %}Notes — {{ swimmer.username }}{% endblock %}
+{% set header_eyebrow = 'Squad · ' ~ squad.name %}
+{% block page_title %}Notes — {{ swimmer.username }}{% endblock %}
+{% block page_sub %}<p class="coach-header-sub">Coach-private. Never shown to the swimmer.</p>{% endblock %}
+
+{% block content %}
+  <form class="sn-form" method="POST" action="/coach/squad/{{ squad.id }}/swimmer/{{ swimmer.id }}/note">
+    <textarea name="note" placeholder="Add a private note…" required></textarea>
+    <button type="submit" class="coach-btn coach-btn-primary">Add</button>
+  </form>
+
+  {% if notes %}
+    {% for n in notes %}
+    <div class="sn-note">
+      <div class="sn-note-date">{{ n.created_at.strftime('%d %b %Y %H:%M') }}</div>
+      <div>{{ n.note }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="panel-note">No notes yet.</p>
+  {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .sn-form{display:flex;gap:10px;margin-bottom:24px;max-width:640px;}
+  .sn-form textarea{flex:1;padding:12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;min-height:60px;}
+  .sn-note{border-bottom:1px solid #eee;padding:14px 0;max-width:640px;}
+  .sn-note-date{font-size:11px;color:#999;font-weight:700;margin-bottom:4px;}
+</style>
+{% endblock %}

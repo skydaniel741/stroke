@@ -511,6 +511,12 @@
   color:#777;
 }
 
+.set-summary-note{
+  font-size:11px;
+  color:#5a5a8a;
+  font-style:italic;
+}
+
 .set-summary-actions{
   display:flex;
   align-items:center;
@@ -680,6 +686,28 @@
   box-shadow:2px 2px 0 #111;
 }
 
+.wizard-q-sub{
+  font-size:11px;
+  color:#8f8ff0;
+  margin-top:4px;
+}
+
+.wizard-q-sub span{
+  color:#aaa;
+  font-weight:600;
+  text-transform:none;
+  letter-spacing:normal;
+}
+
+.wizard-options-sm{
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+}
+
+.wizard-opt-sm{
+  padding:8px 4px;
+  font-size:11px;
+}
+
 .wizard-custom-input{
   width:100%;
   padding:11px 12px;
@@ -827,6 +855,18 @@
   color:#111;
   text-align:right;
   max-width:60%;
+}
+
+.log-tag-row{margin-bottom:16px}
+.log-tag-row .pool-toggle{margin-bottom:0}
+
+.splits-toggle{margin-bottom:16px}
+
+.splits-hint{
+  margin-top:6px;
+  font-size:12px;
+  font-weight:600;
+  color:#6d6d8a;
 }
 
 .save-notes{

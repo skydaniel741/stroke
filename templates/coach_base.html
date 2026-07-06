@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Coach{% endblock %} — STROKE Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coach.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="coach-shell">
+
+  <div class="coach-topbar no-print">
+    <button class="coach-menu-btn" id="coachMenuToggle" aria-label="Open coach menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+    </button>
+    <span class="coach-topbar-logo">STROKE <span>COACH</span></span>
+  </div>
+
+  <div class="coach-sidebar-backdrop no-print" id="coachSidebarBackdrop"></div>
+
+  <aside class="coach-sidebar no-print" id="coachSidebar">
+    <div class="coach-sidebar-head">
+      <a href="/dashboard" class="coach-logo">STROKE</a>
+      <span class="coach-logo-sub">Coach workspace</span>
+    </div>
+
+    <nav class="coach-nav">
+      <p class="coach-nav-lbl">Overview</p>
+      <a href="/coach" class="coach-nav-link {{ 'active' if request.path == '/coach' else '' }}">
+        <span class="coach-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg></span>
+        Squads & Clubs
+      </a>
+
+      {% if nav_squads %}
+      <p class="coach-nav-lbl">Your squads</p>
+      {% for sq in nav_squads %}
+        <a href="/coach/squad/{{ sq.id }}" class="coach-nav-link {{ 'active' if squad and squad.id == sq.id else '' }}">
+          <span class="coach-nav-dot"></span>
+          <span class="coach-nav-link-text">{{ sq.name }}</span>
+        </a>
+        {% if squad and squad.id == sq.id %}
+        <div class="coach-subnav">
+          <a href="/coach/squad/{{ sq.id }}" class="coach-subnav-link {{ 'active' if request.path == '/coach/squad/' ~ sq.id|string else '' }}">Roster</a>
+          <a href="/coach/squad/{{ sq.id }}/announcements" class="coach-subnav-link {{ 'active' if request.path.endswith('/announcements') else '' }}">Announcements</a>
+          <a href="/coach/squad/{{ sq.id }}/report" class="coach-subnav-link {{ 'active' if request.path.endswith('/report') else '' }}">End-of-term report</a>
+          <a href="/coach/squad/{{ sq.id }}/billing" class="coach-subnav-link {{ 'active' if request.path.endswith('/billing') else '' }}">Billing estimate</a>
+        </div>
+        {% endif %}
+      {% endfor %}
+      {% endif %}
+    </nav>
+
+    <div class="coach-sidebar-foot">
+      <div class="coach-user">
+        <div class="coach-user-avatar">{{ current_user.username[0]|upper }}</div>
+        <div class="coach-user-info">
+          <p class="coach-user-name">{{ current_user.username }}</p>
+          <span class="coach-user-tag">Coach</span>
+        </div>
+      </div>
+      <a href="/dashboard" class="coach-exit-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"></path></svg>
+        Back to swimmer app
+      </a>
+    </div>
+  </aside>
+
+  <main class="coach-main">
+    <header class="coach-header no-print">
+      <div>
+        {% if header_eyebrow %}<p class="coach-header-eyebrow">{{ header_eyebrow }}</p>{% endif %}
+        <h1 class="coach-header-title">{% block page_title %}Coach{% endblock %}</h1>
+        {% block page_sub %}{% endblock %}
+      </div>
+      <div class="coach-header-actions">{% block page_actions %}{% endblock %}</div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="coach-flash-wrap no-print">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="coach-content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+</div>
+
+<script>
+  const coachMenuToggle = document.getElementById('coachMenuToggle');
+  const coachSidebar = document.getElementById('coachSidebar');
+  const coachSidebarBackdrop = document.getElementById('coachSidebarBackdrop');
+
+  function openCoachSidebar(){
+    coachSidebar.classList.add('open');
+    coachSidebarBackdrop.classList.add('open');
+  }
+  function closeCoachSidebar(){
+    coachSidebar.classList.remove('open');
+    coachSidebarBackdrop.classList.remove('open');
+  }
+  coachMenuToggle.addEventListener('click', () => {
+    coachSidebar.classList.contains('open') ? closeCoachSidebar() : openCoachSidebar();
+  });
+  coachSidebarBackdrop.addEventListener('click', closeCoachSidebar);
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -197,14 +197,17 @@
     <div class="wizard-step" id="wstep2">
       <p class="wizard-q">What stroke?</p>
       <div class="wizard-options" id="wStroke"></div>
+      <p class="wizard-q wizard-q-sub">Kick, pull or drill? <span>(optional)</span></p>
+      <div class="wizard-options wizard-options-sm" id="wModifier"></div>
     </div>
 
     <div class="wizard-step" id="wstep3">
       <p class="wizard-q">Rest between reps?</p>
       <div class="wizard-options" id="wRest"></div>
       <input class="wizard-custom-input" type="text" id="wRestCustom" placeholder="e.g. 1:15" oninput="wizardCustom('rest', this.value)">
-      <div class="wizard-advanced-toggle" onclick="toggleAdvanced()">+ Add heart rate target (optional)</div>
+      <div class="wizard-advanced-toggle" onclick="toggleAdvanced()">+ Add a note or heart rate target (optional)</div>
       <div class="wizard-advanced-panel" id="advancedPanel">
+        <input class="wizard-custom-input" type="text" id="wNote" placeholder="e.g. descend 1-4, build each 50" oninput="wizardCustom('note', this.value)">
         <input class="wizard-custom-input" type="text" id="wHR" placeholder="e.g. 150bpm" oninput="wizardCustom('hr', this.value)">
       </div>
     </div>
@@ -246,6 +249,22 @@
     <div class="confirm-row"><span class="confirm-key">Date</span><span class="confirm-val" id="cDate">Today</span></div>
   </div>
 
+  <div class="log-tag-row" id="logTagRow">
+    <label class="meta-label">Tag</label>
+    <div class="pool-toggle">
+      <button type="button" class="pool-btn active" id="tagPractice" onclick="setTag('practice')">Practice</button>
+      <button type="button" class="pool-btn" id="tagMeet" onclick="setTag('meet')">Meet</button>
+    </div>
+  </div>
+
+  <div class="splits-toggle" id="splitsToggleWrap">
+    <div class="wizard-advanced-toggle" onclick="toggleSplits()">+ Add 50m splits (optional)</div>
+    <div class="wizard-advanced-panel" id="splitsPanel">
+      <input class="wizard-custom-input" type="text" id="splitsInput" placeholder="e.g. 26.10, 27.80, 28.40, 29.04" oninput="renderSplitsPreview()">
+      <p class="splits-hint" id="splitsPreview"></p>
+    </div>
+  </div>
+
   <textarea class="save-notes" id="sessionNotes" rows="2" placeholder="How did it feel? (optional)"></textarea>
 
   <form method="POST" action="/log" id="logForm">
@@ -256,6 +275,8 @@
     <input type="hidden" name="time" id="f_time">
     <input type="hidden" name="session_data" id="f_session">
     <input type="hidden" name="notes" id="f_notes">
+    <input type="hidden" name="tag" id="f_tag" value="practice">
+    <input type="hidden" name="splits" id="f_splits">
     <button type="button" class="save-btn" onclick="submitLog()">Save swim ✓</button>
   </form>
 
@@ -300,6 +321,22 @@ function loadLibrarySet(preload){
   sessionSets = preload.blocks.map((s,i)=>({id:'set_'+Date.now()+i, ...s}));
   document.getElementById('sessionPool').value = preload.pool;
   document.getElementById('sessionType').value = preload.session_type;
+  goTo(3);
+  renderSetsSummary();
+}
+
+// ─── SCANNED WHITEBOARD (from dashboard photo upload) ───
+function loadScannedBlocks(){
+  const raw = sessionStorage.getItem('scannedSet');
+  sessionStorage.removeItem('scannedSet');
+  if(!raw) return;
+  let scanned;
+  try{ scanned = JSON.parse(raw); }catch(e){ return; }
+  if(!scanned || !scanned.blocks || !scanned.blocks.length) return;
+
+  sessionSets = scanned.blocks.map((s,i)=>({id:'set_'+Date.now()+i, ...s}));
+  document.getElementById('sessionPool').value = scanned.pool || '25m';
+  document.getElementById('sessionType').value = scanned.session_type || 'Training';
   goTo(3);
   renderSetsSummary();
 }
@@ -409,6 +446,32 @@ function getTimeStr(){
 }
 
 // ─── PB CONFIRM ───
+let logTag = 'practice';
+let splitsOpen = false;
+
+function setTag(t){
+  logTag = t;
+  document.getElementById('tagPractice').classList.toggle('active', t==='practice');
+  document.getElementById('tagMeet').classList.toggle('active', t==='meet');
+}
+
+function toggleSplits(){
+  splitsOpen = !splitsOpen;
+  document.getElementById('splitsPanel').classList.toggle('open', splitsOpen);
+}
+
+function renderSplitsPreview(){
+  const parts = parseSplits();
+  document.getElementById('splitsPreview').textContent = parts.length
+    ? parts.length+' split'+(parts.length!==1?'s':'')+' — '+parts.join(', ')
+    : '';
+}
+
+function parseSplits(){
+  const raw = document.getElementById('splitsInput').value;
+  return raw.split(',').map(s=>s.trim()).filter(s=>s.length>0);
+}
+
 function prepPBConfirm(){
   confirmType = 'pb';
   const today = new Date().toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'});
@@ -418,6 +481,8 @@ function prepPBConfirm(){
   document.getElementById('cTime').textContent = getTimeStr();
   document.getElementById('cPool').textContent = pb.pool+'m';
   document.getElementById('cDate').textContent = today;
+  document.getElementById('logTagRow').style.display = '';
+  document.getElementById('splitsToggleWrap').style.display = '';
   goTo(4);
 }
 
@@ -430,20 +495,26 @@ const repsOptions = [1,2,4,6,8,10,12];
 const distOptions = [25,50,100,200,400];
 const strokeOptionsFull = [
   {label:'Freestyle', code:'FR'}, {label:'Fly', code:'FL'}, {label:'Backstroke', code:'BK'},
-  {label:'Breaststroke', code:'BR'}, {label:'IM', code:'IM'}, {label:'Kick', code:'Kick'},
-  {label:'Pull', code:'Pull'}, {label:'Drill', code:'Drill'}
+  {label:'Breaststroke', code:'BR'}, {label:'IM', code:'IM'},
+  // legacy codes kept only so old saved sets (from before Kick/Pull/Drill became a
+  // separate 'modifier' field) still render a sensible label
+  {label:'Kick', code:'Kick'}, {label:'Pull', code:'Pull'}, {label:'Drill', code:'Drill'}
+];
+const modifierOptions = [
+  {label:'None', code:''}, {label:'Kick', code:'Kick'}, {label:'Pull', code:'Pull'}, {label:'Drill', code:'Drill'}
 ];
 const restOptions = ['None','0:15','0:30','0:45','1:00','1:30','2:00'];
 
 function openWizard(setToEdit){
   wizardStep = 0;
-  wizardSet = setToEdit ? {...setToEdit} : {reps:null, dist:null, stroke:null, rest:'', hr:''};
+  wizardSet = setToEdit ? {...setToEdit} : {reps:null, dist:null, stroke:null, modifier:'', rest:'', note:'', hr:''};
   editingSetId = setToEdit ? setToEdit.id : null;
   document.getElementById('wRepsCustom').value = '';
   document.getElementById('wDistCustom').value = '';
   document.getElementById('wRestCustom').value = '';
+  document.getElementById('wNote').value = setToEdit ? (setToEdit.note||'') : '';
   document.getElementById('wHR').value = setToEdit ? (setToEdit.hr||'') : '';
-  document.getElementById('advancedPanel').classList.toggle('open', !!(setToEdit && setToEdit.hr));
+  document.getElementById('advancedPanel').classList.toggle('open', !!(setToEdit && (setToEdit.hr || setToEdit.note)));
   renderWizardOptions();
   showWizardStep(0);
   document.getElementById('wizardOverlay').classList.add('open');
@@ -460,8 +531,11 @@ function renderWizardOptions(){
   document.getElementById('wDist').innerHTML = distOptions.map(d=>
     `<div class="wizard-opt ${wizardSet.dist==d?'selected':''}" onclick="pickWizard('dist',${d})">${d}m</div>`
   ).join('');
-  document.getElementById('wStroke').innerHTML = strokeOptionsFull.map(s=>
+  document.getElementById('wStroke').innerHTML = strokeOptionsFull.slice(0,5).map(s=>
     `<div class="wizard-opt ${wizardSet.stroke===s.code?'selected':''}" onclick="pickWizard('stroke','${s.code}')">${s.label}</div>`
+  ).join('');
+  document.getElementById('wModifier').innerHTML = modifierOptions.map(m=>
+    `<div class="wizard-opt wizard-opt-sm ${(wizardSet.modifier||'')===m.code?'selected':''}" onclick="pickWizard('modifier','${m.code}')">${m.label}</div>`
   ).join('');
   document.getElementById('wRest').innerHTML = restOptions.map(r=>{
     const val = r==='None' ? '' : r;
@@ -472,17 +546,17 @@ function renderWizardOptions(){
 function pickWizard(field, value){
   wizardSet[field] = value;
   renderWizardOptions();
-  document.getElementById('wNextBtn').disabled = false;
+  if(field!=='modifier') document.getElementById('wNextBtn').disabled = false;
   if(field==='reps') document.getElementById('wRepsCustom').value='';
   if(field==='dist') document.getElementById('wDistCustom').value='';
 }
 
 function wizardCustom(field, value){
   if(value===''){
-    if(field==='rest' || field==='hr') wizardSet[field] = '';
+    if(field==='rest' || field==='hr' || field==='note') wizardSet[field] = '';
     return;
   }
-  wizardSet[field] = (field==='rest' || field==='hr') ? value : parseInt(value);
+  wizardSet[field] = (field==='rest' || field==='hr' || field==='note') ? value : parseInt(value);
   renderWizardOptions();
   document.getElementById('wNextBtn').disabled = false;
 }
@@ -546,6 +620,19 @@ function strokeLabel(code){
   return found ? found.label : code;
 }
 
+// Scanned sets keep the modifier (Kick/Pull/Drill) separate from the primary stroke
+// so it isn't lost -- merge them back into one label for display, e.g. "Fly Kick".
+function strokeDisplay(s){
+  const label = strokeLabel(s.stroke);
+  return s.modifier ? `${label} ${s.modifier}` : label;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 function renderSetsSummary(){
   const wrap = document.getElementById('setsSummary');
   if(sessionSets.length===0){
@@ -555,8 +642,9 @@ function renderSetsSummary(){
       <div class="set-summary-row">
         <div class="set-summary-num">${i+1}</div>
         <div class="set-summary-text">
-          <span class="set-summary-main">${s.reps} × ${s.dist}m ${strokeLabel(s.stroke)}</span>
+          <span class="set-summary-main">${s.reps} × ${s.dist}m ${strokeDisplay(s)}</span>
           <span class="set-summary-sub">${s.rest ? 'Rest '+s.rest : 'No rest set'}${s.hr ? ' · HR '+s.hr : ''}</span>
+          ${s.note ? `<span class="set-summary-note">${escapeHtml(s.note)}</span>` : ''}
         </div>
         <div class="set-summary-actions">
           <span class="set-edit" onclick="editSet('${s.id}')">Edit</span>
@@ -597,6 +685,8 @@ function prepSessionConfirm(){
   document.getElementById('cTime').textContent = distStr;
   document.getElementById('cPool').textContent = pool;
   document.getElementById('cDate').textContent = today;
+  document.getElementById('logTagRow').style.display = 'none';
+  document.getElementById('splitsToggleWrap').style.display = 'none';
   goTo(4);
 }
 
@@ -609,6 +699,8 @@ function submitLog(){
     document.getElementById('f_stroke').value = pb.strokeCode;
     document.getElementById('f_time').value = getTimeStr();
     document.getElementById('f_session').value = '';
+    document.getElementById('f_tag').value = logTag;
+    document.getElementById('f_splits').value = JSON.stringify(parseSplits());
   } else {
     document.getElementById('f_event').value = document.getElementById('sessionType').value;
     document.getElementById('f_pool').value = document.getElementById('sessionPool').value;
@@ -625,6 +717,9 @@ initEventGrid();
 renderSetsSummary();
 {% if preload_set %}
 loadLibrarySet({{ preload_set|tojson }});
+{% endif %}
+{% if request.args.get('fromscan') %}
+loadScannedBlocks();
 {% endif %}
 </script>
 </body>

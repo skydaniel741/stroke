@@ -1,0 +1,32 @@
+{% extends 'coach_base.html' %}
+{% block title %}Announcements — {{ squad.name }}{% endblock %}
+{% set header_eyebrow = 'Squad · ' ~ squad.name %}
+{% block page_title %}Announcements{% endblock %}
+{% block page_sub %}<p class="coach-header-sub">One-way board — swimmers see these on their dashboard, no replies.</p>{% endblock %}
+
+{% block content %}
+  <form class="an-form" method="POST" action="/coach/squad/{{ squad.id }}/announcements">
+    <input type="text" name="message" placeholder="Post an announcement…" required>
+    <button type="submit" class="coach-btn coach-btn-primary">Post</button>
+  </form>
+
+  {% if announcements %}
+    {% for a in announcements %}
+    <div class="an-item">
+      <div class="an-date">{{ a.created_at.strftime('%d %b %Y %H:%M') }}</div>
+      <div>{{ a.message }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="panel-note">Nothing posted yet.</p>
+  {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .an-form{display:flex;gap:10px;margin-bottom:24px;max-width:640px;}
+  .an-form input{flex:1;padding:12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;}
+  .an-item{border-bottom:1px solid #eee;padding:14px 0;max-width:640px;}
+  .an-date{font-size:11px;color:#999;font-weight:700;margin-bottom:4px;}
+</style>
+{% endblock %}

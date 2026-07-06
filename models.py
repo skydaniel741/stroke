@@ -18,6 +18,8 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False)
     verify_code = db.Column(db.String(6), nullable=True)
     verify_code_sent_at = db.Column(db.DateTime, nullable=True)
+    role = db.Column(db.String(20), default='swimmer')  # 'swimmer' or 'coach'
+    share_leaderboard = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -45,6 +47,14 @@ class Swim(db.Model):
     time = db.Column(db.String(20))
     notes = db.Column(db.Text)
     logged_at = db.Column(db.DateTime, default=datetime.utcnow)
+    tag = db.Column(db.String(10), default='practice')  # 'practice' or 'meet'
+    splits = db.Column(db.Text)  # JSON list of 50m split strings, optional
+
+    def get_splits(self):
+        try:
+            return json.loads(self.splits or '[]')
+        except (ValueError, TypeError):
+            return []
 
     def time_in_seconds(self):
         t = self.time
@@ -89,6 +99,193 @@ class Session(db.Model):
             except:
                 pass
         return total
+
+
+class Goal(db.Model):
+    __tablename__ = 'goal'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    event = db.Column(db.String(50), nullable=False)
+    pool = db.Column(db.String(10))
+    target_time = db.Column(db.String(20), nullable=False)
+    target_date = db.Column(db.Date, nullable=True)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def target_seconds(self):
+        t = self.target_time
+        if not t:
+            return None
+        try:
+            if ':' in t:
+                mins, rest = t.split(':')
+                return int(mins) * 60 + float(rest)
+            return float(t)
+        except (ValueError, TypeError):
+            return None
+
+
+class Standard(db.Model):
+    """A public qualifying-standard reference time, e.g. a NAG cut or a
+    club/regional qualifying time. Admin-managed. Used both for free-tier
+    'compare against a standard' and coach-tier squad-promotion flags."""
+    __tablename__ = 'standard'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)   # e.g. "NAG 12 & Under"
+    event = db.Column(db.String(50), nullable=False)
+    pool = db.Column(db.String(10), default='25m')
+    gender = db.Column(db.String(10), default='open')  # 'men', 'women', 'open'
+    age_group = db.Column(db.String(30))
+    cutoff_time = db.Column(db.String(20), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def cutoff_seconds(self):
+        t = self.cutoff_time
+        if not t:
+            return None
+        try:
+            if ':' in t:
+                mins, rest = t.split(':')
+                return int(mins) * 60 + float(rest)
+            return float(t)
+        except (ValueError, TypeError):
+            return None
+
+
+class AdminAuditLog(db.Model):
+    __tablename__ = 'admin_audit_log'
+
+    id = db.Column(db.Integer, primary_key=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    action = db.Column(db.String(50), nullable=False)
+    target_type = db.Column(db.String(30))
+    target_id = db.Column(db.Integer)
+    detail = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Announcement(db.Model):
+    """squad_id NULL = platform-wide banner (posted by an admin).
+    squad_id set = a coach's one-way announcement board for that squad."""
+    __tablename__ = 'announcement'
+
+    id = db.Column(db.Integer, primary_key=True)
+    squad_id = db.Column(db.Integer, db.ForeignKey('squad.id'), nullable=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class TrainingProgram(db.Model):
+    """Solo-tier content library: dryland/strength/mobility/core programs
+    and nutrition/fueling suggestions. Same flexible shape serves both."""
+    __tablename__ = 'training_program'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    category = db.Column(db.String(30), default='Strength')  # Strength/Mobility/Core/Nutrition
+    description = db.Column(db.Text)
+    content_blocks = db.Column(db.Text)  # JSON: [{heading, body, reps?, sets?, rest?}]
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def get_blocks(self):
+        try:
+            return json.loads(self.content_blocks or '[]')
+        except (ValueError, TypeError):
+            return []
+
+
+class Club(db.Model):
+    """Groups multiple squads under one club-level owner (multi-squad admin view)."""
+    __tablename__ = 'club'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    squads = db.relationship('Squad', backref='club', lazy=True)
+
+
+class Squad(db.Model):
+    __tablename__ = 'squad'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    coach_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    club_id = db.Column(db.Integer, db.ForeignKey('club.id'), nullable=True)
+    invite_code = db.Column(db.String(20), unique=True, nullable=False)
+    base_fee = db.Column(db.Numeric(10, 2), default=0)
+    per_swimmer_fee = db.Column(db.Numeric(10, 2), default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    memberships = db.relationship('SquadMembership', backref='squad', lazy=True)
+
+    def active_member_count(self):
+        return sum(1 for m in self.memberships if m.status == 'active')
+
+    def billing_estimate(self):
+        base = float(self.base_fee or 0)
+        per = float(self.per_swimmer_fee or 0)
+        return base + per * self.active_member_count()
+
+
+class SquadMembership(db.Model):
+    __tablename__ = 'squad_membership'
+
+    id = db.Column(db.Integer, primary_key=True)
+    squad_id = db.Column(db.Integer, db.ForeignKey('squad.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    invited_email = db.Column(db.String(150))
+    status = db.Column(db.String(20), default='invited')  # invited/pending_consent/active/declined
+    lane_group = db.Column(db.String(30))
+    requires_consent = db.Column(db.Boolean, default=False)
+    joined_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    swimmer = db.relationship('User', foreign_keys=[user_id])
+
+
+class ConsentRecord(db.Model):
+    """Parental consent for a minor swimmer joining a squad. Placeholder
+    copy only -- needs legal review before this is relied on in production."""
+    __tablename__ = 'consent_record'
+
+    id = db.Column(db.Integer, primary_key=True)
+    membership_id = db.Column(db.Integer, db.ForeignKey('squad_membership.id'), nullable=False)
+    guardian_name = db.Column(db.String(120))
+    guardian_email = db.Column(db.String(150))
+    consent_given = db.Column(db.Boolean, default=False)
+    consent_requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    consent_given_at = db.Column(db.DateTime, nullable=True)
+
+
+class CoachNote(db.Model):
+    """Coach-private note about a swimmer. Never shown to the swimmer."""
+    __tablename__ = 'coach_note'
+
+    id = db.Column(db.Integer, primary_key=True)
+    squad_id = db.Column(db.Integer, db.ForeignKey('squad.id'), nullable=False)
+    swimmer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    coach_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    note = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class StatusFlag(db.Model):
+    """Injury / availability status for a swimmer within a squad."""
+    __tablename__ = 'status_flag'
+
+    id = db.Column(db.Integer, primary_key=True)
+    squad_id = db.Column(db.Integer, db.ForeignKey('squad.id'), nullable=False)
+    swimmer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20), default='available')  # available/injured/limited
+    note = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
 class SavedSet(db.Model):

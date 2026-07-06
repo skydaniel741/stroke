@@ -11,6 +11,8 @@
 </head>
 <body>
 
+{% set is_solo = current_user.plan in ('solo', 'coach') or current_user.is_admin %}
+
 <div class="app-container">
 
   <!-- MAIN HARDWARE CONTENT PANEL -->
@@ -31,6 +33,16 @@
         </button>
       </div>
     </div>
+
+    {% if site_announcement %}
+    <div class="site-announce-banner">📣 {{ site_announcement.message }}</div>
+    {% endif %}
+
+    {% if show_rest_nudge %}
+    <div class="rest-nudge-banner">
+      <span>🌊 {{ streak }} days in a row — nice work. Consider a rest day so the training actually sinks in.</span>
+    </div>
+    {% endif %}
 
     <!-- STATS BLOCKS -->
     <div class="stats-row">
@@ -102,9 +114,16 @@
       <div class="panel panel--log">
         <div class="panel-label">Log a swim</div>
         <a href="/log" class="log-btn"> Type manually <span class="log-btn-badge">Free</span></a>
+        {% if is_solo %}
+        <button class="log-btn" type="button" onclick="document.getElementById('scanPhotoInput').click()"> Scan whiteboard <span class="log-btn-badge">Solo</span></button>
+        <input type="file" id="scanPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleScanUpload(this)">
+        <p class="scan-status" id="scanStatus"></p>
+        {% else %}
         <button class="log-btn locked" disabled> Scan whiteboard <span class="log-btn-badge">Solo</span></button>
+        {% endif %}
         <button class="log-btn locked" disabled> Voice log <span class="log-btn-badge">Solo</span></button>
         <a href="/sets" class="log-btn"> Browse set library <span class="log-btn-badge">Free</span></a>
+        {% if not is_solo %}
         <div class="upgrade-banner">
           <div>
             <div class="upgrade-text">Upgrade to Solo</div>
@@ -112,11 +131,16 @@
           </div>
           <a href="/#pricing" class="upgrade-btn">$12/mo →</a>
         </div>
+        {% endif %}
       </div>
     </div>
 
-    <div class="grid-2">
-      <div class="panel">
+    <div class="grid-2 grid-2--tabbed">
+      <div class="mobile-tab-switch">
+        <button class="mobile-tab-btn active" data-tab-target="panel-pb">Personal bests</button>
+        <button class="mobile-tab-btn" data-tab-target="panel-sessions">Recent sessions</button>
+      </div>
+      <div class="panel mobile-tab-panel active" id="panel-pb">
         <div class="panel-label">Personal bests</div>
         {% if personal_bests %}
           {% for pb in personal_bests %}
@@ -132,7 +156,7 @@
         {% endif %}
       </div>
 
-      <div class="panel">
+      <div class="panel mobile-tab-panel" id="panel-sessions">
         <div class="panel-label">Recent sessions</div>
         {% if recent_activity %}
           {% for a in recent_activity %}
@@ -148,8 +172,12 @@
       </div>
     </div>
 
-    <div class="grid-2">
-      <div class="panel panel--ring">
+    <div class="grid-2 grid-2--tabbed">
+      <div class="mobile-tab-switch">
+        <button class="mobile-tab-btn active" data-tab-target="panel-split">Pool split</button>
+        <button class="mobile-tab-btn" data-tab-target="panel-streak">Streak</button>
+      </div>
+      <div class="panel panel--ring mobile-tab-panel active" id="panel-split">
         <div class="panel-label">Pool split</div>
         {% if has_pool_data %}
         <div class="ring-row">
@@ -178,7 +206,7 @@
         {% endif %}
       </div>
 
-      <div class="panel">
+      <div class="panel mobile-tab-panel" id="panel-streak">
         <div class="panel-label">Streak</div>
         <div class="points-big"><span data-count="{{ streak }}">0</span><span class="unit-label">d</span></div>
         <div class="points-label">days in a row</div>
@@ -190,6 +218,31 @@
         <div class="streak-label">{{ 'Keep it going.' if streak else 'Log your first swim to start' }}</div>
       </div>
     </div>
+
+    {% if squad_announcements %}
+    <div class="panel" style="margin-top:20px">
+      <div class="panel-label">From your coach</div>
+      {% for a in squad_announcements %}
+        <div class="session-row">
+          <span class="session-row-main">{{ a.message }}</span>
+          <span class="session-row-tag">{{ a.created_at.strftime('%d %b') }}</span>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if on_this_day %}
+    <div class="panel" style="margin-top:20px">
+      <div class="panel-label">On this day</div>
+      {% for s in on_this_day %}
+        <div class="session-row">
+          <span class="session-row-main">{{ s.event }} · {{ s.logged_at.year }}</span>
+          <span class="session-row-tag">{{ s.pool }}</span>
+          <span class="session-row-time">{{ s.time }}</span>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
 
   </main>
 
@@ -214,38 +267,68 @@
         <p class="drawer-user-name">{{ current_user.username }}</p>
         <span class="drawer-plan-badge {{ 'hot' if current_user.plan == 'solo' else '' }}">{{ current_user.plan|capitalize }} plan</span>
       </div>
+      <div class="drawer-user-streak">
+        <span class="drawer-user-streak-val">{{ streak }}</span>
+        <span class="drawer-user-streak-lbl">day{{ 's' if streak != 1 else '' }}<br>streak</span>
+      </div>
     </div>
 
     <nav class="drawer-nav-links">
       <a href="/log" class="drawer-link {{ 'active' if request.path == '/log' else '' }}">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></span>
         Log swim
       </a>
       <a href="/sets" class="drawer-link {{ 'active' if request.path == '/sets' else '' }}">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></span>
         Set library
       </a>
       <a href="/wa-points" class="drawer-link {{ 'active' if request.path == '/wa-points' else '' }}">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>
         Points & CSS
       </a>
-      <a href="#" class="drawer-link drawer-link--soon">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+      <a href="/personal-bests" class="drawer-link {{ 'active' if request.path == '/personal-bests' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg></span>
         Personal bests
-        <span class="drawer-soon-tag">Soon</span>
       </a>
-      <a href="#" class="drawer-link drawer-link--soon">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+      <a href="/goals" class="drawer-link {{ 'active' if request.path == '/goals' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg></span>
         Goals
-        <span class="drawer-soon-tag">Soon</span>
       </a>
-      <a href="#" class="drawer-link drawer-link--soon drawer-bottom">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+
+      <div class="drawer-section-divider"><span>Solo</span></div>
+      <a href="{{ '/solo/dryland' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/dryland' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M4 6.5l1-3h14l1 3M4 17.5l1 3h14l1-3"></path></svg></span>
+        Dryland
+        {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
+      </a>
+      <a href="{{ '/solo/nutrition' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/nutrition' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg></span>
+        Nutrition
+        {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
+      </a>
+      <a href="{{ '/solo/leaderboard' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/leaderboard' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"></path></svg></span>
+        Leaderboard
+        {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
+      </a>
+
+      {% if current_user.role == 'coach' or current_user.is_admin %}
+      <div class="drawer-section-divider"><span>Coach</span></div>
+      <a href="/coach" class="drawer-link {{ 'active' if request.path.startswith('/coach') else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+        Coach dashboard
+      </a>
+      {% endif %}
+
+      <div class="drawer-spacer"></div>
+
+      <a href="#" class="drawer-link drawer-link--soon">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></span>
         Settings
         <span class="drawer-soon-tag">Soon</span>
       </a>
       <a href="/logout" class="drawer-link drawer-logout">
-        <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></span>
         Log out
       </a>
     </nav>
@@ -325,6 +408,48 @@ function animateCount(el){
 }
 
 document.querySelectorAll('[data-count]').forEach(animateCount);
+
+// Mobile tab switcher for stacked panel pairs (Personal bests/Recent sessions, Pool split/Streak) --
+// on desktop both panels show side by side and these controls are hidden via CSS.
+document.querySelectorAll('.grid-2--tabbed').forEach(grid => {
+  grid.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+      grid.querySelectorAll('.mobile-tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tabTarget).classList.add('active');
+    });
+  });
+});
+
+// Photo whiteboard scan — upload, then hand parsed blocks to the log flow for review
+function handleScanUpload(input){
+  const file = input.files[0];
+  if(!file) return;
+  const status = document.getElementById('scanStatus');
+  status.textContent = 'Scanning…';
+  status.className = 'scan-status';
+
+  const body = new FormData();
+  body.append('photo', file);
+
+  fetch('/solo/scan-whiteboard', { method: 'POST', body })
+    .then(r => r.json())
+    .then(data => {
+      if(data.ok){
+        sessionStorage.setItem('scannedSet', JSON.stringify(data));
+        window.location.href = '/log?fromscan=1';
+      } else {
+        status.textContent = data.error || 'Could not read that photo.';
+        status.classList.add('error');
+      }
+    })
+    .catch(() => {
+      status.textContent = 'Could not read that photo — try again.';
+      status.classList.add('error');
+    })
+    .finally(() => { input.value = ''; });
+}
 </script>
 
 </body>

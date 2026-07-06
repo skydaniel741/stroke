@@ -20,7 +20,10 @@
   .adm-stat-num{font-family:'Antonio',sans-serif;font-size:30px;color:#7C89D0;}
   .adm-stat-lbl{font-size:12px;color:#777;text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-top:2px;}
 
-  .adm-panel{background:#fff;border-radius:14px;border:1px solid #eee;overflow:hidden;}
+  .adm-panel{background:#fff;border-radius:14px;border:1px solid #eee;overflow:hidden;margin-bottom:24px;}
+  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;}
+  .alert-success{background:#e3f7e9;color:#1a7a3d;border:1px solid #1a7a3d;}
+  .alert-error{background:#fbe9e9;color:#b23b3b;border:1px solid #b23b3b;}
   .adm-panel-head{padding:16px 20px;border-bottom:1px solid #eee;font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:center;}
   table{width:100%;border-collapse:collapse;}
   th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:12px 20px;border-bottom:1px solid #eee;}
@@ -29,6 +32,27 @@
   .badge.yes{background:#e3f7e9;color:#1a7a3d;}
   .badge.no{background:#fbe9e9;color:#b23b3b;}
   .badge.admin{background:#e6e8fb;color:#4b52c4;}
+
+  .adm-filter-bar{display:flex;gap:10px;padding:16px 20px;border-bottom:1px solid #eee;flex-wrap:wrap;}
+  .adm-filter-bar input, .adm-filter-bar select{
+    padding:8px 12px;border:2px solid #ccccff;background:#fcfcff;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;
+  }
+  .adm-filter-bar button{padding:8px 16px;border:2px solid #111;background:#ccccff;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+
+  .adm-override-form{display:flex;gap:6px;align-items:center;}
+  .adm-override-form select{padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;}
+  .adm-override-form button{padding:5px 10px;border:none;background:#111;color:#fff;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;}
+
+  .adm-chart{display:flex;align-items:flex-end;gap:8px;height:90px;padding:20px;}
+  .adm-chart-bar{flex:1;background:#ccccff;border-radius:4px 4px 0 0;min-height:3px;position:relative;}
+  .adm-chart-bar span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#777;}
+
+  .adm-announce-form{display:flex;gap:10px;padding:16px 20px;}
+  .adm-announce-form input{flex:1;padding:10px 14px;border:2px solid #ccccff;background:#fcfcff;border-radius:8px;font-size:13px;}
+  .adm-announce-form button{padding:10px 18px;border:2px solid #111;background:#ccccff;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;}
+  .adm-announce-current{padding:0 20px 16px;font-size:13px;color:#333;}
+  .adm-announce-current form{display:inline;margin-left:10px;}
+  .adm-announce-current button{background:none;border:none;color:#b23b3b;font-weight:700;font-size:12px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -38,6 +62,9 @@
   <div>
     <a href="/admin">Overview</a>
     <a href="/admin/sets">Swim sets</a>
+    <a href="/admin/standards">Standards</a>
+    <a href="/admin/programs">Programs</a>
+    <a href="/admin/audit">Audit log</a>
     <a href="/dashboard">Back to app</a>
     <a href="/logout">Log out</a>
   </div>
@@ -45,6 +72,14 @@
 
 <div class="adm-wrap">
   <p class="adm-title">Overview</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
   <div class="adm-stats">
     <div class="adm-stat"><div class="adm-stat-num">{{ total_users }}</div><div class="adm-stat-lbl">Total users</div></div>
@@ -54,10 +89,45 @@
   </div>
 
   <div class="adm-panel">
+    <div class="adm-panel-head">Signups — last 8 weeks</div>
+    <div class="adm-chart">
+      {% for v in weekly_signups %}
+      <div class="adm-chart-bar" style="height:{{ [(v / max_week_signups * 100)|round(0,'floor')|int, 4]|max }}%"><span>{{ v }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Site announcement banner</div>
+    <form class="adm-announce-form" method="POST" action="/admin/announcement">
+      <input type="text" name="message" placeholder="Shown to every signed-in user on their dashboard…" required>
+      <button type="submit">Post</button>
+    </form>
+    {% if site_announcement %}
+    <div class="adm-announce-current">
+      Live: "{{ site_announcement.message }}"
+      <form method="POST" action="/admin/announcement/{{ site_announcement.id }}/delete">
+        <button type="submit">Clear</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="adm-panel">
     <div class="adm-panel-head">All signups</div>
+    <form class="adm-filter-bar" method="GET" action="/admin">
+      <input type="text" name="q" placeholder="Search username or email…" value="{{ q }}">
+      <select name="plan">
+        <option value="">All plans</option>
+        <option value="free" {{ 'selected' if plan_filter=='free' }}>Free</option>
+        <option value="solo" {{ 'selected' if plan_filter=='solo' }}>Solo</option>
+        <option value="coach" {{ 'selected' if plan_filter=='coach' }}>Coach</option>
+      </select>
+      <button type="submit">Filter</button>
+    </form>
     <table>
       <thead>
-        <tr><th>Username</th><th>Email</th><th>Verified</th><th>Plan</th><th>Signed up</th><th>Role</th></tr>
+        <tr><th>Username</th><th>Email</th><th>Verified</th><th>Plan</th><th>Role</th><th>Signed up</th><th>Admin</th><th>Override</th></tr>
       </thead>
       <tbody>
         {% for u in users %}
@@ -72,8 +142,23 @@
             {% endif %}
           </td>
           <td>{{ u.plan }}</td>
+          <td>{{ u.role }}</td>
           <td>{{ u.created_at.strftime('%d %b %Y') }}</td>
           <td>{% if u.is_admin %}<span class="badge admin">Admin</span>{% else %}—{% endif %}</td>
+          <td>
+            <form class="adm-override-form" method="POST" action="/admin/users/{{ u.id }}/update">
+              <select name="plan">
+                <option value="free" {{ 'selected' if u.plan=='free' }}>Free</option>
+                <option value="solo" {{ 'selected' if u.plan=='solo' }}>Solo</option>
+                <option value="coach" {{ 'selected' if u.plan=='coach' }}>Coach</option>
+              </select>
+              <select name="role">
+                <option value="swimmer" {{ 'selected' if u.role=='swimmer' }}>Swimmer</option>
+                <option value="coach" {{ 'selected' if u.role=='coach' }}>Coach</option>
+              </select>
+              <button type="submit">Save</button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

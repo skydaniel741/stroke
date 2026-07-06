@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programs — STROKE Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  body{font-family:'Inter',sans-serif;background:#f7f7fa;margin:0;color:#111;}
+  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#111;color:#fff;}
+  .adm-nav a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;margin-left:20px;}
+  .adm-logo{font-family:'Antonio',sans-serif;font-size:20px;}
+  .adm-wrap{max-width:1000px;margin:0 auto;padding:32px 20px 60px;}
+  .adm-title{font-family:'Antonio',sans-serif;font-size:30px;margin:0 0 4px;}
+  .adm-panel{background:#fff;border-radius:14px;border:1px solid #eee;overflow:hidden;margin-bottom:24px;}
+  .adm-panel-head{padding:16px 20px;border-bottom:1px solid #eee;font-weight:800;font-size:15px;}
+  .adm-panel-body{padding:20px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .form-group{display:flex;flex-direction:column;}
+  .form-group label{font-size:12px;font-weight:700;text-transform:uppercase;color:#777;letter-spacing:.04em;margin-bottom:6px;}
+  .form-group input, .form-group select, .form-group textarea{border:2px solid #ccccff;background:#fcfcff;color:#111;padding:10px 12px;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;}
+  .form-group textarea{resize:vertical;min-height:100px;font-family:monospace;font-size:12px;}
+  .btn-add-set{background:#ccccff;color:#111;border:3px solid #111;border-radius:12px;padding:12px 20px;font-weight:700;cursor:pointer;font-size:14px;}
+  .btn-add-set:hover{background:#111;color:#ccccff;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:12px 20px;border-bottom:1px solid #eee;}
+  td{padding:12px 20px;border-bottom:1px solid #f2f2f4;font-size:14px;}
+  .btn-delete{background:#ff6b6b;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:12px;}
+  .btn-delete:hover{background:#d63031;}
+  .empty-state{text-align:center;padding:40px;color:#888;font-size:14px;}
+  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;}
+  .alert-success{background:#e3f7e9;color:#1a7a3d;border:1px solid #1a7a3d;}
+  .alert-error{background:#fbe9e9;color:#b23b3b;border:1px solid #b23b3b;}
+</style>
+</head>
+<body>
+
+<nav class="adm-nav">
+  <span class="adm-logo">STROKE Admin</span>
+  <div>
+    <a href="/admin">Overview</a>
+    <a href="/admin/sets">Swim sets</a>
+    <a href="/admin/standards">Standards</a>
+    <a href="/admin/programs">Programs</a>
+    <a href="/admin/audit">Audit log</a>
+    <a href="/dashboard">Back to app</a>
+    <a href="/logout">Log out</a>
+  </div>
+</nav>
+
+<div class="adm-wrap">
+  <p class="adm-title">Solo content library</p>
+  <p style="color:#777;margin-top:-4px;margin-bottom:20px">Dryland/strength/mobility/core programs and nutrition tips shown on the Solo tier.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Add a program</div>
+    <div class="adm-panel-body">
+      <form method="POST" action="/admin/programs/create">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" name="title" placeholder="e.g. Shoulder stability circuit" required>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select name="category">
+              <option value="Strength">Strength</option>
+              <option value="Mobility">Mobility</option>
+              <option value="Core">Core</option>
+              <option value="Nutrition">Nutrition</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Description</label>
+          <input type="text" name="description" placeholder="One-line summary shown in the library list">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Content blocks (JSON array of {heading, body, reps, sets, rest})</label>
+          <textarea name="content_blocks" placeholder='[{"heading":"Band pull-aparts","body":"Keep elbows straight, squeeze shoulder blades.","reps":"15","sets":"3","rest":"30s"}]'>[]</textarea>
+        </div>
+        <button type="submit" class="btn-add-set">Create program</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">All programs</div>
+    {% if programs %}
+    <table>
+      <thead>
+        <tr><th>Title</th><th>Category</th><th>Blocks</th><th>Created</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for p in programs %}
+        <tr>
+          <td><strong>{{ p.title }}</strong></td>
+          <td>{{ p.category }}</td>
+          <td>{{ p.get_blocks()|length }}</td>
+          <td>{{ p.created_at.strftime('%d %b %Y') }}</td>
+          <td>
+            <form method="POST" action="/admin/programs/delete/{{ p.id }}" style="display:inline;">
+              <button type="submit" class="btn-delete" onclick="return confirm('Delete this program?')">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No programs yet. Add one above.</div>
+    {% endif %}
+  </div>
+</div>
+
+</body>
+</html>

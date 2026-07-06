@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit log — STROKE Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  body{font-family:'Inter',sans-serif;background:#f7f7fa;margin:0;color:#111;}
+  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#111;color:#fff;}
+  .adm-nav a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;margin-left:20px;}
+  .adm-logo{font-family:'Antonio',sans-serif;font-size:20px;}
+  .adm-wrap{max-width:1000px;margin:0 auto;padding:32px 20px 60px;}
+  .adm-title{font-family:'Antonio',sans-serif;font-size:30px;margin:0 0 20px;}
+  .adm-panel{background:#fff;border-radius:14px;border:1px solid #eee;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:12px 20px;border-bottom:1px solid #eee;}
+  td{padding:12px 20px;border-bottom:1px solid #f2f2f4;font-size:13px;}
+  .empty-state{text-align:center;padding:40px;color:#888;font-size:14px;}
+</style>
+</head>
+<body>
+
+<nav class="adm-nav">
+  <span class="adm-logo">STROKE Admin</span>
+  <div>
+    <a href="/admin">Overview</a>
+    <a href="/admin/sets">Swim sets</a>
+    <a href="/admin/standards">Standards</a>
+    <a href="/admin/programs">Programs</a>
+    <a href="/admin/audit">Audit log</a>
+    <a href="/dashboard">Back to app</a>
+    <a href="/logout">Log out</a>
+  </div>
+</nav>
+
+<div class="adm-wrap">
+  <p class="adm-title">Audit log</p>
+
+  <div class="adm-panel">
+    {% if logs %}
+    <table>
+      <thead>
+        <tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        {% for l in logs %}
+        <tr>
+          <td>{{ l.created_at.strftime('%d %b %Y %H:%M') }}</td>
+          <td>{{ admins.get(l.admin_id, '—') }}</td>
+          <td>{{ l.action }}</td>
+          <td>{{ l.target_type or '—' }}{% if l.target_id %} #{{ l.target_id }}{% endif %}</td>
+          <td>{{ l.detail or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No admin actions logged yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+</body>
+</html>

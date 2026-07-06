@@ -281,6 +281,9 @@
   <div>
     <a href="/admin">Overview</a>
     <a href="/admin/sets">Swim sets</a>
+    <a href="/admin/standards">Standards</a>
+    <a href="/admin/programs">Programs</a>
+    <a href="/admin/audit">Audit log</a>
     <a href="/dashboard">Back to app</a>
     <a href="/logout">Log out</a>
   </div>
@@ -436,7 +439,7 @@ function renderBlocks(){
   } else {
     list.innerHTML = blocks.map((b, i) => `
       <div class="block-chip">
-        <span><strong>${b.section}</strong> — ${b.reps} × ${b.dist}m ${strokeLabels[b.stroke] || b.stroke}${b.rest ? ' · Rest ' + b.rest : ''}${b.note ? ' · ' + b.note : ''}</span>
+        <span><strong>${b.section}</strong> — ${b.reps} × ${b.dist}m ${strokeLabels[b.stroke] || b.stroke}${b.modifier ? ' ' + b.modifier : ''}${b.rest ? ' · Rest ' + b.rest : ''}${b.note ? ' · ' + b.note : ''}</span>
         <button type="button" class="block-chip-remove" onclick="removeBlock(${i})">✕</button>
       </div>
     `).join('');

@@ -1,0 +1,446 @@
+/* ============================================================
+   COACH SECTION SHELL
+   Sidebar + header shell shared by every coach-facing page.
+   ============================================================ */
+
+.coach-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #fafafd;
+}
+
+/* ---------- MOBILE TOPBAR ---------- */
+.coach-topbar {
+  display: none;
+}
+
+.coach-menu-btn {
+  width: 38px;
+  height: 38px;
+  border: 2.5px solid #111111;
+  border-radius: 10px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #111111;
+  flex-shrink: 0;
+}
+
+.coach-topbar-logo {
+  font-family: 'Antonio', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: #111111;
+}
+
+.coach-topbar-logo span {
+  color: #8f8ff0;
+}
+
+.coach-sidebar-backdrop {
+  display: none;
+}
+
+/* ---------- SIDEBAR ---------- */
+.coach-sidebar {
+  width: 264px;
+  flex-shrink: 0;
+  background: #111111;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.coach-sidebar-head {
+  padding: 26px 22px 20px;
+  border-bottom: 2px solid #2a2a2a;
+}
+
+.coach-logo {
+  font-family: 'Antonio', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ccccff;
+  text-decoration: none;
+  display: block;
+}
+
+.coach-logo-sub {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #777777;
+  margin-top: 4px;
+}
+
+.coach-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: auto;
+  flex: 1;
+  padding: 14px 12px;
+}
+
+.coach-nav-lbl {
+  padding: 14px 10px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #666666;
+  margin: 0;
+}
+
+.coach-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #cfcfcf;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  margin-bottom: 2px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.coach-nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+}
+
+.coach-nav-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.coach-nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #555;
+  flex-shrink: 0;
+  margin-left: 3px;
+  transition: background 0.15s;
+}
+
+.coach-nav-link-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-nav-link:hover {
+  background: #1e1e1e;
+  color: #ffffff;
+}
+
+.coach-nav-link.active {
+  background: #ccccff;
+  color: #111111;
+}
+
+.coach-nav-link.active .coach-nav-dot {
+  background: #111111;
+}
+
+.coach-subnav {
+  margin: 2px 0 10px 25px;
+  padding-left: 12px;
+  border-left: 2px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.coach-subnav-link {
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #999999;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.coach-subnav-link:hover {
+  color: #ffffff;
+}
+
+.coach-subnav-link.active {
+  background: #2a2a38;
+  color: #ccccff;
+}
+
+.coach-sidebar-foot {
+  padding: 16px;
+  border-top: 2px solid #2a2a2a;
+}
+
+.coach-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.coach-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ccccff;
+  color: #111111;
+  font-family: 'Antonio', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.coach-user-info {
+  min-width: 0;
+}
+
+.coach-user-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.coach-user-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8f8ff0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.coach-exit-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #999999;
+  text-decoration: none;
+  padding: 8px 4px;
+  transition: color 0.15s;
+}
+
+.coach-exit-link svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.coach-exit-link:hover {
+  color: #ffffff;
+}
+
+/* ---------- MAIN AREA ---------- */
+.coach-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.coach-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 32px 36px 0;
+}
+
+.coach-header-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8f8ff0;
+  margin: 0 0 6px;
+}
+
+.coach-header-title {
+  font-family: 'Antonio', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #111111;
+  margin: 0;
+}
+
+.coach-header-sub {
+  font-size: 13px;
+  color: #666666;
+  margin: 6px 0 0;
+}
+
+.coach-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.coach-flash-wrap {
+  padding: 20px 36px 0;
+}
+
+.coach-content {
+  padding: 24px 36px 90px;
+}
+
+/* ---------- SHARED BITS REUSED ACROSS COACH PAGES ---------- */
+.coach-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 2.5px solid #111111;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111111;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.coach-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 #111111;
+}
+
+.coach-btn-primary {
+  background: #ccccff;
+}
+
+.coach-card-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 2.5px solid #111111;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  text-decoration: none;
+  color: #111111;
+  background: #ffffff;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.coach-card-link:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 #111111;
+}
+
+.coach-card-name {
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.coach-card-meta {
+  font-size: 12px;
+  color: #777777;
+  margin-top: 4px;
+}
+
+.coach-card-arrow {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 960px) {
+  .coach-topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: #ffffff;
+    border-bottom: 3px solid #111111;
+    position: sticky;
+    top: 0;
+    z-index: 500;
+  }
+
+  .coach-shell {
+    flex-direction: column;
+  }
+
+  .coach-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 264px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(.4,0,.2,1);
+  }
+
+  .coach-sidebar.open {
+    left: 0;
+  }
+
+  .coach-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(17,17,17,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 999;
+  }
+
+  .coach-sidebar-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .coach-header {
+    padding: 22px 20px 0;
+  }
+
+  .coach-flash-wrap {
+    padding: 16px 20px 0;
+  }
+
+  .coach-content {
+    padding: 20px 20px 70px;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

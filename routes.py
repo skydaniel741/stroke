@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
@@ -31,6 +32,11 @@ STROKE_LABELS = {
 @main.route('/')
 def home():
     return render_template('index.html')
+
+
+@main.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
 
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -240,8 +246,28 @@ def logout():
 @login_required
 def dashboard():
     from app import db
-    from models import Swim, Session
+    from models import Swim, Session, Announcement, SquadMembership
     from datetime import timedelta
+
+    site_announcement = (
+        db.session.query(Announcement)
+        .filter_by(squad_id=None)
+        .order_by(Announcement.created_at.desc())
+        .first()
+    )
+
+    my_squad_ids = [
+        m.squad_id for m in
+        db.session.query(SquadMembership).filter_by(user_id=current_user.id, status='active').all()
+    ]
+    squad_announcements = (
+        db.session.query(Announcement)
+        .filter(Announcement.squad_id.in_(my_squad_ids))
+        .order_by(Announcement.created_at.desc())
+        .limit(5)
+        .all()
+        if my_squad_ids else []
+    )
 
     swims = db.session.query(Swim).filter_by(user_id=current_user.id).order_by(Swim.logged_at.desc()).all()
     sessions = db.session.query(Session).filter_by(user_id=current_user.id).order_by(Session.logged_at.desc()).all()
@@ -347,8 +373,21 @@ def dashboard():
         for i in range(20, -1, -1)
     ]
 
+    # --- on this day: same month/day, a prior year ---
+    on_this_day = [
+        s for s in swims
+        if s.logged_at.month == today.month and s.logged_at.day == today.day and s.logged_at.year != today.year
+    ]
+
+    # --- gentle rest-day nudge: long unbroken streaks only ---
+    show_rest_nudge = streak >= 6
+
     return render_template(
         'dashboard.html',
+        on_this_day=on_this_day,
+        show_rest_nudge=show_rest_nudge,
+        site_announcement=site_announcement,
+        squad_announcements=squad_announcements,
         swims=swims,
         sessions=sessions,
         sessions_this_week=sessions_logged_count,
@@ -380,6 +419,14 @@ def log():
 
         if log_type == 'pb':
             # Save a PB / race time
+            splits_raw = request.form.get('splits', '[]')
+            try:
+                splits_list = json.loads(splits_raw)
+                if not isinstance(splits_list, list):
+                    splits_list = []
+            except ValueError:
+                splits_list = []
+
             swim = Swim(
                 user_id=current_user.id,
                 event=request.form.get('event'),
@@ -387,6 +434,8 @@ def log():
                 stroke=request.form.get('stroke'),
                 time=request.form.get('time'),
                 notes=notes,
+                tag=request.form.get('tag', 'practice'),
+                splits=json.dumps(splits_list) if splits_list else None,
                 logged_at=datetime.utcnow()
             )
             db.session.add(swim)
@@ -420,7 +469,6 @@ def log():
     preload_set = None
     use_id = request.args.get('use')
     if use_id:
-        import json
         picked = db.session.query(SavedSet).get(use_id)
         if picked:
             try:
@@ -561,16 +609,264 @@ def wa_points():
     return render_template('wa_points.html')
 
 
-from functools import wraps
-from flask import abort
+@main.route('/personal-bests')
+@login_required
+def personal_bests():
+    from app import db
+    from models import Swim, Standard
 
-def admin_required(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin:
-            abort(403)
-        return f(*args, **kwargs)
-    return wrapper
+    q = request.args.get('q', '').strip().lower()
+    pool_filter = request.args.get('pool', '')
+    tag_filter = request.args.get('tag', '')
+
+    swims = (
+        db.session.query(Swim)
+        .filter_by(user_id=current_user.id)
+        .order_by(Swim.logged_at.desc())
+        .all()
+    )
+
+    def _pool_key(p):
+        return '50' if str(p or '25').startswith('50') else '25'
+
+    filtered = swims
+    if q:
+        filtered = [s for s in filtered if q in (s.event or '').lower()]
+    if pool_filter:
+        filtered = [s for s in filtered if _pool_key(s.pool) == _pool_key(pool_filter)]
+    if tag_filter:
+        filtered = [s for s in filtered if (s.tag or 'practice') == tag_filter]
+
+    # Best time per event across ALL swims (not just the filtered set).
+    best_by_event = {}
+    for s in swims:
+        secs = s.time_in_seconds()
+        if secs is None:
+            continue
+        current = best_by_event.get(s.event)
+        if current is None or secs < current['secs']:
+            best_by_event[s.event] = {'swim': s, 'secs': secs}
+
+    standards = db.session.query(Standard).all()
+
+    def nearest_standard(event, pool, secs):
+        candidates = [st for st in standards if st.event == event and _pool_key(st.pool) == _pool_key(pool)]
+        best = None
+        for st in candidates:
+            cutoff = st.cutoff_seconds()
+            if cutoff is None:
+                continue
+            diff = secs - cutoff
+            if best is None or abs(diff) < abs(best[1]):
+                best = (st, diff)
+        return best
+
+    pb_rows = []
+    for event, data in best_by_event.items():
+        swim = data['swim']
+        match = nearest_standard(event, swim.pool, data['secs'])
+        pb_rows.append({
+            'swim': swim,
+            'standard': match[0] if match else None,
+            'diff': round(match[1], 2) if match else None,
+        })
+    pb_rows.sort(key=lambda r: r['swim'].event)
+
+    return render_template(
+        'personal_bests.html',
+        pb_rows=pb_rows,
+        swims=filtered,
+        q=request.args.get('q', ''),
+        pool_filter=pool_filter,
+        tag_filter=tag_filter,
+    )
+
+
+@main.route('/personal-bests/export.csv')
+@login_required
+def personal_bests_export():
+    import csv
+    import io
+    from flask import Response
+    from app import db
+    from models import Swim
+
+    swims = (
+        db.session.query(Swim)
+        .filter_by(user_id=current_user.id)
+        .order_by(Swim.logged_at.desc())
+        .all()
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['event', 'pool', 'stroke', 'time', 'tag', 'splits', 'notes', 'logged_at'])
+    for s in swims:
+        writer.writerow([
+            s.event, s.pool, s.stroke, s.time, s.tag or 'practice',
+            ';'.join(s.get_splits()), s.notes or '', s.logged_at.strftime('%Y-%m-%d %H:%M'),
+        ])
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=stroke_swim_history.csv'},
+    )
+
+
+@main.route('/personal-bests/import', methods=['POST'])
+@login_required
+def personal_bests_import():
+    import csv
+    import io
+    from app import db
+    from models import Swim
+
+    file = request.files.get('csv_file')
+    if not file or not file.filename:
+        flash('Choose a CSV file first.', 'error')
+        return redirect(url_for('main.personal_bests'))
+
+    try:
+        text = file.stream.read().decode('utf-8-sig')
+        reader = csv.DictReader(io.StringIO(text))
+        count = 0
+        for row in reader:
+            event = (row.get('event') or '').strip()
+            time = (row.get('time') or '').strip()
+            if not event or not time:
+                continue
+            splits_raw = (row.get('splits') or '').strip()
+            splits_list = [x.strip() for x in splits_raw.split(';') if x.strip()] if splits_raw else []
+            swim = Swim(
+                user_id=current_user.id,
+                event=event,
+                pool=(row.get('pool') or '25m').strip(),
+                stroke=(row.get('stroke') or '').strip(),
+                time=time,
+                tag=(row.get('tag') or 'practice').strip(),
+                splits=json.dumps(splits_list) if splits_list else None,
+                notes=(row.get('notes') or '').strip(),
+            )
+            db.session.add(swim)
+            count += 1
+        db.session.commit()
+        flash(f'Imported {count} swim(s).', 'success')
+    except Exception:
+        flash('Could not read that CSV — check it matches the exported format and try again.', 'error')
+
+    return redirect(url_for('main.personal_bests'))
+
+
+@main.route('/personal-bests/<int:swim_id>/card')
+@login_required
+def pb_card(swim_id):
+    from app import db
+    from models import Swim
+    from flask import abort
+
+    swim = db.session.query(Swim).get(swim_id)
+    if not swim or swim.user_id != current_user.id:
+        abort(404)
+    return render_template('pb_card.html', swim=swim)
+
+
+@main.route('/goals', methods=['GET', 'POST'])
+@login_required
+def goals():
+    from app import db
+    from models import Goal, Swim
+
+    if request.method == 'POST':
+        event = request.form.get('event', '').strip()
+        target_time = request.form.get('target_time', '').strip()
+        pool = request.form.get('pool', '25m')
+        target_date_raw = request.form.get('target_date') or ''
+        notes = request.form.get('notes', '').strip()
+
+        if not event or not target_time:
+            flash('Pick an event and a target time.', 'error')
+            return redirect(url_for('main.goals'))
+
+        target_date_val = None
+        if target_date_raw:
+            try:
+                target_date_val = datetime.strptime(target_date_raw, '%Y-%m-%d').date()
+            except ValueError:
+                flash('That target date is not valid.', 'error')
+                return redirect(url_for('main.goals'))
+
+        goal = Goal(
+            user_id=current_user.id,
+            event=event,
+            pool=pool,
+            target_time=target_time,
+            target_date=target_date_val,
+            notes=notes,
+        )
+        db.session.add(goal)
+        db.session.commit()
+        flash('Goal set.', 'success')
+        return redirect(url_for('main.goals'))
+
+    user_goals = (
+        db.session.query(Goal)
+        .filter_by(user_id=current_user.id)
+        .order_by(Goal.created_at.desc())
+        .all()
+    )
+    swims = db.session.query(Swim).filter_by(user_id=current_user.id).all()
+
+    best_by_event = {}
+    for s in swims:
+        secs = s.time_in_seconds()
+        if secs is None:
+            continue
+        current = best_by_event.get(s.event)
+        if current is None or secs < current:
+            best_by_event[s.event] = secs
+
+    goal_rows = []
+    for g in user_goals:
+        best_secs = best_by_event.get(g.event)
+        target_secs = g.target_seconds()
+        achieved = best_secs is not None and target_secs is not None and best_secs <= target_secs
+        gap = round(best_secs - target_secs, 2) if (best_secs is not None and target_secs is not None) else None
+        goal_rows.append({'goal': g, 'best_secs': best_secs, 'achieved': achieved, 'gap': gap})
+
+    return render_template('goals.html', goal_rows=goal_rows)
+
+
+@main.route('/goals/<int:goal_id>/delete', methods=['POST'])
+@login_required
+def goals_delete(goal_id):
+    from app import db
+    from models import Goal
+
+    g = db.session.query(Goal).get(goal_id)
+    if g and g.user_id == current_user.id:
+        db.session.delete(g)
+        db.session.commit()
+        flash('Goal removed.', 'success')
+    return redirect(url_for('main.goals'))
+
+
+from flask import abort
+from auth_utils import admin_required
+
+
+def _log_admin_action(action, target_type=None, target_id=None, detail=None):
+    from app import db
+    from models import AdminAuditLog
+
+    db.session.add(AdminAuditLog(
+        admin_id=current_user.id,
+        action=action,
+        target_type=target_type,
+        target_id=target_id,
+        detail=detail,
+    ))
+    db.session.commit()
 
 
 @main.route('/admin')
@@ -578,14 +874,42 @@ def admin_required(f):
 @admin_required
 def admin_dashboard():
     from app import db
-    from models import User, Swim, Session, SavedSet
+    from models import User, Swim, Session, SavedSet, Announcement
 
     total_users = db.session.query(User).count()
     verified_users = db.session.query(User).filter_by(is_verified=True).count()
     unverified_users = total_users - verified_users
     total_swims = db.session.query(Swim).count()
     total_sessions = db.session.query(Session).count()
-    users = db.session.query(User).order_by(User.created_at.desc()).all()
+
+    q = request.args.get('q', '').strip().lower()
+    plan_filter = request.args.get('plan', '')
+    users_query = db.session.query(User).order_by(User.created_at.desc()).all()
+    users = users_query
+    if q:
+        users = [u for u in users if q in u.username.lower() or q in u.email.lower()]
+    if plan_filter:
+        users = [u for u in users if u.plan == plan_filter]
+
+    # --- signups per week, last 8 weeks, for the admin activity chart ---
+    now = datetime.utcnow()
+    week_start = now - timedelta(days=now.weekday())
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    weekly_signups = []
+    for i in range(7, -1, -1):
+        wk_start = week_start - timedelta(weeks=i)
+        wk_end = wk_start + timedelta(days=7)
+        weekly_signups.append(
+            sum(1 for u in users_query if wk_start <= u.created_at < wk_end)
+        )
+    max_week_signups = max(weekly_signups) if any(weekly_signups) else 1
+
+    site_announcement = (
+        db.session.query(Announcement)
+        .filter_by(squad_id=None)
+        .order_by(Announcement.created_at.desc())
+        .first()
+    )
 
     return render_template(
         'admin_dashboard.html',
@@ -594,8 +918,205 @@ def admin_dashboard():
         unverified_users=unverified_users,
         total_swims=total_swims,
         total_sessions=total_sessions,
-        users=users
+        users=users,
+        q=q,
+        plan_filter=plan_filter,
+        weekly_signups=weekly_signups,
+        max_week_signups=max_week_signups,
+        site_announcement=site_announcement,
     )
+
+
+@main.route('/admin/users/<int:user_id>/update', methods=['POST'])
+@login_required
+@admin_required
+def admin_user_update(user_id):
+    from app import db
+    from models import User
+
+    u = db.session.query(User).get(user_id)
+    if not u:
+        abort(404)
+
+    new_plan = request.form.get('plan')
+    new_role = request.form.get('role')
+    changes = []
+    if new_plan and new_plan != u.plan:
+        changes.append(f"plan {u.plan} -> {new_plan}")
+        u.plan = new_plan
+    if new_role and new_role != u.role:
+        changes.append(f"role {u.role} -> {new_role}")
+        u.role = new_role
+
+    if changes:
+        db.session.commit()
+        _log_admin_action('update_user', 'User', u.id, ', '.join(changes))
+        flash(f'Updated {u.username}: {", ".join(changes)}', 'success')
+
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@main.route('/admin/announcement', methods=['POST'])
+@login_required
+@admin_required
+def admin_announcement_post():
+    from app import db
+    from models import Announcement
+
+    message = request.form.get('message', '').strip()
+    if message:
+        db.session.add(Announcement(squad_id=None, author_id=current_user.id, message=message))
+        db.session.commit()
+        _log_admin_action('post_announcement', 'Announcement', None, message)
+        flash('Announcement posted.', 'success')
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@main.route('/admin/announcement/<int:ann_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_announcement_delete(ann_id):
+    from app import db
+    from models import Announcement
+
+    a = db.session.query(Announcement).get(ann_id)
+    if a and a.squad_id is None:
+        db.session.delete(a)
+        db.session.commit()
+        _log_admin_action('clear_announcement', 'Announcement', ann_id)
+        flash('Announcement cleared.', 'success')
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@main.route('/admin/audit')
+@login_required
+@admin_required
+def admin_audit():
+    from app import db
+    from models import AdminAuditLog, User
+
+    logs = (
+        db.session.query(AdminAuditLog)
+        .order_by(AdminAuditLog.created_at.desc())
+        .limit(200)
+        .all()
+    )
+    admins = {u.id: u.username for u in db.session.query(User).all()}
+    return render_template('admin_audit.html', logs=logs, admins=admins)
+
+
+@main.route('/admin/standards')
+@login_required
+@admin_required
+def admin_standards():
+    from app import db
+    from models import Standard
+
+    standards = db.session.query(Standard).order_by(Standard.event, Standard.name).all()
+    return render_template('admin_standards.html', standards=standards)
+
+
+@main.route('/admin/standards/create', methods=['POST'])
+@login_required
+@admin_required
+def admin_standards_create():
+    from app import db
+    from models import Standard
+
+    name = request.form.get('name', '').strip()
+    event = request.form.get('event', '').strip()
+    cutoff_time = request.form.get('cutoff_time', '').strip()
+
+    if not name or not event or not cutoff_time:
+        flash('Name, event and cutoff time are required.', 'error')
+        return redirect(url_for('main.admin_standards'))
+
+    standard = Standard(
+        name=name,
+        event=event,
+        pool=request.form.get('pool', '25m'),
+        gender=request.form.get('gender', 'open'),
+        age_group=request.form.get('age_group', '').strip(),
+        cutoff_time=cutoff_time,
+    )
+    db.session.add(standard)
+    db.session.commit()
+    _log_admin_action('create_standard', 'Standard', standard.id, name)
+    flash('Standard added.', 'success')
+    return redirect(url_for('main.admin_standards'))
+
+
+@main.route('/admin/standards/delete/<int:standard_id>', methods=['POST'])
+@login_required
+@admin_required
+def admin_standards_delete(standard_id):
+    from app import db
+    from models import Standard
+
+    s = db.session.query(Standard).get(standard_id)
+    if s:
+        db.session.delete(s)
+        db.session.commit()
+        _log_admin_action('delete_standard', 'Standard', standard_id, s.name)
+        flash('Standard removed.', 'success')
+    return redirect(url_for('main.admin_standards'))
+
+@main.route('/admin/programs')
+@login_required
+@admin_required
+def admin_programs():
+    from app import db
+    from models import TrainingProgram
+
+    programs = db.session.query(TrainingProgram).order_by(TrainingProgram.created_at.desc()).all()
+    return render_template('admin_programs.html', programs=programs)
+
+
+@main.route('/admin/programs/create', methods=['POST'])
+@login_required
+@admin_required
+def admin_programs_create():
+    from app import db
+    from models import TrainingProgram
+
+    title = request.form.get('title', '').strip()
+    category = request.form.get('category', 'Strength')
+    description = request.form.get('description', '').strip()
+    content_blocks = request.form.get('content_blocks', '[]')
+
+    if not title:
+        flash('Program needs a title.', 'error')
+        return redirect(url_for('main.admin_programs'))
+
+    program = TrainingProgram(
+        title=title,
+        category=category,
+        description=description,
+        content_blocks=content_blocks,
+        created_by=current_user.id,
+    )
+    db.session.add(program)
+    db.session.commit()
+    _log_admin_action('create_program', 'TrainingProgram', program.id, title)
+    flash('Program created.', 'success')
+    return redirect(url_for('main.admin_programs'))
+
+
+@main.route('/admin/programs/delete/<int:program_id>', methods=['POST'])
+@login_required
+@admin_required
+def admin_programs_delete(program_id):
+    from app import db
+    from models import TrainingProgram
+
+    p = db.session.query(TrainingProgram).get(program_id)
+    if p:
+        db.session.delete(p)
+        db.session.commit()
+        _log_admin_action('delete_program', 'TrainingProgram', program_id, p.title)
+        flash('Program deleted.', 'success')
+    return redirect(url_for('main.admin_programs'))
+
 
 @main.route('/admin/sets')
 @login_required
@@ -650,5 +1171,6 @@ def admin_sets_delete(set_id):
     if s:
         db.session.delete(s)
         db.session.commit()
+        _log_admin_action('delete_set', 'SavedSet', set_id, s.name)
         flash('Set deleted.', 'success')
     return redirect(url_for('main.admin_sets'))

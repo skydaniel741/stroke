@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ swim.event }} — {{ swim.time }} — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  :root{ --ink:#111111; --lav-deep:#8f8ff0; --line:rgba(17,17,17,0.08); }
+  body{background:#f3f3ff;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;margin:0;}
+  .card-nav{position:fixed;top:20px;left:20px;display:flex;gap:10px;}
+  .card-nav a{font-size:13px;font-weight:700;color:#111;text-decoration:none;background:#fff;border:2px solid #111;border-radius:10px;padding:8px 14px;}
+
+  .share-card{
+    width:320px;background:#fff;border:3px solid #111;border-radius:24px;
+    padding:30px;box-shadow:8px 8px 0 var(--lav-deep);text-align:left;
+  }
+  .share-card-brand{font-family:'Antonio',sans-serif;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:18px;}
+  .share-card-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--lav-deep);margin-bottom:8px;}
+  .share-card-title{font-family:'Antonio',sans-serif;font-size:24px;font-weight:700;text-transform:uppercase;color:var(--ink);}
+  .share-card-big{font-family:'Antonio',sans-serif;font-size:56px;font-weight:700;color:var(--ink);margin-top:10px;line-height:1;}
+  .share-card-sub{font-size:13px;font-weight:600;color:#888;margin-top:10px;}
+  .share-card-splits{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:#555;font-weight:600;}
+
+  .print-btn{margin-top:20px;padding:12px 22px;background:#ccccff;border:2.5px solid #111;border-radius:10px;font-weight:800;text-transform:uppercase;font-size:13px;cursor:pointer;}
+
+  @media print{
+    .card-nav, .print-btn{display:none !important}
+    body{background:#fff;min-height:0;padding:0;}
+    .share-card{box-shadow:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="card-nav no-print">
+  <a href="/personal-bests">← Personal bests</a>
+</nav>
+
+<div class="share-card" id="shareCard">
+  <p class="share-card-brand">STROKE</p>
+  <p class="share-card-label">Personal best</p>
+  <p class="share-card-title">{{ swim.event }}</p>
+  <p class="share-card-big">{{ swim.time }}</p>
+  <p class="share-card-sub">{{ swim.pool }} pool · {{ (swim.tag or 'practice')|capitalize }} · {{ swim.logged_at.strftime('%d %b %Y') }}</p>
+  {% if swim.get_splits() %}
+  <div class="share-card-splits">Splits: {{ swim.get_splits()|join(' · ') }}</div>
+  {% endif %}
+</div>
+
+<button class="print-btn no-print" onclick="window.print()">Print / save as image</button>
+
+</body>
+</html>

@@ -69,7 +69,7 @@
         <div class="set-block">
           <div class="set-block-num">{{ loop.index }}</div>
           <div class="set-block-body">
-            <p class="set-block-main">{{ b.reps }} <span class="set-block-x">×</span> {{ b.dist }}<span class="set-block-unit">m</span> <span class="set-block-stroke-inline">{{ stroke_labels.get(b.stroke, b.stroke) }}</span></p>
+            <p class="set-block-main">{{ b.reps }} <span class="set-block-x">×</span> {{ b.dist }}<span class="set-block-unit">m</span> <span class="set-block-stroke-inline">{{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}</span></p>
             {% if b.note %}<span class="set-block-note">{{ b.note }}</span>{% endif %}
           </div>
           <div class="set-block-rest">
@@ -111,7 +111,7 @@
       <p class="print-section-head">{{ sec.name }} <span class="print-section-dist">— {{ sec.distance }}m</span></p>
       {% for b in sec.blocks %}
       <div class="print-line">
-        <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">@ {{ b.rest }} rest</span>{% endif %}</p>
+        <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">@ {{ b.rest }} rest</span>{% endif %}</p>
         {% if b.note %}<p class="print-line-note">{{ b.note }}</p>{% endif %}
       </div>
       {% endfor %}

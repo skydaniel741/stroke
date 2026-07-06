@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parental consent — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  body{background:#f3f3ff;min-height:100vh;margin:0;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .cf-card{max-width:480px;width:100%;background:#fff;border:3px solid #111;border-radius:20px;padding:32px;box-shadow:6px 6px 0 #ccccff;}
+  .cf-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
+  .cf-h1{font-family:'Antonio',sans-serif;font-size:28px;margin:0 0 14px;}
+  .cf-notice{background:#fff4e0;border:1px solid #a86400;border-radius:10px;padding:12px 14px;font-size:12px;color:#7a4b00;margin-bottom:20px;}
+  .cf-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .cf-field label{font-size:12px;font-weight:700;text-transform:uppercase;color:#777;}
+  .cf-field input{padding:10px 12px;border:2px solid #ccccff;background:#fcfcff;border-radius:10px;font-size:14px;}
+  .cf-check{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:16px 0;}
+  .cf-btn{width:100%;padding:14px;background:#ccccff;border:2.5px solid #111;border-radius:10px;font-weight:800;text-transform:uppercase;font-size:13px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="cf-card">
+  <p class="cf-eyebrow">Parental consent</p>
+  <h1 class="cf-h1">Joining {{ squad.name }}</h1>
+
+  <!-- TODO: legal review before launch — this is placeholder copy, not reviewed legal text -->
+  <div class="cf-notice">This squad requires a parent or guardian's consent before a minor swimmer's account is activated. Placeholder text — final wording pending legal review.</div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <p style="color:{{ '#1a7a3d' if category=='success' else '#b23b3b' }};font-weight:700">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" action="/coach/consent/{{ membership.id }}">
+    <div class="cf-field">
+      <label>Guardian full name</label>
+      <input type="text" name="guardian_name" required>
+    </div>
+    <div class="cf-field">
+      <label>Guardian email</label>
+      <input type="email" name="guardian_email" required>
+    </div>
+    <label class="cf-check">
+      <input type="checkbox" name="confirm" value="1" required>
+      I confirm I am this swimmer's parent or legal guardian and consent to them joining {{ squad.name }} on Stroke.
+    </label>
+    <button type="submit" class="cf-btn">Confirm consent</button>
+  </form>
+  <p style="font-size:11px;color:#888;margin-top:14px;text-align:center">See our <a href="/privacy">Privacy Policy</a> for how this information is stored and used.</p>
+</div>
+
+</body>
+</html>

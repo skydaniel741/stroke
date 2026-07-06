@@ -77,13 +77,13 @@
 
 .dashboard-drawer {
   position: fixed;
-  right: -300px;
+  right: -320px;
   top: 0;
-  width: 300px;
+  width: 320px;
   height: 100vh;
-  background: #ffffff;
+  background: #fafafd;
   border-left: 3px solid #111111;
-  box-shadow: -8px 0 0 rgba(17, 17, 17, 0.06);
+  box-shadow: -6px 0 0 #111111;
   transition: right 0.3s cubic-bezier(.4,0,.2,1);
   z-index: 1000;
   overflow-y: auto;
@@ -99,29 +99,65 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 22px 24px;
-  border-bottom: 3px solid #111111;
+  padding: 20px 20px;
+  background: #111111;
   flex-shrink: 0;
 }
 
+.drawer-logo {
+  font-family: 'Antonio', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ccccff;
+}
+
+.drawer-close-btn {
+  background: none;
+  border: 2px solid #ccccff;
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ccccff;
+  transition: background 0.15s, color 0.15s;
+}
+
+.drawer-close-btn:hover {
+  background: #ccccff;
+  color: #111111;
+}
+
+.drawer-close-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---------- USER CARD ---------- */
 .drawer-user {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 20px 24px;
+  margin: 18px 16px;
+  padding: 16px;
   background: #ccccff;
-  border-bottom: 3px solid #111111;
+  border: 3px solid #111111;
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 #111111;
   flex-shrink: 0;
 }
 
 .drawer-user-avatar {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: #111111;
   color: #ccccff;
   font-family: 'Antonio', sans-serif;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -132,6 +168,7 @@
 
 .drawer-user-info {
   min-width: 0;
+  flex: 1;
 }
 
 .drawer-user-name {
@@ -164,102 +201,131 @@
   border-color: #111111;
 }
 
-.drawer-logo {
+.drawer-user-streak {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 6px 10px;
+  background: #111111;
+  border-radius: 10px;
+  line-height: 1.1;
+}
+
+.drawer-user-streak-val {
+  display: block;
   font-family: 'Antonio', sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
-  text-transform: uppercase;
-  color: #111111;
-}
-
-.drawer-close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #111111;
-  transition: color 0.15s;
-}
-
-.drawer-close-btn:hover {
   color: #ccccff;
 }
 
-.drawer-close-btn svg {
-  width: 24px;
-  height: 24px;
+.drawer-user-streak-lbl {
+  display: block;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #999;
+  margin-top: 2px;
 }
 
-.drawer-sub {
-  font-size: 13px;
-  color: #555;
-  margin-top: 8px;
-}
-
+/* ---------- NAV LINKS ---------- */
 .drawer-nav-links {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 6px;
   flex: 1;
-  padding: 8px 0;
+  padding: 4px 16px 16px;
+}
+
+.drawer-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 2px 2px;
+}
+
+.drawer-section-divider::before,
+.drawer-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: #e5e5f0;
+}
+
+.drawer-section-divider span {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8f8ff0;
+  white-space: nowrap;
+}
+
+.drawer-spacer {
+  flex: 1;
+  min-height: 8px;
 }
 
 .drawer-link {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 24px;
-  margin: 0 10px;
+  gap: 12px;
+  padding: 10px 12px;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #111111;
   text-decoration: none;
-  border-left: 4px solid transparent;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  background: #ffffff;
+  border: 2.5px solid #111111;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
+}
+
+.drawer-icon-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #f3f3ff;
+  color: #8f8ff0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
 }
 
 .drawer-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
-  color: #6d6d8a;
-  transition: color 0.15s;
 }
 
 .drawer-link:hover {
-  background: #f3f3ff;
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 #111111;
 }
 
 .drawer-link.active {
   background: #111111;
   color: #ccccff;
-  border-left-color: #ccccff;
 }
 
-.drawer-link.active .drawer-icon {
+.drawer-link.active .drawer-icon-box {
+  background: rgba(204,204,255,0.16);
   color: #ccccff;
 }
 
-.drawer-link.drawer-bottom {
-  margin-bottom: 8px;
-}
-
 .drawer-logout {
-  border-top: 2px solid #eee;
-  border-radius: 0;
-  margin: 8px 0 0;
-  padding: 18px 24px;
   color: #b23b3b;
-  flex-shrink: 0;
+  border-color: #b23b3b;
 }
 
-.drawer-logout .drawer-icon {
+.drawer-logout .drawer-icon-box {
+  background: #fbe9e9;
   color: #b23b3b;
 }
 
@@ -533,6 +599,38 @@
 
 .panel--log { justify-content: flex-start; }
 
+.site-announce-banner {
+  background: #111111;
+  color: #ccccff;
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.rest-nudge-banner {
+  background: #f3f3ff;
+  border: 2.5px solid #111111;
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 20px;
+}
+
+.scan-status {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b52c4;
+  margin: 4px 0 0;
+}
+
+.scan-status.error {
+  color: #b23b3b;
+}
+
 .upgrade-banner {
   margin-top: auto;
   display: flex;
@@ -789,7 +887,8 @@
 }
 
 .drawer-link--soon:hover {
-  background: transparent;
+  transform: none;
+  box-shadow: none;
 }
 
 .drawer-soon-tag {
@@ -802,6 +901,13 @@
   color: #999;
   padding: 3px 8px;
   border-radius: 20px;
+}
+
+/* ---------- MOBILE TAB SWITCHER (Personal bests/Recent sessions, Pool split/Streak) ----------
+   Both panels sit side by side normally; below 960px each pair collapses down to
+   whichever one tab is active so the page doesn't turn into one long vertical stack. */
+.mobile-tab-switch {
+  display: none;
 }
 
 @media(max-width: 960px) {
@@ -829,11 +935,70 @@
   .stats-row {
     grid-template-columns: 1fr 1fr;
   }
+
+  .grid-2--tabbed {
+    margin-bottom: 20px;
+  }
+
+  .mobile-tab-switch {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .mobile-tab-btn {
+    flex: 1;
+    border: 3px solid #111111;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #111111;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+
+  .mobile-tab-btn.active {
+    background: #111111;
+    color: #ccccff;
+  }
+
+  .grid-2--tabbed .mobile-tab-panel {
+    display: none;
+    margin-bottom: 0;
+  }
+
+  .grid-2--tabbed .mobile-tab-panel.active {
+    display: flex;
+  }
 }
 
 @media(max-width: 680px) {
+  .main-workspace {
+    padding: 18px 16px;
+  }
+
+  .workspace-header {
+    margin-bottom: 20px;
+  }
+
+  .panel {
+    padding: 18px;
+  }
+
   .stats-row {
-    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat {
+    padding: 16px;
+  }
+
+  .stat-val {
+    font-size: 30px;
+    margin: 8px 0 2px;
   }
 
   .grid-2 {
