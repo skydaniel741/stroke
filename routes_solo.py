@@ -8,6 +8,7 @@ from auth_utils import solo_required
 solo = Blueprint('solo', __name__, url_prefix='/solo')
 
 MAX_SCAN_BYTES = 20 * 1024 * 1024  # raw phone-camera uploads before we downscale server-side
+WEEKLY_REGEN_LIMIT = 3  # AI program rebuilds allowed per rolling week
 
 
 @solo.route('/scan-whiteboard', methods=['POST'])
@@ -52,6 +53,20 @@ def onboarding():
             flash("AI program generation isn't set up yet.", 'error')
             return redirect(url_for('solo.onboarding'))
 
+        # Rebuilds are capped at WEEKLY_REGEN_LIMIT per rolling week (Mon-Sun).
+        # The very first build (no program yet) is always free.
+        is_rebuild = bool(existing and existing.program_json)
+        monday = datetime.utcnow().date() - timedelta(days=datetime.utcnow().weekday())
+        week_used = (existing.regen_count or 0) if (existing and existing.regen_week_start == monday) else 0
+        if is_rebuild and week_used >= WEEKLY_REGEN_LIMIT:
+            reset = monday + timedelta(days=7)
+            flash(
+                f"You've used all {WEEKLY_REGEN_LIMIT} program rebuilds this week. "
+                f"You can rebuild again on {reset.strftime('%a %d %b')}.",
+                'error',
+            )
+            return redirect(url_for('solo.program'))
+
         try:
             age = int(request.form.get('age') or 0) or None
         except ValueError:
@@ -68,6 +83,18 @@ def onboarding():
         profile.fitness_ability = request.form.get('fitness_ability', '').strip()
         profile.primary_stroke = request.form.get('primary_stroke', '').strip()
         profile.main_goal = request.form.get('main_goal', '').strip()
+
+        # AI tuning is a Solo Pro feature; free solo swimmers stay on the
+        # defaults no matter what gets posted.
+        if current_user.is_solo_pro:
+            tone = request.form.get('coaching_tone', 'balanced')
+            profile.coaching_tone = tone if tone in ('encouraging', 'balanced', 'direct') else 'balanced'
+            intensity = request.form.get('intensity', 'normal')
+            profile.intensity = intensity if intensity in ('easier', 'normal', 'harder') else 'normal'
+        else:
+            profile.coaching_tone = 'balanced'
+            profile.intensity = 'normal'
+
         profile.updated_at = datetime.utcnow()
 
         from ai_utils import generate_training_program
@@ -82,13 +109,23 @@ def onboarding():
 
         import json
         profile.program_json = json.dumps(result['program'])
+        # Count this against the weekly rebuild cap (only rebuilds, not the
+        # first-ever build).
+        if is_rebuild:
+            profile.regen_week_start = monday
+            profile.regen_count = week_used + 1
         if not existing:
             db.session.add(profile)
         db.session.commit()
         flash('Your personalized program is ready.', 'success')
         return redirect(url_for('solo.program'))
 
-    return render_template('solo_onboarding.html', profile=existing)
+    regens_left = existing.regens_left(WEEKLY_REGEN_LIMIT) if existing else WEEKLY_REGEN_LIMIT
+    return render_template(
+        'solo_onboarding.html', profile=existing,
+        regens_left=regens_left, regen_limit=WEEKLY_REGEN_LIMIT,
+        is_rebuild=bool(existing and existing.program_json),
+    )
 
 
 @solo.route('/program')
@@ -102,7 +139,43 @@ def program():
     if not profile or not profile.program_json:
         return redirect(url_for('solo.onboarding'))
 
-    return render_template('solo_program.html', profile=profile, program=profile.get_program())
+    return render_template(
+        'solo_program.html', profile=profile, program=profile.get_program(),
+        regens_left=profile.regens_left(WEEKLY_REGEN_LIMIT), regen_limit=WEEKLY_REGEN_LIMIT,
+    )
+
+
+@solo.route('/pro')
+@login_required
+@solo_required
+def pro():
+    return render_template('solo_pro.html')
+
+
+@solo.route('/pro/upgrade', methods=['POST'])
+@login_required
+@solo_required
+def pro_upgrade():
+    from app import db
+
+    # Placeholder for real checkout. In production this is where a Stripe
+    # (or similar) payment would be confirmed before flipping the plan.
+    current_user.plan = 'solo_pro'
+    db.session.commit()
+    flash('Welcome to Solo Pro — AI tuning is unlocked.', 'success')
+    return redirect(url_for('solo.onboarding'))
+
+
+@solo.route('/pro/downgrade', methods=['POST'])
+@login_required
+@solo_required
+def pro_downgrade():
+    from app import db
+
+    current_user.plan = 'solo'
+    db.session.commit()
+    flash('Back on the free Solo plan.', 'success')
+    return redirect(url_for('solo.pro'))
 
 
 @solo.route('/checkin', methods=['GET', 'POST'])
@@ -217,16 +290,13 @@ def dryland_view(program_id):
 @login_required
 @solo_required
 def nutrition_library():
-    from app import db
-    from models import TrainingProgram
+    from nutrition_data import CATEGORIES, meals_by_category
 
-    programs = (
-        db.session.query(TrainingProgram)
-        .filter_by(category='Nutrition')
-        .order_by(TrainingProgram.created_at.desc())
-        .all()
+    return render_template(
+        'nutrition.html',
+        categories=CATEGORIES,
+        meals_by_cat=meals_by_category(),
     )
-    return render_template('nutrition_library.html', programs=programs)
 
 
 @solo.route('/nutrition/<int:program_id>')

@@ -20,6 +20,23 @@ NEW_COLUMNS = {
         ("status", "VARCHAR(20) DEFAULT 'active'"),
         ("approved_at", "DATETIME"),
     ],
+    'squad': [
+        ("color", "VARCHAR(20) DEFAULT 'blue'"),
+    ],
+    'squad_event': [
+        ("slot", "VARCHAR(10) DEFAULT ''"),
+        ("saved_set_id", "INTEGER"),
+    ],
+    'session': [
+        ("source", "VARCHAR(20) DEFAULT 'self'"),
+        ("squad_event_id", "INTEGER"),
+    ],
+    'athlete_profile': [
+        ("coaching_tone", "VARCHAR(20) DEFAULT 'balanced'"),
+        ("intensity", "VARCHAR(20) DEFAULT 'normal'"),
+        ("regen_week_start", "DATE"),
+        ("regen_count", "INTEGER DEFAULT 0"),
+    ],
 }
 
 

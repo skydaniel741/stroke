@@ -1,7 +1,57 @@
 import base64
 import io
+import logging
 
 import anthropic
+
+logger = logging.getLogger(__name__)
+
+# Coaching tone for the AI's feedback (squad insights, check-in replies).
+# Lets a coach dial how blunt the AI is -- the default is deliberately warm
+# rather than harsh.
+TONE_GUIDANCE = {
+    'encouraging': (
+        "TONE: Warm and encouraging. Lead with what's going well, frame concerns gently as "
+        "opportunities, and never be harsh or discouraging. Still be honest, but choose kind, "
+        "motivating wording -- this reader may be young or easily disheartened."
+    ),
+    'balanced': (
+        "TONE: Supportive but honest -- a good club coach. Acknowledge positives, name real "
+        "concerns plainly without being harsh, and keep it constructive."
+    ),
+    'direct': (
+        "TONE: Direct and performance-focused, like a senior squad coach. Be candid about "
+        "problems and hold a high bar, but stay professional and never insulting."
+    ),
+}
+
+
+def _tone_line(tone):
+    return TONE_GUIDANCE.get((tone or 'balanced').lower(), TONE_GUIDANCE['balanced'])
+
+
+# Solo Pro intensity knob -- shifts how demanding the generated program is
+# without changing the swimmer's stated level.
+INTENSITY_GUIDANCE = {
+    'easier': (
+        "INTENSITY: Dial this program slightly easier than their level would normally get -- "
+        "trim total volume ~15-20%, give more rest between reps, and keep most work aerobic. "
+        "Prioritise sustainability and recovery over hard sets."
+    ),
+    'normal': (
+        "INTENSITY: Pitch the program squarely at their stated level and fitness -- a sensible, "
+        "well-balanced load."
+    ),
+    'harder': (
+        "INTENSITY: Push this program a notch harder than their level would normally get -- "
+        "add ~15-20% volume or an extra quality/race-pace element, with tighter intervals. "
+        "Keep it safe and achievable, but make them work."
+    ),
+}
+
+
+def _intensity_line(intensity):
+    return INTENSITY_GUIDANCE.get((intensity or 'normal').lower(), INTENSITY_GUIDANCE['normal'])
 from PIL import Image, ImageOps
 import pillow_heif
 
@@ -199,6 +249,7 @@ def extract_set_from_image(image_bytes, api_key, model):
             }],
         )
     except Exception:
+        logger.exception('extract_set_from_image: API call failed')
         return {'ok': False, 'error': "Couldn't read that photo — try again or enter it manually."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
@@ -221,63 +272,81 @@ def extract_set_from_image(image_bytes, api_key, model):
 # SOLO-TIER AI COACHING: onboarding -> program, and daily check-ins
 # ============================================================
 
+SWIM_BLOCK_ITEM_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "section": {"type": "string", "enum": SECTIONS, "description": "Which part of the session this block belongs to."},
+        "reps": {"type": "integer", "description": "Number of repeats."},
+        "dist": {"type": "integer", "description": "Distance per rep in metres (multiples of 25)."},
+        "stroke": {"type": "string", "enum": sorted(STROKE_CODES), "description": "Primary stroke code."},
+        "modifier": {"type": "string", "enum": sorted(MODIFIERS), "description": "Kick/Pull/Drill modifier, or empty."},
+        "rest": {"type": "string", "description": "Rest or send-off as 'M:SS' / '0:SS'. Empty if none."},
+        "note": {"type": "string", "description": "Short cue for this block, e.g. 'descend 1-4', 'build to race pace'. Empty if none."},
+    },
+    "required": ["section", "reps", "dist", "stroke"],
+}
+
 PROGRAM_TOOL_SCHEMA = {
     "name": "create_training_program",
-    "description": "Build a personalized weekly swim training program from a swimmer's onboarding answers.",
+    "description": "Build a personalized weekly swim training calendar from a swimmer's onboarding answers.",
     "input_schema": {
         "type": "object",
         "properties": {
             "overview": {
                 "type": "string",
                 "description": (
-                    "2-4 sentence summary of the training approach for this swimmer specifically -- "
-                    "reference their level, goal and training frequency so it clearly isn't generic."
+                    "ONE short sentence (max ~20 words) naming this week's focus for this swimmer. "
+                    "No preamble, no restating their answers back to them."
                 ),
             },
-            "sessions": {
+            "days": {
                 "type": "array",
-                "description": "Exactly one entry per training day they said they can train each week.",
+                "description": (
+                    "Exactly 7 entries, Monday through Sunday, covering the whole week. Training days get "
+                    "full sessions with concrete swim blocks; the remaining days are rest or optional "
+                    "recovery days (rest=true, no blocks). Spread training days sensibly across the week."
+                ),
                 "items": {
                     "type": "object",
                     "properties": {
-                        "day_label": {"type": "string", "description": "e.g. 'Session 1', 'Session 2'."},
-                        "focus": {"type": "string", "description": "e.g. 'Aerobic base', 'Speed & technique', 'Recovery'."},
-                        "summary": {
-                            "type": "string",
-                            "description": (
-                                "3-5 sentences describing what this session should cover: rough total distance, "
-                                "stroke/drill emphasis, and effort level, all pitched at this swimmer's level."
-                            ),
+                        "day": {"type": "string", "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]},
+                        "rest": {"type": "boolean", "description": "True if this is a rest/recovery day with no swim session."},
+                        "focus": {"type": "string", "description": "e.g. 'Aerobic base', 'Speed & technique', 'Recovery'. For rest days: 'Rest' or 'Active recovery'."},
+                        "blocks": {
+                            "type": "array",
+                            "description": "The actual written set for a training day: warm up, main set(s), cool down. Empty for rest days.",
+                            "items": SWIM_BLOCK_ITEM_SCHEMA,
                         },
+                        "coach_note": {"type": "string", "description": "ONE short cue for the day (max ~12 words), e.g. 'Hold form when tired'. For rest days, one line on recovery."},
                     },
-                    "required": ["day_label", "focus", "summary"],
+                    "required": ["day", "rest", "focus", "coach_note"],
                 },
             },
             "progression_tips": {
                 "type": "string",
-                "description": "2-3 sentences on how to progress this program over the coming weeks as they adapt.",
+                "description": "ONE short sentence on how to progress next week (e.g. add reps or drop rest). Max ~20 words.",
             },
             "insights": {
                 "type": "array",
                 "items": {"type": "string"},
                 "description": (
-                    "4-6 specific, personalized coaching insights -- things this exact swimmer should know or "
-                    "watch for given their age, level, goal and fitness ability. Avoid generic filler; make each "
-                    "one clearly tied to something they told you."
+                    "Exactly 3 short, punchy coaching cues (each max ~15 words), specific to THIS swimmer's "
+                    "age/level/goal. No generic filler, no full sentences padded with fluff."
                 ),
             },
         },
-        "required": ["overview", "sessions", "insights"],
+        "required": ["overview", "days", "insights"],
     },
 }
 
 
 def generate_training_program(profile, api_key, model):
     """Call Claude to turn a swimmer's onboarding answers into a structured
-    weekly program. `profile` is an AthleteProfile instance. Returns
-    {'ok': True, 'program': {...}} or {'ok': False, 'error': '...'}."""
+    week-calendar program (7 day boxes with real swim blocks). `profile` is an
+    AthleteProfile instance. Returns {'ok': True, 'program': {...}} or
+    {'ok': False, 'error': '...'}."""
     prompt = (
-        "You are an experienced swim coach building a personalized training program. "
+        "You are an experienced swim coach building a personalized weekly training calendar. "
         "Here is what the swimmer told you about themselves:\n\n"
         f"- Level: {profile.level or 'not specified'}\n"
         f"- Age: {profile.age or 'not specified'}\n"
@@ -285,28 +354,52 @@ def generate_training_program(profile, api_key, model):
         f"- Self-rated fitness ability: {profile.fitness_ability or 'not specified'}\n"
         f"- Primary/favourite stroke: {profile.primary_stroke or 'not specified'}\n"
         f"- Main goal: {profile.main_goal or 'not specified'}\n\n"
-        "Call the create_training_program tool with a program tailored to exactly this swimmer. "
-        "Create one session per training day they specified. Go heavy on the insights -- that's the "
-        "most valuable part for them."
+        f"{_intensity_line(getattr(profile, 'intensity', 'normal'))}\n"
+        f"{_tone_line(getattr(profile, 'coaching_tone', 'balanced'))} Apply this tone to the "
+        "overview, coach notes and insights.\n\n"
+        "Call the create_training_program tool with a full 7-day week (Monday-Sunday). "
+        "The number of non-rest days MUST exactly equal the days per week they said they can train. "
+        "Give each training day a complete written session -- warm up, main set, cool down -- as "
+        "concrete blocks (reps x distance, stroke, rest interval, short cue), with total volume and "
+        "intensity pitched honestly at their level and fitness. Beginners get short sessions "
+        "(under ~1500m) with generous rest; competitive swimmers get real volume and race-pace work. "
+        "Non-training days are rest days.\n\n"
+        "STYLE: The swim blocks carry the detail -- keep all the text (overview, focus, coach notes, "
+        "insights) short and punchy. Quality over quantity: no filler, no repeating their answers back."
     )
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
+        # 7 full days of structured blocks plus insights is a long response --
+        # a small budget here truncates the tool JSON and the whole call fails.
         response = client.messages.create(
             model=model,
-            max_tokens=2048,
+            max_tokens=8192,
             tools=[PROGRAM_TOOL_SCHEMA],
             tool_choice={"type": "tool", "name": "create_training_program"},
             messages=[{"role": "user", "content": prompt}],
         )
     except Exception:
+        logger.exception('generate_training_program: API call failed')
+        return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
+
+    if response.stop_reason == 'max_tokens':
+        logger.error('generate_training_program: response truncated at max_tokens')
         return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use or not tool_use.input:
+        logger.error('generate_training_program: no usable tool_use in response')
         return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
 
-    return {'ok': True, 'program': tool_use.input}
+    program = tool_use.input
+    for day in program.get('days', []):
+        day['blocks'] = [b for b in (_clamp_block(r) for r in day.get('blocks', [])) if b is not None]
+        day['total'] = sum(b['reps'] * b['dist'] for b in day['blocks'])
+    if not program.get('days'):
+        logger.error('generate_training_program: program came back with no days')
+        return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
+    return {'ok': True, 'program': program}
 
 
 INSIGHT_TOOL_SCHEMA = {
@@ -318,9 +411,8 @@ INSIGHT_TOOL_SCHEMA = {
             "insight": {
                 "type": "string",
                 "description": (
-                    "2-4 sentences responding directly to how they say they felt and what they wrote. "
-                    "Be specific and encouraging but honest -- reference their actual words and, if a recent "
-                    "trend is visible across their check-ins, mention it. No generic platitudes."
+                    "1-2 short sentences (max ~30 words total) reacting to their words and any visible trend. "
+                    "One concrete takeaway. No platitudes, no restating what they said."
                 ),
             },
         },
@@ -329,17 +421,19 @@ INSIGHT_TOOL_SCHEMA = {
 }
 
 
-def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, api_key, model):
+def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, api_key, model, tone='encouraging'):
     """Call Claude to respond to a single check-in with a short personalized insight.
     `recent_checkins` is a list of {'date', 'feeling_rating', 'notes'} dicts, most recent
-    last, excluding the one just submitted. Returns a plain string insight, or a
-    friendly fallback string on any failure -- never raises."""
+    last, excluding the one just submitted. `tone` defaults to encouraging since this
+    talks straight to the swimmer. Returns a plain string insight, or a friendly
+    fallback string on any failure -- never raises."""
     history_lines = "\n".join(
         f"- {c['date']}: felt {c['feeling_rating']}/5 — \"{c['notes']}\"" for c in recent_checkins
     ) or "No previous check-ins."
 
     prompt = (
         "You are a swim coach reviewing a swimmer's daily training check-in.\n\n"
+        f"{_tone_line(tone)}\n\n"
         f"Swimmer level: {profile.level or 'not specified'}, goal: {profile.main_goal or 'not specified'}.\n\n"
         f"Recent check-in history:\n{history_lines}\n\n"
         f"Today's check-in: felt {feeling_rating}/5 — \"{notes}\"\n\n"
@@ -362,3 +456,341 @@ def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, ap
         pass
 
     return "Logged — keep it up. Come back tomorrow and check in again to start building a trend I can learn from."
+
+
+# ============================================================
+# COACH-TIER AI: squad performance insights for the coach dashboard
+# ============================================================
+
+SQUAD_INSIGHTS_TOOL_SCHEMA = {
+    "name": "give_squad_insights",
+    "description": "Analyze a swim squad's recent training data and give the coach actionable insights.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "summary": {
+                "type": "string",
+                "description": (
+                    "1-2 tight sentences (max ~35 words) on how the squad is trending. Lead with the single "
+                    "most important signal in the data. No filler, no listing every swimmer."
+                ),
+            },
+            "swimmer_flags": {
+                "type": "array",
+                "description": (
+                    "Swimmers who need the coach's attention this week, most urgent first. "
+                    "Include at-risk swimmers (inactive, low attendance, injured) AND standouts "
+                    "worth stretching. Skip swimmers who are simply fine."
+                ),
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Swimmer's name exactly as given in the data."},
+                        "kind": {
+                            "type": "string",
+                            "enum": ["at_risk", "watch", "standout"],
+                            "description": "at_risk = needs intervention, watch = keep an eye on, standout = performing above the group.",
+                        },
+                        "reason": {
+                            "type": "string",
+                            "description": "ONE sentence (max ~20 words): the data point + the action. e.g. 'No swim in 12 days — check in.'",
+                        },
+                    },
+                    "required": ["name", "kind", "reason"],
+                },
+            },
+            "focus_suggestions": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "2-3 short, concrete next-focus suggestions (each max ~15 words), each tied to something "
+                    "visible in the data (a stroke nobody logs, attendance dips, volume plateaus)."
+                ),
+            },
+        },
+        "required": ["summary", "swimmer_flags", "focus_suggestions"],
+    },
+}
+
+
+def generate_squad_insights(squad_name, swimmers_digest, api_key, model, tone='balanced'):
+    """Call Claude to analyze a squad's recent training/attendance digest and
+    return coaching insights. `swimmers_digest` is a list of per-swimmer dicts
+    built in routes_coach.coach_pro_ai_insights. `tone` is one of
+    encouraging/balanced/direct. Returns {'ok': True, 'insights': {...}} or
+    {'ok': False, 'error': '...'} -- never raises."""
+    lines = []
+    for s in swimmers_digest:
+        lines.append(
+            f"- {s['name']}: {s['sessions_60d']} sessions / {s['distance_60d']}m in last 60 days; "
+            f"last active {s['last_active'] or 'never'}; attendance {s['attendance']}; "
+            f"best times: {', '.join(s['best_times']) or 'none logged'}"
+            + (f"; STATUS FLAG: {s['status_flag']}" if s.get('status_flag') else "")
+        )
+
+    prompt = (
+        f"You are an experienced swim coach's assistant reviewing the squad \"{squad_name}\".\n\n"
+        f"{_tone_line(tone)}\n\n"
+        f"Recent data for each swimmer:\n" + "\n".join(lines) + "\n\n"
+        "Call the give_squad_insights tool with your analysis. Be specific and honest -- "
+        "cite the actual numbers and names above. If the data is thin, say so plainly in the "
+        "summary rather than inventing trends. Keep everything terse: quality over quantity, no filler."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=4096,
+            tools=[SQUAD_INSIGHTS_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "give_squad_insights"},
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception:
+        logger.exception('generate_squad_insights: API call failed')
+        return {'ok': False, 'error': "Couldn't generate insights right now — try again in a moment."}
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input:
+        return {'ok': False, 'error': "Couldn't generate insights right now — try again in a moment."}
+
+    return {'ok': True, 'insights': tool_use.input}
+
+
+# ============================================================
+# COACH-TIER AI: set generator grounded in elite training methodology
+# ============================================================
+
+# Compressed knowledge base of how elite programs actually structure training.
+# Injected into the set-generator prompt so generated sets follow real
+# methodology instead of generic filler.
+ELITE_METHODOLOGY_NOTES = """
+Methodology reference (draw on whichever matches the request):
+
+- Bowman-style aerobic engine (Michael Phelps' program at NBAC): very high aerobic base,
+  heavy IM and kick emphasis year-round, long freestyle/IM ladders at threshold, descend
+  patterns, negative-split discipline. Typical main sets 2000-4000m for seniors, e.g.
+  5x400 IM descend, 8x200 free on tight intervals holding pace, 1000+ of quality kick.
+- USRPT / race-pace (Rushall): short rest, exact race-pace repeats, stop-when-you-fail.
+  E.g. 20x50 free at 100-pace on 0:50, 30x25 fly at 50-pace. Low volume, maximal specificity.
+- Sprint/power (e.g. Bob Gillett / Magnussen-era Australian sprint work): low volume, full
+  recovery, maximal velocity 15-25m efforts, resisted/assisted work, dive 25s, broken 50s
+  with 10-15s rest. Quality over volume, long rest (2:00+ between max efforts).
+- Threshold / CSS (British Swimming style): sustained sub-threshold repeats with short rest,
+  e.g. 3x(4x100) at CSS with 0:15 rest, step-test informed pacing, controlled heart rate.
+- Season phasing: early season = aerobic base + technique volume; mid season = threshold and
+  quality race-pace blocks; taper = drop volume ~40-60%, keep intensity sharp with broken
+  race-pace and speed touches; post-long-course transition = lower volume, stroke variety,
+  drill emphasis, rebuild aerobic base gently.
+- Age-group swimmers: cap volume sensibly, more drill/kick variety, avoid heavy lactate work.
+"""
+
+COACH_SET_TOOL_SCHEMA = {
+    "name": "create_coach_set",
+    "description": "Write a structured swim set for a coach, grounded in elite training methodology.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string", "description": "Short punchy title for the set, e.g. 'Bowman IM Engine 3k'."},
+            "description": {
+                "type": "string",
+                "description": "ONE short sentence: what this set trains + the methodology it draws on. Max ~20 words.",
+            },
+            "session_type": {"type": "string", "description": "Short label, e.g. Endurance, Speed, Race pace, Technique."},
+            "category": {
+                "type": "string",
+                "enum": ["Fast", "Easy", "Heart Rate", "Drill", "Lactate", "Fitness", "Open Water", "Triathlon"],
+                "description": "Library category that best fits.",
+            },
+            "blocks": {
+                "type": "array",
+                "description": "The full written session in order: warm up, pre set, main set(s), cool down.",
+                "items": SWIM_BLOCK_ITEM_SCHEMA,
+            },
+        },
+        "required": ["name", "description", "blocks"],
+    },
+}
+
+
+def generate_coach_set(params, api_key, model):
+    """Call Claude to write a coach's set from structured parameters, grounded
+    in the elite-methodology notes above. `params` keys: focus, style,
+    season_phase, level, pool, duration_minutes. Returns {'ok': True,
+    'set': {...}} or {'ok': False, 'error': '...'} -- never raises."""
+    focus = params.get('focus') or "coach's choice"
+    prompt = (
+        "You are an elite swim coach's assistant writing tomorrow's set.\n"
+        f"{ELITE_METHODOLOGY_NOTES}\n"
+        "The coach wants:\n"
+        f"- Training focus: {focus}\n"
+        f"- Methodology style: {params.get('style') or 'best fit for the focus'}\n"
+        f"- Season phase: {params.get('season_phase') or 'mid season'}\n"
+        f"- Squad level: {params.get('level') or 'senior club'}\n"
+        f"- Pool: {params.get('pool') or '25m'}\n"
+        f"- Session length: about {params.get('duration_minutes') or 60} minutes\n\n"
+        "Call the create_coach_set tool with one complete session: warm up, main work, cool down. "
+        "Total volume must be realistic for the session length and level (roughly 45-60m/min for "
+        "seniors including rest, less for age-groupers). Intervals must be swimmable for the level. "
+        "Use the note field for cues like 'descend 1-4' or 'hold 200 race pace'. Stay true to the "
+        "requested methodology -- a USRPT set should look nothing like a Bowman aerobic set."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=4096,
+            tools=[COACH_SET_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "create_coach_set"},
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception:
+        logger.exception('generate_coach_set: API call failed')
+        return {'ok': False, 'error': "Couldn't generate a set right now — try again in a moment."}
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input:
+        return {'ok': False, 'error': "Couldn't generate a set right now — try again in a moment."}
+
+    data = tool_use.input
+    blocks = [b for b in (_clamp_block(r) for r in data.get('blocks', [])) if b is not None]
+    if not blocks:
+        return {'ok': False, 'error': "The generated set came back empty — try again."}
+
+    return {'ok': True, 'set': {
+        'name': (data.get('name') or 'AI generated set').strip()[:100],
+        'description': (data.get('description') or '').strip(),
+        'session_type': (data.get('session_type') or 'Training').strip()[:50],
+        'category': data.get('category') if data.get('category') in (
+            'Fast', 'Easy', 'Heart Rate', 'Drill', 'Lactate', 'Fitness', 'Open Water', 'Triathlon'
+        ) else 'Fitness',
+        'blocks': blocks,
+    }}
+
+
+# ============================================================
+# COACH-TIER AI: read a test-set results board into per-swimmer times
+# ============================================================
+
+TEST_RESULTS_TOOL_SCHEMA = {
+    "name": "log_test_results",
+    "description": "Read swimmers' names and times off a photo of a test set results board or notebook.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "test_label": {
+                "type": "string",
+                "description": "What the test was, as written or implied, e.g. '5x100 FR max', '200 IM time trial'.",
+            },
+            "event": {
+                "type": "string",
+                "description": (
+                    "The single event these results map to, normalized like '100m Freestyle', "
+                    "'200m IM', '50m Butterfly'. Use the per-rep distance for multi-rep tests "
+                    "(5x100 max -> '100m Freestyle')."
+                ),
+            },
+            "results": {
+                "type": "array",
+                "description": "One entry per swimmer whose results are readable.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": (
+                                "The swimmer's name. If it clearly matches a roster name you were "
+                                "given, return the roster name EXACTLY as provided; otherwise "
+                                "return the name as written on the board."
+                            ),
+                        },
+                        "times": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": (
+                                "All of this swimmer's times in order, normalized to 'M:SS.ss' or "
+                                "'SS.ss' -- e.g. '1:02.5', '58.9'. Coaches write 62.5 for 1:02.5; "
+                                "convert anything over 60 seconds to minutes notation."
+                            ),
+                        },
+                        "note": {"type": "string", "description": "Anything else written next to this swimmer. Empty if none."},
+                    },
+                    "required": ["name", "times"],
+                },
+            },
+        },
+        "required": ["results"],
+    },
+}
+
+
+def extract_test_results_from_image(image_bytes, roster_names, api_key, model):
+    """Read a photo of a test-set results board and return per-swimmer times,
+    matching names against `roster_names` where possible. Returns {'ok': True,
+    'test_label', 'event', 'results': [{name, times, note, matched}]} or
+    {'ok': False, 'error': '...'} -- never raises."""
+    normalized = normalize_image(image_bytes)
+    if normalized is None:
+        return {'ok': False, 'error': "That doesn't look like a photo — try again."}
+
+    roster_line = ", ".join(roster_names) if roster_names else "(no roster provided)"
+    prompt = (
+        "This is a photo of a swim coach's test set results -- swimmers' names with their times, "
+        "written on a whiteboard, clipboard or notebook.\n\n"
+        f"The squad roster is: {roster_line}\n\n"
+        "Call the log_test_results tool with every swimmer's times you can read. Match written "
+        "names (often first names, surnames or nicknames) to the roster: if a board name clearly "
+        "corresponds to one roster name, return that roster name exactly as given above. Times may "
+        "be shorthand: '62.5' means 1:02.5, '1.05.3' means 1:05.3. Keep each swimmer's times in the "
+        "order written. If the photo has no readable results, return an empty results array."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        b64 = base64.standard_b64encode(normalized).decode('utf-8')
+        response = client.messages.create(
+            model=model,
+            max_tokens=4096,
+            tools=[TEST_RESULTS_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "log_test_results"},
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64}},
+                    {"type": "text", "text": prompt},
+                ],
+            }],
+        )
+    except Exception:
+        logger.exception('extract_test_results_from_image: API call failed')
+        return {'ok': False, 'error': "Couldn't read that photo — try again or enter times manually."}
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input:
+        return {'ok': False, 'error': "Couldn't read that photo — try again or enter times manually."}
+
+    data = tool_use.input
+    roster_set = set(roster_names or [])
+    results = []
+    for r in data.get('results', []):
+        name = str(r.get('name') or '').strip()
+        times = [str(t).strip() for t in (r.get('times') or []) if str(t).strip()]
+        if not name or not times:
+            continue
+        results.append({
+            'name': name,
+            'times': times,
+            'note': str(r.get('note') or '').strip(),
+            'matched': name in roster_set,
+        })
+
+    if not results:
+        return {'ok': False, 'error': "Couldn't find any readable names and times in that photo."}
+
+    return {
+        'ok': True,
+        'test_label': str(data.get('test_label') or 'Test set').strip(),
+        'event': str(data.get('event') or '').strip(),
+        'results': results,
+    }

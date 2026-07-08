@@ -1,4 +1,5 @@
 import json
+import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
@@ -246,11 +247,11 @@ def logout():
 @login_required
 def dashboard():
     from app import db
-    from models import Swim, Session, Announcement, SquadMembership, AthleteProfile
+    from models import Swim, Session, Announcement, SquadMembership, AthleteProfile, SquadEvent, Squad
     from datetime import timedelta
 
     needs_ai_onboarding = False
-    if current_user.plan == 'solo':
+    if current_user.is_solo:
         has_profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
         needs_ai_onboarding = has_profile is None
 
@@ -273,6 +274,26 @@ def dashboard():
         .all()
         if my_squad_ids else []
     )
+
+    # --- squad schedule: today's + upcoming coach-planned sessions ---
+    today_date = datetime.utcnow().date()
+    squad_events = (
+        db.session.query(SquadEvent)
+        .filter(
+            SquadEvent.squad_id.in_(my_squad_ids),
+            SquadEvent.event_date >= today_date,
+            SquadEvent.event_date <= today_date + timedelta(days=6),
+        )
+        .order_by(SquadEvent.event_date, SquadEvent.slot, SquadEvent.event_time)
+        .all()
+        if my_squad_ids else []
+    )
+    squad_names = {
+        s.id: s.name for s in
+        (db.session.query(Squad).filter(Squad.id.in_(my_squad_ids)).all() if my_squad_ids else [])
+    }
+    todays_squad_sessions = [e for e in squad_events if e.event_date == today_date]
+    upcoming_squad_sessions = [e for e in squad_events if e.event_date != today_date][:4]
 
     swims = db.session.query(Swim).filter_by(user_id=current_user.id).order_by(Swim.logged_at.desc()).all()
     sessions = db.session.query(Session).filter_by(user_id=current_user.id).order_by(Session.logged_at.desc()).all()
@@ -413,6 +434,9 @@ def dashboard():
         pool_split_25=pool_split_25,
         pool_split_50=pool_split_50,
         needs_ai_onboarding=needs_ai_onboarding,
+        todays_squad_sessions=todays_squad_sessions,
+        upcoming_squad_sessions=upcoming_squad_sessions,
+        squad_names=squad_names,
     )
 
 
@@ -591,6 +615,7 @@ def sets_create():
     session_type = request.form.get('session_type', 'Training')
     sets_data = request.form.get('sets_data', '[]')
     category = request.form.get('category', 'Fitness')
+    description = (request.form.get('description') or '').strip()
 
     if not name:
         return {'ok': False, 'error': 'Set needs a name.'}, 400
@@ -601,6 +626,7 @@ def sets_create():
         session_type=session_type,
         sets_data=sets_data,
         category=category,
+        description=description,
         created_by=current_user.id
     )
     db.session.add(new_set)
@@ -769,6 +795,83 @@ def personal_bests():
         })
     pb_rows.sort(key=lambda r: r['swim'].event)
 
+    def _fmt_secs(secs):
+        if secs >= 60:
+            return f'{int(secs // 60)}:{secs % 60:05.2f}'
+        return f'{secs:.2f}'
+
+    # --- training trends: per event, recent form vs earlier form ---
+    # Needs 4+ timed swims in an event. Compares the average of the newest
+    # half against the oldest half; swimming is a sport of hundredths, so
+    # anything past ±0.4% counts as a real move.
+    swims_by_event = {}
+    for s in swims:  # already newest-first
+        secs = s.time_in_seconds()
+        if secs is not None:
+            swims_by_event.setdefault(s.event, []).append(secs)
+
+    trend_rows = []
+    for event, times in swims_by_event.items():
+        if len(times) < 4:
+            continue
+        half = len(times) // 2
+        recent_avg = sum(times[:half]) / half
+        earlier_avg = sum(times[-half:]) / half
+        change_pct = (recent_avg - earlier_avg) / earlier_avg * 100
+        direction = 'improving' if change_pct < -0.4 else 'slipping' if change_pct > 0.4 else 'steady'
+        trend_rows.append({
+            'event': event,
+            'count': len(times),
+            'recent_avg': _fmt_secs(recent_avg),
+            'change_pct': round(abs(change_pct), 1),
+            'direction': direction,
+        })
+    trend_rows.sort(key=lambda r: {'slipping': 0, 'improving': 1, 'steady': 2}[r['direction']])
+
+    # --- predicted times: Riegel's endurance model (t2 = t1 * (d2/d1)^1.06),
+    # the same formula behind most race-time calculators. Trained on race
+    # data across distances; a solid guide for training targets. ---
+    def _event_parts(event):
+        m = re.match(r'\s*(\d+)\s*m?\s+(.+)', event or '')
+        return (int(m.group(1)), m.group(2).strip()) if m else (None, None)
+
+    stroke_bests = {}
+    for event, data in best_by_event.items():
+        dist, stroke_name = _event_parts(event)
+        if not dist or not stroke_name:
+            continue
+        cur = stroke_bests.setdefault(stroke_name, {})
+        cur[dist] = min(cur.get(dist, float('inf')), data['secs'])
+
+    PREDICT_DISTANCES = {
+        'Freestyle': [50, 100, 200, 400, 800, 1500],
+        'Backstroke': [50, 100, 200],
+        'Breaststroke': [50, 100, 200],
+        'Butterfly': [50, 100, 200],
+        'IM': [100, 200, 400],
+    }
+    prediction_rows = []
+    for stroke_name, bests in stroke_bests.items():
+        targets = PREDICT_DISTANCES.get(stroke_name)
+        if not targets:
+            continue
+        for target in targets:
+            if target in bests:
+                continue
+            # Predict from the nearest distance we actually have a time for.
+            base_dist = min(bests.keys(), key=lambda d: abs(d - target))
+            # Riegel drifts badly past ~4x extrapolation; skip those.
+            if not (0.25 <= target / base_dist <= 4):
+                continue
+            predicted = bests[base_dist] * (target / base_dist) ** 1.06
+            prediction_rows.append({
+                'event': f'{target}m {stroke_name}',
+                'predicted': _fmt_secs(predicted),
+                'base_event': f'{base_dist}m {stroke_name}',
+                'base_time': _fmt_secs(bests[base_dist]),
+            })
+    prediction_rows.sort(key=lambda r: r['event'])
+
     return render_template(
         'personal_bests.html',
         pb_rows=pb_rows,
@@ -776,6 +879,8 @@ def personal_bests():
         q=request.args.get('q', ''),
         pool_filter=pool_filter,
         tag_filter=tag_filter,
+        trend_rows=trend_rows,
+        prediction_rows=prediction_rows,
     )
 
 

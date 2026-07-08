@@ -1,7 +1,7 @@
 /* ============================================================
    LOG PAGE STYLES
    Structured swim logging interface — matches the bold, playful
-   visual system used on the landing page and dashboard (Antonio,
+   visual system used on the landing page and dashboard (Schibsted Grotesk,
    lavender, black borders + hard offset shadows).
    ============================================================ */
 
@@ -19,11 +19,10 @@
 }
 
 .log-nav-logo{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:22px;
   font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.05em;
+  letter-spacing:-0.01em;
   color:#111;
   text-decoration:none;
 }
@@ -58,10 +57,9 @@
 }
 
 .path-greeting{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:30px;
   font-weight:700;
-  text-transform:uppercase;
   color:#111;
   margin-bottom:4px;
 }
@@ -98,10 +96,9 @@
 .path-card.pb{background:#f7f7ff}
 
 .path-title{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:18px;
   font-weight:700;
-  text-transform:uppercase;
   color:#111;
   margin-bottom:4px;
 }
@@ -149,11 +146,10 @@
 }
 
 .repeat-event{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:22px;
   font-weight:700;
   color:#111;
-  text-transform:uppercase;
 }
 
 .repeat-meta{
@@ -222,10 +218,9 @@
 }
 
 .screen-title{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:26px;
   font-weight:700;
-  text-transform:uppercase;
   color:#111;
   margin-bottom:4px;
 }
@@ -260,7 +255,7 @@
   transition:all .15s;
   background:transparent;
   color:#555;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
 }
 
 .pool-btn.active{
@@ -306,10 +301,9 @@
   padding:18px 12px;
   border:3px solid #111;
   border-radius:14px;
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:22px;
   font-weight:700;
-  text-transform:uppercase;
   text-align:center;
   cursor:pointer;
   background:#fff;
@@ -345,7 +339,7 @@
 }
 
 .time-display{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:52px;
   font-weight:700;
   color:#111;
@@ -384,7 +378,7 @@
   padding:18px 10px;
   border:2.5px solid #111;
   border-radius:12px;
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:26px;
   font-weight:700;
   color:#111;
@@ -404,7 +398,7 @@
 
 .num-btn.del{
   font-size:16px;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-weight:800;
 }
 
@@ -443,7 +437,7 @@
   border-radius:10px;
   font-size:14px;
   font-weight:600;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   background:#fff;
   color:#111;
   outline:none;
@@ -762,7 +756,7 @@
   letter-spacing:.04em;
   cursor:pointer;
   transition:all .15s;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
 }
 
 .wizard-back{
@@ -808,7 +802,7 @@
 
 .total-item{text-align:center}
 .total-val{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:22px;
   font-weight:700;
   color:#111;
@@ -849,7 +843,7 @@
 }
 
 .confirm-val{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:18px;
   font-weight:700;
   color:#111;
@@ -876,7 +870,7 @@
   border-radius:12px;
   font-size:14px;
   font-weight:600;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   background:#fff;
   color:#111;
   outline:none;
@@ -893,11 +887,10 @@
   color:#111;
   border:3px solid #111;
   border-radius:14px;
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:20px;
   font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.06em;
+  letter-spacing:-0.01em;
   cursor:pointer;
   transition:all .15s;
   box-shadow:5px 5px 0 #111;
@@ -931,7 +924,7 @@
   letter-spacing:.04em;
   cursor:pointer;
   transition:all .15s;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
 }
 
 .snav-back{

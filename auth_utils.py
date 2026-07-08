@@ -15,7 +15,7 @@ def admin_required(f):
 def solo_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not current_user.is_authenticated or (current_user.plan != 'solo' and not current_user.is_admin):
+        if not current_user.is_authenticated or (not current_user.is_solo and not current_user.is_admin):
             abort(403)
         return f(*args, **kwargs)
     return wrapper

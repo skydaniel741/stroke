@@ -2,7 +2,7 @@
    SET LIBRARY STYLES
    Covers the library home, category listing, and set detail
    pages — matches the bold, playful visual system used across
-   the rest of STROKE (Antonio, lavender, hard borders + offset
+   the rest of STROKE (Schibsted Grotesk, lavender, hard borders + offset
    shadows), but built for wide desktop viewing as well as mobile.
    ============================================================ */
 
@@ -32,11 +32,10 @@
 }
 
 .sets-nav-logo{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:22px;
   font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.05em;
+  letter-spacing:-0.01em;
   color:#111;
   text-decoration:none;
 }
@@ -52,7 +51,7 @@
   border:none;
   border-radius:10px;
   padding:9px 16px;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:12px;
   font-weight:800;
   text-transform:uppercase;
@@ -79,11 +78,10 @@
 }
 
 .sets-h1{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:clamp(32px,5vw,52px);
   font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.02em;
+  letter-spacing:-0.01em;
   line-height:1.05;
   color:#111;
 }
@@ -151,10 +149,9 @@
 }
 
 .sets-cat-name{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:22px;
   font-weight:700;
-  text-transform:uppercase;
   color:#111;
   line-height:1.1;
 }
@@ -238,10 +235,9 @@
 }
 
 .set-card-name{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:20px;
   font-weight:700;
-  text-transform:uppercase;
   color:#111;
   line-height:1.15;
 }
@@ -304,11 +300,10 @@
 .set-detail-cat-icon svg{width:100%;height:100%}
 
 .set-detail-h1{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:clamp(30px,5vw,46px);
   font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.02em;
+  letter-spacing:-0.01em;
   line-height:1.08;
   color:#111;
 }
@@ -339,11 +334,10 @@
 
 .set-stat-val{
   display:block;
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:22px;
   font-weight:700;
   color:#111;
-  text-transform:uppercase;
   line-height:1.1;
 }
 
@@ -382,11 +376,10 @@
 }
 
 .set-section-name{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:20px;
   font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.03em;
+  letter-spacing:-0.01em;
   color:#111;
 }
 
@@ -436,7 +429,7 @@
   border-radius:50%;
   background:#111;
   color:#ccccff;
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:16px;
   font-weight:700;
   display:flex;
@@ -447,7 +440,7 @@
 .set-block-body{flex:1;min-width:0}
 
 .set-block-main{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:26px;
   font-weight:700;
   color:#111;
@@ -483,7 +476,7 @@
 
 .set-block-rest-val{
   display:block;
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:20px;
   font-weight:700;
   color:#111;
@@ -528,7 +521,7 @@
   text-transform:uppercase;
   letter-spacing:.04em;
   cursor:pointer;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   transition:transform .15s;
 }
 
@@ -555,7 +548,7 @@
   /* Coach's practice card — clean, readable type a 5-year-old or a
      95-year-old can follow on the pool deck. */
   .print-sheet{
-    font-family:'Inter','Segoe UI',Arial,sans-serif;
+    font-family:'Schibsted Grotesk','Segoe UI',Arial,sans-serif;
     color:#000;
     max-width:660px;
   }
@@ -570,11 +563,10 @@
   }
 
   .print-brand{
-    font-family:'Antonio',sans-serif;
+    font-family:'Schibsted Grotesk',sans-serif;
     font-size:20px;
     font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.06em;
+    letter-spacing:-0.01em;
   }
 
   .print-brand-sub{
@@ -586,11 +578,10 @@
   }
 
   .print-title{
-    font-family:'Antonio',sans-serif;
+    font-family:'Schibsted Grotesk',sans-serif;
     font-size:30px;
     font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.02em;
+    letter-spacing:-0.01em;
     line-height:1.1;
     margin-bottom:6px;
   }
@@ -616,18 +607,17 @@
   }
 
   .print-section-head{
-    font-family:'Antonio',sans-serif;
+    font-family:'Schibsted Grotesk',sans-serif;
     font-size:17px;
     font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.04em;
+    letter-spacing:-0.01em;
     border-bottom:2px solid #000;
     padding-bottom:5px;
     margin-bottom:10px;
   }
 
   .print-section-dist{
-    font-family:'Inter',sans-serif;
+    font-family:'Schibsted Grotesk',sans-serif;
     font-size:12px;
     font-weight:600;
     text-transform:none;

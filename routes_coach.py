@@ -40,12 +40,912 @@ def _squad_or_404(squad_id):
 @login_required
 @coach_required
 def coach_dashboard():
-    from app import db
-    from models import Squad, Club
+    return render_template('coach_pro.html')
 
-    squads = db.session.query(Squad).filter_by(coach_id=current_user.id).order_by(Squad.created_at.desc()).all()
-    clubs = db.session.query(Club).filter_by(owner_id=current_user.id).order_by(Club.created_at.desc()).all()
-    return render_template('coach_dashboard.html', squads=squads, clubs=clubs)
+
+@coach.route('/pro')
+@login_required
+@coach_required
+def coach_pro():
+    return redirect(url_for('coach.coach_dashboard'))
+
+
+@coach.route('/pro/api/state')
+@login_required
+@coach_required
+def coach_pro_state():
+    from app import db
+    from models import Squad, SquadMembership, User, Swim, Session, SavedSet, CoachAssignment, AttendanceRecord, SquadEvent, Announcement
+    from sqlalchemy import or_
+
+    squads = db.session.query(Squad).filter_by(coach_id=current_user.id).order_by(Squad.created_at.asc()).all()
+    squad_ids = [s.id for s in squads]
+
+    memberships = (
+        db.session.query(SquadMembership)
+        .filter(SquadMembership.squad_id.in_(squad_ids))
+        .order_by(SquadMembership.created_at.asc())
+        .all()
+        if squad_ids else []
+    )
+
+    swimmer_ids = [m.user_id for m in memberships if m.user_id]
+    users_by_id = {
+        u.id: u for u in db.session.query(User).filter(User.id.in_(swimmer_ids)).all()
+    } if swimmer_ids else {}
+
+    swims_by_user = {}
+    for sw in (db.session.query(Swim).filter(Swim.user_id.in_(swimmer_ids)).all() if swimmer_ids else []):
+        swims_by_user.setdefault(sw.user_id, []).append(sw)
+
+    sessions_by_user = {}
+    for se in (db.session.query(Session).filter(Session.user_id.in_(swimmer_ids)).all() if swimmer_ids else []):
+        sessions_by_user.setdefault(se.user_id, []).append(se)
+
+    # Attendance rate over the last 30 days: attended (present/late) marks
+    # divided by the days their squad actually held a marked roll call.
+    since_30 = (datetime.utcnow() - timedelta(days=30)).date()
+    recent_attendance = (
+        db.session.query(AttendanceRecord)
+        .filter(AttendanceRecord.squad_id.in_(squad_ids), AttendanceRecord.session_date >= since_30)
+        .all()
+        if squad_ids else []
+    )
+    squad_marked_days = {}
+    attendance_by_swimmer = {}
+    for rec in recent_attendance:
+        squad_marked_days.setdefault(rec.squad_id, set()).add(rec.session_date)
+        attendance_by_swimmer.setdefault(rec.swimmer_id, []).append(rec)
+
+    def attendance_rate(m):
+        marked = len(squad_marked_days.get(m.squad_id, set()))
+        if not m.user_id or marked == 0:
+            return None
+        attended = sum(
+            1 for r in attendance_by_swimmer.get(m.user_id, [])
+            if r.squad_id == m.squad_id and r.status in ('present', 'late')
+        )
+        return round(100 * attended / marked)
+
+    # Monday 00:00 of the current week, for per-swimmer weekly volume bars
+    now = datetime.utcnow()
+    this_week_start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    def swimmer_payload(m):
+        u = users_by_id.get(m.user_id)
+        swims = swims_by_user.get(m.user_id, [])
+        sessions = sessions_by_user.get(m.user_id, [])
+
+        weekly_volume = []
+        for i in range(7, -1, -1):
+            wk_start = this_week_start - timedelta(weeks=i)
+            wk_end = wk_start + timedelta(days=7)
+            weekly_volume.append(
+                sum(s.distance() for s in swims if wk_start <= s.logged_at < wk_end) +
+                sum(se.total_distance() for se in sessions if wk_start <= se.logged_at < wk_end)
+            )
+
+        best_by_event = {}
+        for s in swims:
+            secs = s.time_in_seconds()
+            if secs is None:
+                continue
+            cur = best_by_event.get(s.event)
+            if cur is None or secs < cur['secs']:
+                best_by_event[s.event] = {
+                    'event': s.event, 'time': s.time, 'pool': s.pool, 'secs': secs,
+                    'date': s.logged_at.strftime('%Y-%m-%d'),
+                }
+
+        activity_dates = [s.logged_at for s in swims] + [se.logged_at for se in sessions]
+        last_active = max(activity_dates).strftime('%Y-%m-%d') if activity_dates else None
+        total_distance = sum(s.distance() for s in swims) + sum(se.total_distance() for se in sessions)
+
+        recent_activity = sorted(
+            [
+                {'kind': 'PB attempt', 'label': s.event, 'pool': s.pool or '—', 'loggedAt': s.logged_at.strftime('%Y-%m-%d')}
+                for s in swims
+            ] + [
+                {
+                    'kind': se.session_type or 'Session',
+                    'label': (f"{len(se.get_sets())} set" + ('s' if len(se.get_sets()) != 1 else '')) if se.get_sets() else (se.session_type or 'Session'),
+                    'pool': se.pool or '—',
+                    'loggedAt': se.logged_at.strftime('%Y-%m-%d'),
+                }
+                for se in sessions
+            ],
+            key=lambda x: x['loggedAt'],
+            reverse=True,
+        )[:10]
+
+        return {
+            'membershipId': m.id,
+            'userId': m.user_id,
+            'name': u.username if u else (m.invited_email or 'Invited swimmer'),
+            'email': u.email if u else m.invited_email,
+            'squadId': m.squad_id,
+            'status': m.status,
+            'laneGroup': m.lane_group,
+            'personalBests': sorted(best_by_event.values(), key=lambda x: x['event']),
+            'recentActivity': recent_activity,
+            'sessionsCount': len(swims) + len(sessions),
+            'totalDistance': total_distance,
+            'lastActive': last_active,
+            'attendanceRate': attendance_rate(m),
+            'weeklyVolume': weekly_volume,
+        }
+
+    swimmers_payload = [swimmer_payload(m) for m in memberships]
+
+    saved_sets = (
+        db.session.query(SavedSet)
+        .filter_by(created_by=current_user.id)
+        .order_by(SavedSet.created_at.desc())
+        .all()
+    )
+
+    conditions = []
+    if squad_ids:
+        conditions.append(CoachAssignment.squad_id.in_(squad_ids))
+    if swimmer_ids:
+        conditions.append(CoachAssignment.swimmer_id.in_(swimmer_ids))
+    assignments = (
+        db.session.query(CoachAssignment).filter(or_(*conditions)).order_by(CoachAssignment.created_at.desc()).all()
+        if conditions else []
+    )
+
+    def squad_payload(sq):
+        return {
+            'id': sq.id,
+            'name': sq.name,
+            'color': sq.color or 'blue',
+            'inviteCode': sq.invite_code,
+            'memberCount': sum(1 for m in memberships if m.squad_id == sq.id),
+        }
+
+    def set_payload(s):
+        return {
+            'id': s.id,
+            'title': s.name,
+            'description': s.description,
+            'category': s.category or 'Fitness',
+            'pool': s.pool,
+            'sessionType': s.session_type,
+            'totalDistance': s.total_distance(),
+            'blocks': s.get_sets(),
+        }
+
+    def assignment_payload(a):
+        target_type = 'squad' if a.squad_id else 'swimmer'
+        target_id = a.squad_id if a.squad_id else a.swimmer_id
+        return {
+            'id': a.id,
+            'setId': a.saved_set_id,
+            'setTitle': a.saved_set.name if a.saved_set else 'Deleted set',
+            'targetType': target_type,
+            'targetId': target_id,
+            'dueDate': a.due_date.isoformat() if a.due_date else None,
+            'status': a.status,
+            'notes': a.notes,
+        }
+
+    today = datetime.utcnow().date()
+    upcoming_events = (
+        db.session.query(SquadEvent)
+        .filter(
+            SquadEvent.squad_id.in_(squad_ids),
+            SquadEvent.event_date >= today,
+            SquadEvent.event_date <= today + timedelta(days=13),
+        )
+        .order_by(SquadEvent.event_date, SquadEvent.slot, SquadEvent.event_time)
+        .all()
+        if squad_ids else []
+    )
+
+    def event_payload(e):
+        return {
+            'id': e.id,
+            'squadId': e.squad_id,
+            'title': e.title,
+            'date': e.event_date.isoformat(),
+            'time': e.event_time or '',
+            'slot': e.slot or '',
+            'type': e.event_type or 'practice',
+            'notes': e.notes or '',
+            'setId': e.saved_set_id,
+            'setTitle': e.saved_set.name if e.saved_set else None,
+            'setDistance': e.saved_set.total_distance() if e.saved_set else None,
+        }
+
+    announcements = (
+        db.session.query(Announcement)
+        .filter(Announcement.squad_id.in_(squad_ids))
+        .order_by(Announcement.created_at.desc())
+        .limit(30)
+        .all()
+        if squad_ids else []
+    )
+
+    def announcement_payload(a):
+        return {
+            'id': a.id,
+            'squadId': a.squad_id,
+            'message': a.message,
+            'createdAt': a.created_at.strftime('%Y-%m-%d %H:%M'),
+        }
+
+    from flask import current_app
+    return {
+        'squads': [squad_payload(s) for s in squads],
+        'swimmers': swimmers_payload,
+        'savedSets': [set_payload(s) for s in saved_sets],
+        'assignments': [assignment_payload(a) for a in assignments],
+        'upcomingEvents': [event_payload(e) for e in upcoming_events],
+        'announcements': [announcement_payload(a) for a in announcements],
+        'today': today.isoformat(),
+        'aiEnabled': bool(current_app.config.get('AI_SCAN_ENABLED')),
+    }
+
+
+@coach.route('/pro/api/announcements', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_announcement_create():
+    from app import db
+    from models import Announcement
+
+    squad = _squad_or_404(request.form.get('squad_id', type=int) or 0)
+    message = (request.form.get('message') or '').strip()
+    if not message:
+        return {'ok': False, 'error': 'Write a message first.'}, 400
+
+    db.session.add(Announcement(squad_id=squad.id, author_id=current_user.id, message=message))
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/announcements/<int:announcement_id>/delete', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_announcement_delete(announcement_id):
+    from app import db
+    from models import Announcement
+
+    a = db.session.query(Announcement).get(announcement_id)
+    if not a or not a.squad_id:
+        abort(404)
+    _squad_or_404(a.squad_id)
+    db.session.delete(a)
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/schedule', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_schedule_create():
+    from app import db
+    from models import SquadEvent, SavedSet
+
+    squad = _squad_or_404(request.form.get('squad_id', type=int) or 0)
+    title = (request.form.get('title') or '').strip()
+    try:
+        day = datetime.strptime(request.form.get('date', ''), '%Y-%m-%d').date()
+    except ValueError:
+        return {'ok': False, 'error': 'Pick a valid date.'}, 400
+    if not title:
+        return {'ok': False, 'error': 'The session needs a title.'}, 400
+
+    slot = request.form.get('slot', '')
+    if slot not in ('AM', 'PM', ''):
+        slot = ''
+
+    saved_set_id = request.form.get('set_id', type=int)
+    if saved_set_id:
+        s = db.session.query(SavedSet).filter_by(id=saved_set_id, created_by=current_user.id).first()
+        saved_set_id = s.id if s else None
+
+    db.session.add(SquadEvent(
+        squad_id=squad.id,
+        title=title,
+        event_date=day,
+        event_time=(request.form.get('time') or '').strip(),
+        slot=slot,
+        event_type=request.form.get('event_type', 'practice'),
+        saved_set_id=saved_set_id,
+        notes=(request.form.get('notes') or '').strip(),
+        created_by=current_user.id,
+    ))
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/schedule/<int:event_id>/delete', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_schedule_delete(event_id):
+    from app import db
+    from models import SquadEvent
+
+    e = db.session.query(SquadEvent).get(event_id)
+    if not e:
+        abort(404)
+    _squad_or_404(e.squad_id)
+    db.session.delete(e)
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/squads', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_create_squad():
+    from app import db
+    from models import Squad
+
+    name = (request.form.get('name') or '').strip()
+    color = request.form.get('color', 'blue')
+    if not name:
+        return {'ok': False, 'error': 'Squad needs a name.'}, 400
+
+    squad = Squad(name=name, coach_id=current_user.id, invite_code=secrets.token_urlsafe(6), color=color)
+    db.session.add(squad)
+    db.session.commit()
+    return {'ok': True, 'id': squad.id}
+
+
+@coach.route('/pro/api/squads/<int:squad_id>/delete', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_delete_squad(squad_id):
+    from app import db
+    from models import SquadMembership, CoachAssignment
+
+    squad = _squad_or_404(squad_id)
+    db.session.query(SquadMembership).filter_by(squad_id=squad.id).delete()
+    db.session.query(CoachAssignment).filter_by(squad_id=squad.id).delete()
+    db.session.delete(squad)
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/squads/<int:squad_id>/invite', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_invite(squad_id):
+    from app import db
+    from models import SquadMembership, User
+
+    squad = _squad_or_404(squad_id)
+    email = (request.form.get('email') or '').strip().lower()
+    if not email:
+        return {'ok': False, 'error': 'Enter an email to invite.'}, 400
+
+    existing_user = db.session.query(User).filter_by(email=email).first()
+    membership = SquadMembership(
+        squad_id=squad.id,
+        user_id=existing_user.id if existing_user else None,
+        invited_email=email,
+        status='invited',
+    )
+    db.session.add(membership)
+    db.session.commit()
+    return {'ok': True, 'membershipId': membership.id}
+
+
+@coach.route('/pro/api/memberships/<int:membership_id>/reassign', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_reassign(membership_id):
+    from app import db
+    from models import SquadMembership, Squad
+
+    m = db.session.query(SquadMembership).get(membership_id)
+    if not m:
+        abort(404)
+    _squad_or_404(m.squad_id)
+    new_squad_id = request.form.get('squad_id', type=int)
+    new_squad = db.session.query(Squad).filter_by(id=new_squad_id, coach_id=current_user.id).first()
+    if not new_squad:
+        return {'ok': False, 'error': 'Invalid squad.'}, 400
+    m.squad_id = new_squad.id
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/memberships/<int:membership_id>/remove', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_remove_membership(membership_id):
+    from app import db
+    from models import SquadMembership, CoachAssignment
+
+    m = db.session.query(SquadMembership).get(membership_id)
+    if not m:
+        abort(404)
+    _squad_or_404(m.squad_id)
+    if m.user_id:
+        db.session.query(CoachAssignment).filter_by(swimmer_id=m.user_id).delete()
+    db.session.delete(m)
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/sets/<int:set_id>/delete', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_delete_set(set_id):
+    from app import db
+    from models import SavedSet, CoachAssignment
+
+    s = db.session.query(SavedSet).filter_by(id=set_id, created_by=current_user.id).first()
+    if not s:
+        abort(404)
+    db.session.query(CoachAssignment).filter_by(saved_set_id=s.id).delete()
+    db.session.delete(s)
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/sets/<int:set_id>/update', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_update_set(set_id):
+    import json as json_module
+    from app import db
+    from models import SavedSet
+
+    s = db.session.query(SavedSet).filter_by(id=set_id, created_by=current_user.id).first()
+    if not s:
+        abort(404)
+
+    name = (request.form.get('name') or '').strip()
+    if not name:
+        return {'ok': False, 'error': 'The set needs a title.'}, 400
+
+    # Blocks come through as the same JSON shape the create form / AI generator
+    # use. Clamp each one so a bad edit can't corrupt the stored set.
+    from ai_utils import _clamp_block
+    try:
+        raw_blocks = json_module.loads(request.form.get('sets_data') or '[]')
+    except ValueError:
+        raw_blocks = []
+    blocks = [b for b in (_clamp_block(r) for r in raw_blocks) if b is not None]
+
+    s.name = name[:100]
+    s.category = request.form.get('category') or s.category
+    s.pool = request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else s.pool
+    s.description = (request.form.get('description') or '').strip()
+    if request.form.get('session_type'):
+        s.session_type = request.form.get('session_type').strip()[:50]
+    s.sets_data = json_module.dumps(blocks)
+    db.session.commit()
+    return {'ok': True, 'id': s.id}
+
+
+@coach.route('/pro/api/assignments', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_create_assignment():
+    from app import db
+    from models import CoachAssignment, SavedSet, Squad, SquadMembership
+
+    set_id = request.form.get('set_id', type=int)
+    target_type = request.form.get('target_type')
+    target_id = request.form.get('target_id', type=int)
+    due_date = request.form.get('due_date')
+    notes = request.form.get('notes', '')
+
+    saved_set = db.session.query(SavedSet).filter_by(id=set_id, created_by=current_user.id).first()
+    if not saved_set or target_type not in ('squad', 'swimmer') or not target_id:
+        return {'ok': False, 'error': 'Invalid assignment.'}, 400
+
+    squad_id = None
+    swimmer_id = None
+    if target_type == 'squad':
+        squad = db.session.query(Squad).filter_by(id=target_id, coach_id=current_user.id).first()
+        if not squad:
+            return {'ok': False, 'error': 'Invalid squad.'}, 400
+        squad_id = squad.id
+    else:
+        membership = (
+            db.session.query(SquadMembership)
+            .join(Squad, Squad.id == SquadMembership.squad_id)
+            .filter(SquadMembership.user_id == target_id, Squad.coach_id == current_user.id)
+            .first()
+        )
+        if not membership:
+            return {'ok': False, 'error': 'Invalid swimmer.'}, 400
+        swimmer_id = target_id
+
+    try:
+        due = datetime.strptime(due_date, '%Y-%m-%d').date() if due_date else None
+    except ValueError:
+        due = None
+
+    assignment = CoachAssignment(
+        saved_set_id=saved_set.id, squad_id=squad_id, swimmer_id=swimmer_id,
+        assigned_by=current_user.id, due_date=due, notes=notes, status='Assigned',
+    )
+    db.session.add(assignment)
+    db.session.commit()
+    return {'ok': True, 'id': assignment.id}
+
+
+@coach.route('/pro/api/assignments/<int:assignment_id>/toggle', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_toggle_assignment(assignment_id):
+    from app import db
+    from models import CoachAssignment
+
+    a = db.session.query(CoachAssignment).get(assignment_id)
+    if not a or a.assigned_by != current_user.id:
+        abort(404)
+    a.status = 'Completed' if a.status != 'Completed' else 'Assigned'
+    db.session.commit()
+    return {'ok': True, 'status': a.status}
+
+
+@coach.route('/pro/api/assignments/<int:assignment_id>/delete', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_delete_assignment(assignment_id):
+    from app import db
+    from models import CoachAssignment
+
+    a = db.session.query(CoachAssignment).get(assignment_id)
+    if not a or a.assigned_by != current_user.id:
+        abort(404)
+    db.session.delete(a)
+    db.session.commit()
+    return {'ok': True}
+
+
+@coach.route('/pro/api/attendance')
+@login_required
+@coach_required
+def coach_pro_attendance_get():
+    from app import db
+    from models import AttendanceRecord
+
+    squad = _squad_or_404(request.args.get('squad_id', type=int) or 0)
+    try:
+        day = datetime.strptime(request.args.get('date', ''), '%Y-%m-%d').date()
+    except ValueError:
+        return {'ok': False, 'error': 'Invalid date.'}, 400
+
+    records = (
+        db.session.query(AttendanceRecord)
+        .filter_by(squad_id=squad.id, session_date=day)
+        .all()
+    )
+    return {'ok': True, 'marks': {str(r.swimmer_id): r.status for r in records}}
+
+
+@coach.route('/pro/api/attendance', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_attendance_save():
+    import json as json_module
+    from app import db
+    from models import AttendanceRecord, SquadMembership, SquadEvent, Session
+
+    squad = _squad_or_404(request.form.get('squad_id', type=int) or 0)
+    try:
+        day = datetime.strptime(request.form.get('date', ''), '%Y-%m-%d').date()
+    except ValueError:
+        return {'ok': False, 'error': 'Invalid date.'}, 400
+
+    try:
+        marks = json_module.loads(request.form.get('marks') or '{}')
+    except ValueError:
+        return {'ok': False, 'error': 'Invalid marks payload.'}, 400
+
+    valid_ids = {
+        m.user_id for m in
+        db.session.query(SquadMembership).filter_by(squad_id=squad.id).all()
+        if m.user_id
+    }
+    allowed = {'present', 'late', 'excused', 'absent'}
+    saved = 0
+    attended_ids = []
+    for swimmer_id_str, status in marks.items():
+        try:
+            swimmer_id = int(swimmer_id_str)
+        except (TypeError, ValueError):
+            continue
+        if swimmer_id not in valid_ids or status not in allowed:
+            continue
+        record = (
+            db.session.query(AttendanceRecord)
+            .filter_by(squad_id=squad.id, swimmer_id=swimmer_id, session_date=day)
+            .first()
+        )
+        if not record:
+            record = AttendanceRecord(squad_id=squad.id, swimmer_id=swimmer_id, session_date=day)
+            db.session.add(record)
+        record.status = status
+        record.recorded_by = current_user.id
+        saved += 1
+        if status in ('present', 'late'):
+            attended_ids.append(swimmer_id)
+
+    # Any scheduled session that day with a set attached gets auto-logged for
+    # swimmers who were there -- this is what saves squads from spreadsheets:
+    # the swimmer's logbook fills itself in from the coach's roll call.
+    auto_logged = 0
+    events_with_sets = (
+        db.session.query(SquadEvent)
+        .filter(
+            SquadEvent.squad_id == squad.id,
+            SquadEvent.event_date == day,
+            SquadEvent.saved_set_id.isnot(None),
+        )
+        .all()
+    )
+    for event in events_with_sets:
+        s = event.saved_set
+        if not s:
+            continue
+        for swimmer_id in attended_ids:
+            exists = (
+                db.session.query(Session)
+                .filter_by(user_id=swimmer_id, squad_event_id=event.id)
+                .first()
+            )
+            if exists:
+                continue
+            db.session.add(Session(
+                user_id=swimmer_id,
+                session_type=s.session_type or 'Training',
+                pool=s.pool,
+                sets_data=s.sets_data,
+                notes=f'Squad session: {event.title}' + (f' ({event.slot})' if event.slot else ''),
+                logged_at=datetime.combine(day, datetime.min.time().replace(hour=9 if event.slot != 'PM' else 18)),
+                source='squad',
+                squad_event_id=event.id,
+            ))
+            auto_logged += 1
+
+    db.session.commit()
+    return {'ok': True, 'saved': saved, 'autoLogged': auto_logged}
+
+
+@coach.route('/pro/api/ai/insights', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_ai_insights():
+    from flask import current_app
+    from app import db
+    from models import SquadMembership, User, Swim, Session, AttendanceRecord, StatusFlag
+    from ai_utils import generate_squad_insights
+
+    if not current_app.config.get('AI_SCAN_ENABLED'):
+        return {'ok': False, 'error': 'AI features are not configured on this server.'}, 400
+
+    squad = _squad_or_404(request.form.get('squad_id', type=int) or 0)
+
+    memberships = (
+        db.session.query(SquadMembership)
+        .filter_by(squad_id=squad.id, status='active')
+        .all()
+    )
+    swimmer_ids = [m.user_id for m in memberships if m.user_id]
+    if not swimmer_ids:
+        return {'ok': False, 'error': 'No active swimmers in this squad yet.'}, 400
+
+    since = datetime.utcnow() - timedelta(days=60)
+    since_30 = (datetime.utcnow() - timedelta(days=30)).date()
+
+    users = {u.id: u for u in db.session.query(User).filter(User.id.in_(swimmer_ids)).all()}
+    flags = {
+        f.swimmer_id: f for f in
+        db.session.query(StatusFlag).filter_by(squad_id=squad.id).all()
+    }
+    attendance = (
+        db.session.query(AttendanceRecord)
+        .filter(AttendanceRecord.squad_id == squad.id, AttendanceRecord.session_date >= since_30)
+        .all()
+    )
+    marked_days = len({r.session_date for r in attendance})
+
+    swimmers_digest = []
+    for uid in swimmer_ids:
+        u = users.get(uid)
+        if not u:
+            continue
+        swims = db.session.query(Swim).filter(Swim.user_id == uid, Swim.logged_at >= since).all()
+        sessions = db.session.query(Session).filter(Session.user_id == uid, Session.logged_at >= since).all()
+
+        best_by_event = {}
+        for s in swims:
+            secs = s.time_in_seconds()
+            if secs is None:
+                continue
+            cur = best_by_event.get(s.event)
+            if cur is None or secs < cur[0]:
+                best_by_event[s.event] = (secs, s.time)
+
+        attended = sum(1 for r in attendance if r.swimmer_id == uid and r.status in ('present', 'late'))
+        activity_dates = [s.logged_at for s in swims] + [se.logged_at for se in sessions]
+        flag = flags.get(uid)
+
+        swimmers_digest.append({
+            'name': u.username,
+            'sessions_60d': len(swims) + len(sessions),
+            'distance_60d': sum(s.distance() for s in swims) + sum(se.total_distance() for se in sessions),
+            'last_active': max(activity_dates).strftime('%Y-%m-%d') if activity_dates else None,
+            'attendance': f'{attended}/{marked_days} marked practices (30d)' if marked_days else 'no roll calls yet',
+            'best_times': [f'{ev}: {t}' for ev, (_, t) in sorted(best_by_event.items())][:6],
+            'status_flag': f'{flag.status}: {flag.note}' if flag and flag.status != 'available' else None,
+        })
+
+    tone = request.form.get('tone', 'balanced')
+    if tone not in ('encouraging', 'balanced', 'direct'):
+        tone = 'balanced'
+
+    result = generate_squad_insights(
+        squad.name,
+        swimmers_digest,
+        current_app.config['ANTHROPIC_API_KEY'],
+        current_app.config['ANTHROPIC_MODEL'],
+        tone=tone,
+    )
+    if not result.get('ok'):
+        return result, 502
+    return result
+
+
+@coach.route('/pro/api/ai/generate-set', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_ai_generate_set():
+    import json as json_module
+    from flask import current_app
+    from app import db
+    from models import SavedSet
+    from ai_utils import generate_coach_set
+
+    if not current_app.config.get('AI_SCAN_ENABLED'):
+        return {'ok': False, 'error': 'AI features are not configured on this server.'}, 400
+
+    params = {
+        'focus': (request.form.get('focus') or '').strip()[:200],
+        'style': (request.form.get('style') or '').strip()[:100],
+        'season_phase': (request.form.get('season_phase') or '').strip()[:100],
+        'level': (request.form.get('level') or '').strip()[:100],
+        'pool': request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m',
+        'duration_minutes': request.form.get('duration_minutes', type=int) or 60,
+    }
+
+    result = generate_coach_set(
+        params,
+        current_app.config['ANTHROPIC_API_KEY'],
+        current_app.config['ANTHROPIC_MODEL'],
+    )
+    if not result.get('ok'):
+        return result, 502
+
+    generated = result['set']
+    saved = SavedSet(
+        name=generated['name'],
+        pool=params['pool'],
+        session_type=generated['session_type'],
+        category=generated['category'],
+        description=generated['description'],
+        sets_data=json_module.dumps(generated['blocks']),
+        created_by=current_user.id,
+    )
+    db.session.add(saved)
+    db.session.commit()
+    return {'ok': True, 'setId': saved.id, 'name': saved.name}
+
+
+MAX_SCAN_BYTES = 20 * 1024 * 1024
+
+
+@coach.route('/pro/api/test-sets/scan', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_test_set_scan():
+    from flask import current_app
+    from app import db
+    from models import SquadMembership, User
+    from ai_utils import extract_test_results_from_image
+
+    if not current_app.config.get('AI_SCAN_ENABLED'):
+        return {'ok': False, 'error': 'AI features are not configured on this server.'}, 400
+
+    squad = _squad_or_404(request.form.get('squad_id', type=int) or 0)
+    file = request.files.get('photo')
+    if not file or not file.filename:
+        return {'ok': False, 'error': 'Choose a photo first.'}, 400
+    image_bytes = file.read()
+    if len(image_bytes) > MAX_SCAN_BYTES:
+        return {'ok': False, 'error': 'That photo is too large — try a smaller image.'}, 400
+
+    memberships = (
+        db.session.query(SquadMembership)
+        .filter_by(squad_id=squad.id, status='active')
+        .all()
+    )
+    swimmer_ids = [m.user_id for m in memberships if m.user_id]
+    users = db.session.query(User).filter(User.id.in_(swimmer_ids)).all() if swimmer_ids else []
+    name_to_id = {u.username: u.id for u in users}
+
+    result = extract_test_results_from_image(
+        image_bytes,
+        list(name_to_id.keys()),
+        current_app.config['ANTHROPIC_API_KEY'],
+        current_app.config['ANTHROPIC_MODEL'],
+    )
+    if not result.get('ok'):
+        return result, 422
+
+    for r in result['results']:
+        r['userId'] = name_to_id.get(r['name'])
+    return result
+
+
+@coach.route('/pro/api/test-sets/log', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_test_set_log():
+    import json as json_module
+    from app import db
+    from models import SquadMembership, Swim
+
+    squad = _squad_or_404(request.form.get('squad_id', type=int) or 0)
+    event = (request.form.get('event') or '').strip()[:50]
+    test_label = (request.form.get('test_label') or 'Test set').strip()[:100]
+    pool = request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m'
+    if not event:
+        return {'ok': False, 'error': 'The results need an event, e.g. 100m Freestyle.'}, 400
+
+    try:
+        entries = json_module.loads(request.form.get('entries') or '[]')
+    except ValueError:
+        return {'ok': False, 'error': 'Invalid entries payload.'}, 400
+
+    valid_ids = {
+        m.user_id for m in
+        db.session.query(SquadMembership).filter_by(squad_id=squad.id).all()
+        if m.user_id
+    }
+
+    def _secs(t):
+        try:
+            if ':' in t:
+                mins, rest = t.split(':')
+                return int(mins) * 60 + float(rest)
+            return float(t)
+        except (ValueError, TypeError):
+            return None
+
+    logged = 0
+    for entry in entries:
+        try:
+            user_id = int(entry.get('userId'))
+        except (TypeError, ValueError):
+            continue
+        times = [str(t).strip() for t in (entry.get('times') or []) if _secs(str(t).strip()) is not None]
+        if user_id not in valid_ids or not times:
+            continue
+        best = min(times, key=_secs)
+        all_times_note = f'{test_label} — reps: {", ".join(times)}' if len(times) > 1 else test_label
+        db.session.add(Swim(
+            user_id=user_id,
+            event=event,
+            pool=pool,
+            time=best,
+            tag='test',
+            notes=all_times_note,
+        ))
+        logged += 1
+
+    db.session.commit()
+    return {'ok': True, 'logged': logged}
 
 
 @coach.route('/squad/create', methods=['POST'])
@@ -555,27 +1455,6 @@ def squad_report(squad_id):
         })
 
     return render_template('squad_report.html', squad=squad, rows=rows, since=since)
-
-
-@coach.route('/squad/<int:squad_id>/billing', methods=['GET', 'POST'])
-@login_required
-@coach_required
-def squad_billing(squad_id):
-    from app import db
-
-    squad = _squad_or_404(squad_id)
-
-    if request.method == 'POST':
-        try:
-            squad.base_fee = float(request.form.get('base_fee', 0) or 0)
-            squad.per_swimmer_fee = float(request.form.get('per_swimmer_fee', 0) or 0)
-            db.session.commit()
-            flash('Billing estimate updated.', 'success')
-        except ValueError:
-            flash('Fees must be numbers.', 'error')
-        return redirect(url_for('coach.squad_billing', squad_id=squad.id))
-
-    return render_template('squad_billing.html', squad=squad)
 
 
 @coach.route('/squad/<int:squad_id>/calendar')

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Log swim — STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/log.css') }}">
 </head>
@@ -265,7 +265,13 @@
     </div>
   </div>
 
-  <textarea class="save-notes" id="sessionNotes" rows="2" placeholder="How did it feel? (optional)"></textarea>
+  <div style="position:relative">
+    <textarea class="save-notes" id="sessionNotes" rows="2" placeholder="How did it feel? (optional)" style="padding-right:44px"></textarea>
+    <button type="button" class="voice-btn" data-voice-target="sessionNotes" title="Dictate with your voice" aria-label="Voice input"
+      style="position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;border:2px solid #111;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+    </button>
+  </div>
 
   <form method="POST" action="/log" id="logForm">
     <input type="hidden" name="log_type" id="f_type">
@@ -722,5 +728,11 @@ loadLibrarySet({{ preload_set|tojson }});
 loadScannedBlocks();
 {% endif %}
 </script>
+<style>
+  .voice-btn.voice-recording{background:#ff4d5e !important;border-color:#ff4d5e !important;animation:voicePulse 1s infinite;}
+  .voice-btn.voice-recording svg{stroke:#fff !important;}
+  @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.5);}50%{box-shadow:0 0 0 6px rgba(255,77,94,0);}}
+</style>
+<script src="{{ url_for('static', filename='js/voicelog.js') }}"></script>
 </body>
 </html>

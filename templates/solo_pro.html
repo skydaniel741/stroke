@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solo Pro — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  .pro-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .pro-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
+  .pro-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#888;text-decoration:none;}
+  .pro-nav-logout:hover{color:#111;}
+  .pro-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#111;text-decoration:none;}
+  .pro-wrap{max-width:560px;margin:0 auto;padding:16px 24px 90px;}
+  .pro-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
+  .pro-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:34px;letter-spacing:-0.01em;margin:0 0 10px;}
+  .pro-sub{color:#666;font-size:15px;margin:0 0 26px;line-height:1.55;}
+
+  .pro-card{border:2.5px solid #111;border-radius:18px;padding:24px;background:#faf9ff;box-shadow:6px 6px 0 #ccccff;margin-bottom:22px;}
+  .pro-price{display:flex;align-items:baseline;gap:8px;margin-bottom:18px;}
+  .pro-price b{font-family:'Schibsted Grotesk',sans-serif;font-size:40px;}
+  .pro-price span{color:#888;font-size:14px;}
+  .pro-feat{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #ececf6;font-size:14px;color:#333;line-height:1.4;}
+  .pro-feat:last-of-type{border-bottom:none;}
+  .pro-check{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#111;color:#ccccff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+
+  .pro-btn{width:100%;padding:15px;background:#ccccff;border:2.5px solid #111;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit;}
+  .pro-note{text-align:center;font-size:12px;color:#aaa;margin-top:10px;}
+
+  .pro-active{border:2.5px solid #1f9d57;border-radius:16px;padding:18px 20px;background:#effaf2;margin-bottom:20px;}
+  .pro-active b{font-size:15px;}
+  .pro-active p{font-size:13px;color:#3a6b4c;margin:6px 0 12px;line-height:1.5;}
+  .pro-linkbtn{background:none;border:none;color:#888;font-size:12px;text-decoration:underline;cursor:pointer;padding:0;font-family:inherit;}
+  .pro-manage-links{display:flex;gap:16px;margin-top:12px;}
+  .pro-manage-links a{font-weight:800;color:#5b53d6;text-decoration:none;font-size:14px;}
+</style>
+</head>
+<body>
+
+<nav class="pro-nav">
+  <a href="/dashboard" class="pro-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/logout" class="pro-nav-logout">Log out</a>
+  <a href="/" class="pro-nav-logo">STROKE</a>
+</nav>
+
+<div class="pro-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <p class="pro-eyebrow">Solo · Upgrade</p>
+  <h1 class="pro-h1">Solo Pro</h1>
+  <p class="pro-sub">Your AI coach, on your terms. Take control of how your program is written and how it talks to you.</p>
+
+  {% if current_user.is_solo_pro %}
+  <div class="pro-active">
+    <b>✓ You're on Solo Pro</b>
+    <p>AI tuning is unlocked. Set your coaching tone and program intensity whenever you build or rebuild your program.</p>
+    <div class="pro-manage-links">
+      <a href="/solo/onboarding">Tune &amp; rebuild program →</a>
+    </div>
+    <form method="POST" action="/solo/pro/downgrade" style="margin-top:14px">
+      <button type="submit" class="pro-linkbtn">Cancel Solo Pro</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="pro-card">
+    <div class="pro-price"><b>$4</b><span>/ month · cancel anytime</span></div>
+    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Coaching tone control</b> — pick gentle &amp; encouraging, balanced, or blunt &amp; direct.</div></div>
+    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Program intensity</b> — dial your plan easier, normal, or a notch harder than your level.</div></div>
+    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Regenerate anytime</b> — rebuild your week as your goals and fitness change.</div></div>
+    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Everything in free Solo</b> — the AI program, daily check-ins and libraries.</div></div>
+    <form method="POST" action="/solo/pro/upgrade">
+      <button type="submit" class="pro-btn">Upgrade to Solo Pro</button>
+    </form>
+    <p class="pro-note">Demo checkout — no card charged.</p>
+  </div>
+  {% endif %}
+</div>
+
+</body>
+</html>

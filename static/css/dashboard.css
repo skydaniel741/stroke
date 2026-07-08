@@ -18,11 +18,10 @@
 }
 
 .nav-logo {
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 28px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: -0.01em;
   color: #111111;
 }
 
@@ -105,11 +104,10 @@
 }
 
 .drawer-logo {
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 24px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
   color: #ccccff;
 }
 
@@ -156,7 +154,7 @@
   border-radius: 50%;
   background: #111111;
   color: #ccccff;
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 19px;
   font-weight: 700;
   display: flex;
@@ -212,7 +210,7 @@
 
 .drawer-user-streak-val {
   display: block;
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #ccccff;
@@ -358,11 +356,10 @@
 }
 
 .greeting h1 {
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 34px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
   color: #111111;
 }
 
@@ -453,7 +450,7 @@
 }
 
 .stat-val {
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 40px;
   font-weight: 700;
   margin: 10px 0 4px;
@@ -499,10 +496,9 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.01em;
   color: #111111;
   border-bottom: 2px solid #111111;
   padding-bottom: 12px;
@@ -554,7 +550,7 @@
 
 .session-row-time {
   flex-shrink: 0;
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-weight: 700;
   color: #111111;
 }
@@ -831,7 +827,7 @@
 
 .ring-center-val {
   display: block;
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 24px;
   font-weight: 700;
   color: #111111;
@@ -880,7 +876,7 @@
 }
 
 .ring-legend-val {
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 16px;
   font-weight: 700;
   color: #111111;
@@ -889,7 +885,7 @@
 
 /* ---------- STREAK ---------- */
 .points-big {
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 56px;
   font-weight: 700;
   margin: 4px 0 6px;

@@ -5,26 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Build your program — STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <style>
   .ob-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
   .ob-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
-  .ob-nav-logo{font-family:'Antonio',sans-serif;font-size:20px;margin-left:auto;color:#111;text-decoration:none;}
+  .ob-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#888;text-decoration:none;}
+  .ob-nav-logout:hover{color:#111;}
+  .ob-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#111;text-decoration:none;}
   .ob-wrap{max-width:560px;margin:0 auto;padding:16px 24px 90px;}
   .ob-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
-  .ob-h1{font-family:'Antonio',sans-serif;font-size:32px;margin:0 0 8px;}
+  .ob-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:32px;margin:0 0 8px;}
   .ob-sub{color:#666;font-size:14px;margin:0 0 28px;line-height:1.5;}
 
   .ob-field{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
   .ob-field label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#777;}
-  .ob-field select, .ob-field input, .ob-field textarea{padding:12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;background:#fff;}
+  .ob-field select, .ob-field input, .ob-field textarea{padding:12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;font-family:'Schibsted Grotesk',sans-serif;background:#fff;}
   .ob-field textarea{min-height:80px;resize:vertical;}
   .ob-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 
   .ob-btn{width:100%;padding:15px;background:#ccccff;border:2.5px solid #111;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;margin-top:6px;}
   .ob-btn:disabled{opacity:.6;cursor:wait;}
   .ob-btn-sub{text-align:center;font-size:12px;color:#999;margin-top:10px;}
+
+  .ob-pro{border:2.5px solid #111;border-radius:14px;padding:16px;margin:6px 0 20px;background:#faf9ff;}
+  .ob-pro-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .ob-pro-badge{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#111;color:#ccccff;padding:4px 10px;border-radius:20px;}
+  .ob-pro-head span{font-size:12px;color:#666;}
+  .ob-upsell{border:2.5px dashed #ccc;border-radius:14px;padding:16px;margin:6px 0 20px;background:#fafafc;}
+  .ob-upsell-title{font-weight:800;font-size:14px;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+  .ob-lock{font-size:10px;font-weight:800;text-transform:uppercase;background:#eee;color:#888;padding:3px 8px;border-radius:20px;}
+  .ob-upsell p{font-size:13px;color:#666;margin:0 0 10px;line-height:1.5;}
+  .ob-upsell a{font-weight:800;color:#5b53d6;text-decoration:none;}
 </style>
 </head>
 <body>
@@ -34,6 +46,7 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     Dashboard
   </a>
+  <a href="/logout" class="ob-nav-logout">Log out</a>
   <a href="/" class="ob-nav-logo">STROKE</a>
 </nav>
 
@@ -102,7 +115,45 @@
       <textarea name="main_goal" placeholder="e.g. Break 1:00 for 100m free, swim my first triathlon, just get fitter and more consistent…" required>{{ profile.main_goal if profile else '' }}</textarea>
     </div>
 
-    <button type="submit" class="ob-btn" id="onboardingSubmit">Generate my program</button>
+    {% if current_user.is_solo_pro %}
+    <div class="ob-pro">
+      <div class="ob-pro-head">
+        <span class="ob-pro-badge">Solo Pro</span>
+        <span>Tune how the AI coaches you</span>
+      </div>
+      <div class="ob-field">
+        <label>Coaching tone</label>
+        <select name="coaching_tone">
+          <option value="encouraging" {{ 'selected' if profile and profile.coaching_tone=='encouraging' }}>Encouraging — gentle and motivating</option>
+          <option value="balanced" {{ 'selected' if not profile or profile.coaching_tone=='balanced' }}>Balanced — supportive but honest</option>
+          <option value="direct" {{ 'selected' if profile and profile.coaching_tone=='direct' }}>Direct — blunt, performance-focused</option>
+        </select>
+      </div>
+      <div class="ob-field" style="margin-bottom:0">
+        <label>Program intensity</label>
+        <select name="intensity">
+          <option value="easier" {{ 'selected' if profile and profile.intensity=='easier' }}>Easier — more recovery, less volume</option>
+          <option value="normal" {{ 'selected' if not profile or profile.intensity=='normal' }}>Normal — pitched at my level</option>
+          <option value="harder" {{ 'selected' if profile and profile.intensity=='harder' }}>Harder — push me a notch above</option>
+        </select>
+      </div>
+    </div>
+    {% else %}
+    <div class="ob-upsell">
+      <p class="ob-upsell-title">Tune the AI <span class="ob-lock">Solo Pro</span></p>
+      <p>Choose your coaching tone (gentle → blunt) and program intensity, and regenerate anytime. Free programs use balanced, level-matched defaults.</p>
+      <a href="/solo/pro">Unlock Solo Pro →</a>
+    </div>
+    {% endif %}
+
+    {% if is_rebuild %}
+      {% if regens_left > 0 %}
+      <p class="ob-btn-sub" style="margin:0 0 8px">{{ regens_left }} of {{ regen_limit }} program rebuilds left this week.</p>
+      {% else %}
+      <p class="ob-btn-sub" style="margin:0 0 8px;color:#c0392b;font-weight:800">No rebuilds left this week — your limit resets Monday.</p>
+      {% endif %}
+    {% endif %}
+    <button type="submit" class="ob-btn" id="onboardingSubmit" {{ 'disabled' if is_rebuild and regens_left == 0 }}>{{ 'Generate my program' if not is_rebuild else 'Rebuild my program' }}</button>
     <p class="ob-btn-sub" id="onboardingStatus"></p>
   </form>
 </div>

@@ -5,15 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daily check-in — STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <style>
   .ci-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
   .ci-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
-  .ci-nav-logo{font-family:'Antonio',sans-serif;font-size:20px;margin-left:auto;color:#111;text-decoration:none;}
+  .ci-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#888;text-decoration:none;}
+  .ci-nav-logout:hover{color:#111;}
+  .ci-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#111;text-decoration:none;}
   .ci-wrap{max-width:560px;margin:0 auto;padding:16px 24px 90px;}
   .ci-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
-  .ci-h1{font-family:'Antonio',sans-serif;font-size:32px;margin:0 0 8px;}
+  .ci-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:32px;margin:0 0 8px;}
   .ci-sub{color:#666;font-size:14px;margin:0 0 24px;}
 
   .ci-scale{display:flex;gap:8px;margin-bottom:20px;}
@@ -22,17 +24,24 @@
   .ci-scale-opt-emoji{display:block;font-size:20px;margin-bottom:4px;}
   .ci-scale-opt-label{display:block;font-size:9px;text-transform:uppercase;color:#777;}
 
-  .ci-field textarea{width:100%;padding:12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;min-height:90px;resize:vertical;box-sizing:border-box;}
+  .ci-field{position:relative;}
+  .ci-field textarea{width:100%;padding:12px 46px 12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;font-family:'Schibsted Grotesk',sans-serif;min-height:90px;resize:vertical;box-sizing:border-box;}
+  .voice-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid #111;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+  .voice-btn svg{width:16px;height:16px;}
+  .voice-btn.voice-recording{background:#ff4d5e;border-color:#ff4d5e;animation:voicePulse 1s infinite;}
+  .voice-btn.voice-recording svg{stroke:#fff;}
+  @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.5);}50%{box-shadow:0 0 0 6px rgba(255,77,94,0);}}
+  .voice-hint{font-size:11px;color:#aaa;margin:6px 0 0;}
   .ci-btn{width:100%;padding:15px;background:#ccccff;border:2.5px solid #111;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;margin-top:14px;}
 
   .ci-today-card{border:2.5px solid #111;border-radius:14px;padding:18px;background:#fff;margin-bottom:28px;}
-  .ci-today-rating{font-family:'Antonio',sans-serif;font-size:24px;margin-bottom:8px;}
+  .ci-today-rating{font-family:'Schibsted Grotesk',sans-serif;font-size:24px;margin-bottom:8px;}
   .ci-today-notes{font-size:13px;color:#555;font-style:italic;margin-bottom:12px;}
   .ci-insight{background:#f3f3ff;border:2px solid #ccccff;border-radius:12px;padding:12px 14px;font-size:13px;color:#333;line-height:1.5;}
   .ci-insight-label{font-size:10px;font-weight:800;text-transform:uppercase;color:#8f8ff0;margin-bottom:6px;}
 
   .ci-history-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;}
-  .ci-history-date{font-family:'Antonio',sans-serif;font-weight:700;font-size:13px;min-width:52px;}
+  .ci-history-date{font-family:'Schibsted Grotesk',sans-serif;font-weight:700;font-size:13px;min-width:52px;}
   .ci-history-rating{font-size:11px;font-weight:800;background:#f3f3ff;color:#4b52c4;padding:3px 8px;border-radius:20px;flex-shrink:0;}
   .ci-history-notes{flex:1;font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 </style>
@@ -44,6 +53,7 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     Dashboard
   </a>
+  <a href="/logout" class="ci-nav-logout">Log out</a>
   <a href="/" class="ci-nav-logo">STROKE</a>
 </nav>
 
@@ -87,8 +97,12 @@
     </div>
 
     <div class="ci-field">
-      <textarea name="notes" placeholder="What could have gone better? How did it feel?">{{ todays_checkin.notes if todays_checkin else '' }}</textarea>
+      <textarea name="notes" id="notesField" placeholder="What could have gone better? How did it feel?">{{ todays_checkin.notes if todays_checkin else '' }}</textarea>
+      <button type="button" class="voice-btn" data-voice-target="notesField" title="Dictate with your voice" aria-label="Voice input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+      </button>
     </div>
+    <p class="voice-hint">🎙️ Tap the mic to speak your notes instead of typing.</p>
 
     <button type="submit" class="ci-btn" id="checkinSubmit">{{ 'Update check-in' if todays_checkin else 'Save check-in' }}</button>
   </form>
@@ -125,6 +139,7 @@
     btn.textContent = 'Saving…';
   });
 </script>
+<script src="{{ url_for('static', filename='js/voicelog.js') }}"></script>
 
 </body>
 </html>

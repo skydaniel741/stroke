@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  .nu-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .nu-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
+  .nu-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#888;text-decoration:none;}
+  .nu-nav-logout:hover{color:#111;}
+  .nu-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#111;text-decoration:none;}
+  .nu-wrap{max-width:960px;margin:0 auto;padding:16px 24px 90px;}
+  .nu-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
+  .nu-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:34px;letter-spacing:-0.01em;margin:0 0 8px;}
+  .nu-sub{color:#666;font-size:15px;margin:0 0 26px;line-height:1.5;max-width:620px;}
+
+  .nu-cat-label{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;letter-spacing:-0.01em;margin:28px 0 3px;}
+  .nu-cat-blurb{font-size:13px;color:#999;margin:0 0 14px;}
+
+  .nu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+  .nu-card{border:2.5px solid #111;border-radius:16px;overflow:hidden;background:#fff;cursor:pointer;transition:transform .12s,box-shadow .12s;box-shadow:4px 4px 0 #ececf6;text-align:left;padding:0;font-family:inherit;}
+  .nu-card:hover{transform:translateY(-3px);box-shadow:6px 8px 0 #ccccff;}
+  .nu-photo{height:120px;display:flex;align-items:center;justify-content:center;font-size:56px;}
+  .nu-card-body{padding:12px 14px 14px;}
+  .nu-card-name{font-weight:800;font-size:15px;line-height:1.2;margin-bottom:6px;}
+  .nu-card-timing{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#5b53d6;background:#f0effb;padding:3px 8px;border-radius:20px;margin-bottom:8px;}
+  .nu-card-stats{display:flex;gap:12px;font-size:11px;color:#888;font-weight:600;}
+  .nu-card-stats b{color:#111;}
+
+  /* modal */
+  .nu-modal-bg{position:fixed;inset:0;background:rgba(17,17,17,.55);display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;z-index:900;}
+  .nu-modal-bg.open{display:flex;}
+  .nu-modal{background:#fff;border:2.5px solid #111;border-radius:20px;max-width:600px;width:100%;overflow:hidden;margin:auto;}
+  .nu-modal-photo{height:150px;display:flex;align-items:center;justify-content:center;font-size:76px;position:relative;}
+  .nu-modal-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid #111;font-size:16px;cursor:pointer;line-height:1;font-weight:800;}
+  .nu-modal-body{padding:20px 22px 26px;}
+  .nu-modal-name{font-family:'Schibsted Grotesk',sans-serif;font-size:26px;letter-spacing:-0.01em;margin:0 0 6px;}
+  .nu-modal-timing{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;color:#fff;background:#111;padding:4px 12px;border-radius:20px;margin-bottom:14px;}
+  .nu-why{font-size:14px;color:#444;line-height:1.55;background:#faf9ff;border:1.5px solid #e0ddf5;border-radius:12px;padding:12px 14px;margin-bottom:18px;}
+
+  .nu-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+  .nu-stat{border:2px solid #111;border-radius:12px;padding:10px;text-align:center;}
+  .nu-stat-num{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;font-weight:800;line-height:1;}
+  .nu-stat-lbl{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#999;margin-top:3px;}
+  .nu-macros{display:flex;gap:8px;margin-bottom:20px;}
+  .nu-macro{flex:1;border-radius:10px;padding:8px;text-align:center;font-size:12px;font-weight:700;}
+  .nu-macro span{display:block;font-size:16px;font-weight:800;}
+  .nu-macro.p{background:#ffe3e8;color:#c0392b;} .nu-macro.c{background:#e5f0ff;color:#2456b3;} .nu-macro.f{background:#fff2d9;color:#b8860b;}
+
+  .nu-sec-label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8f8ff0;margin:0 0 8px;}
+  .nu-ingredients{list-style:none;padding:0;margin:0 0 20px;}
+  .nu-ingredients li{font-size:14px;color:#333;padding:6px 0;border-bottom:1px solid #f0f0f5;display:flex;gap:8px;}
+  .nu-ingredients li:before{content:'•';color:#8f8ff0;font-weight:800;}
+  .nu-steps{padding:0;margin:0;counter-reset:step;list-style:none;}
+  .nu-steps li{font-size:14px;color:#333;line-height:1.5;padding:0 0 14px 38px;position:relative;counter-increment:step;}
+  .nu-steps li:before{content:counter(step);position:absolute;left:0;top:-2px;width:26px;height:26px;border-radius:50%;background:#111;color:#ccccff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;}
+</style>
+</head>
+<body>
+
+<nav class="nu-nav">
+  <a href="/dashboard" class="nu-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/logout" class="nu-nav-logout">Log out</a>
+  <a href="/" class="nu-nav-logo">STROKE</a>
+</nav>
+
+<div class="nu-wrap">
+  <p class="nu-eyebrow">Solo · Nutrition</p>
+  <h1 class="nu-h1">Fuel for swimmers</h1>
+  <p class="nu-sub">Meals built around your training — what to eat before you dive in, how to recover after, and how to fuel on race day. Tap any meal for the full recipe, timing and stats.</p>
+
+  {% for cat in categories %}
+    {% set meals = meals_by_cat.get(cat.key, []) %}
+    {% if meals %}
+    <div class="nu-cat-label">{{ cat.label }}</div>
+    <p class="nu-cat-blurb">{{ cat.blurb }}</p>
+    <div class="nu-grid">
+      {% for m in meals %}
+      <button class="nu-card" data-meal="{{ m.id }}">
+        <div class="nu-photo" style="background:{{ m.gradient }}">{{ m.emoji }}</div>
+        <div class="nu-card-body">
+          <div class="nu-card-name">{{ m.name }}</div>
+          <span class="nu-card-timing">{{ m.timing }}</span>
+          <div class="nu-card-stats">
+            <span><b>{{ m.prep_min + m.cook_min }}</b> min</span>
+            <span><b>{{ m.calories }}</b> cal</span>
+            <span><b>{{ m.protein_g }}g</b> protein</span>
+          </div>
+        </div>
+      </button>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<div class="nu-modal-bg" id="nuModalBg">
+  <div class="nu-modal" id="nuModal"></div>
+</div>
+
+<script>
+  const MEALS = {{ meals_by_cat|tojson }};
+  const ALL = Object.values(MEALS).flat();
+  const byId = Object.fromEntries(ALL.map(m => [m.id, m]));
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function openMeal(id){
+    const m = byId[id];
+    if(!m) return;
+    document.getElementById('nuModal').innerHTML = `
+      <div class="nu-modal-photo" style="background:${m.gradient}">
+        ${m.emoji}
+        <button class="nu-modal-close" data-close aria-label="Close">✕</button>
+      </div>
+      <div class="nu-modal-body">
+        <h2 class="nu-modal-name">${esc(m.name)}</h2>
+        <span class="nu-modal-timing">${esc(m.timing)}</span>
+        <div class="nu-why">${esc(m.why)}</div>
+        <div class="nu-stats">
+          <div class="nu-stat"><div class="nu-stat-num">${m.prep_min}m</div><div class="nu-stat-lbl">Prep</div></div>
+          <div class="nu-stat"><div class="nu-stat-num">${m.cook_min}m</div><div class="nu-stat-lbl">Cook</div></div>
+          <div class="nu-stat"><div class="nu-stat-num">${m.calories}</div><div class="nu-stat-lbl">Calories</div></div>
+        </div>
+        <div class="nu-macros">
+          <div class="nu-macro p"><span>${m.protein_g}g</span>Protein</div>
+          <div class="nu-macro c"><span>${m.carbs_g}g</span>Carbs</div>
+          <div class="nu-macro f"><span>${m.fat_g}g</span>Fat</div>
+        </div>
+        <p class="nu-sec-label">Ingredients</p>
+        <ul class="nu-ingredients">${m.ingredients.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
+        <p class="nu-sec-label">Method</p>
+        <ol class="nu-steps">${m.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+      </div>`;
+    document.getElementById('nuModalBg').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMeal(){
+    document.getElementById('nuModalBg').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.nu-card').forEach(c => c.addEventListener('click', () => openMeal(c.dataset.meal)));
+  document.getElementById('nuModalBg').addEventListener('click', e => {
+    if(e.target.id === 'nuModalBg' || e.target.hasAttribute('data-close')) closeMeal();
+  });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeMeal(); });
+</script>
+
+</body>
+</html>

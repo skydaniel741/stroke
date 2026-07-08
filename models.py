@@ -32,6 +32,15 @@ class User(db.Model, UserMixin):
         self.verify_code_sent_at = datetime.utcnow()
         return self.verify_code
 
+    @property
+    def is_solo(self):
+        # Both the free solo tier and paid Solo Pro get the solo AI experience.
+        return self.plan in ('solo', 'solo_pro')
+
+    @property
+    def is_solo_pro(self):
+        return self.plan == 'solo_pro'
+
     swims = db.relationship('Swim', backref='user', lazy=True)
     sessions = db.relationship('Session', backref='user', lazy=True)
 
@@ -84,6 +93,8 @@ class Session(db.Model):
     sets_data = db.Column(db.Text)
     notes = db.Column(db.Text)
     logged_at = db.Column(db.DateTime, default=datetime.utcnow)
+    source = db.Column(db.String(20), default='self')  # 'self' or 'squad' (auto-logged by coach roll call)
+    squad_event_id = db.Column(db.Integer, db.ForeignKey('squad_event.id'), nullable=True)
 
     def get_sets(self):
         try:
@@ -141,8 +152,20 @@ class AthleteProfile(db.Model):
     primary_stroke = db.Column(db.String(20))
     main_goal = db.Column(db.Text)
     program_json = db.Column(db.Text)  # AI-generated program, see ai_utils.generate_training_program
+    # Solo Pro AI tuning knobs (free solo tier stays on the defaults).
+    coaching_tone = db.Column(db.String(20), default='balanced')   # encouraging/balanced/direct
+    intensity = db.Column(db.String(20), default='normal')          # easier/normal/harder
+    # Rolling weekly cap on AI program rebuilds (see routes_solo.onboarding).
+    regen_week_start = db.Column(db.Date, nullable=True)  # Monday of the counted week
+    regen_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def regens_left(self, limit=3):
+        from datetime import date, timedelta
+        monday = date.today() - timedelta(days=date.today().weekday())
+        used = self.regen_count or 0 if self.regen_week_start == monday else 0
+        return max(0, limit - used)
 
     def get_program(self):
         try:
@@ -266,6 +289,7 @@ class Squad(db.Model):
     invite_code = db.Column(db.String(20), unique=True, nullable=False)
     base_fee = db.Column(db.Numeric(10, 2), default=0)
     per_swimmer_fee = db.Column(db.Numeric(10, 2), default=0)
+    color = db.Column(db.String(20), default='blue')  # badge/theme color for the coach dashboard
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     memberships = db.relationship('SquadMembership', backref='squad', lazy=True)
@@ -335,7 +359,10 @@ class StatusFlag(db.Model):
 
 
 class SquadEvent(db.Model):
-    """A scheduled practice/meet/event on a squad's coach-facing calendar."""
+    """A scheduled practice/meet/event on a squad's coach-facing calendar.
+    A practice can carry an AM/PM slot and an attached SavedSet -- when the
+    coach marks attendance for that day, present swimmers get the attached
+    set auto-logged as a Session (see routes_coach.coach_pro_attendance_save)."""
     __tablename__ = 'squad_event'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -343,9 +370,32 @@ class SquadEvent(db.Model):
     title = db.Column(db.String(150), nullable=False)
     event_date = db.Column(db.Date, nullable=False)
     event_time = db.Column(db.String(20))  # free text, e.g. '6:00 AM'
+    slot = db.Column(db.String(10), default='')  # 'AM' / 'PM' / ''
     event_type = db.Column(db.String(20), default='practice')  # practice/meet/other
+    saved_set_id = db.Column(db.Integer, db.ForeignKey('saved_set.id'), nullable=True)
     notes = db.Column(db.Text)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    saved_set = db.relationship('SavedSet')
+
+
+class AttendanceRecord(db.Model):
+    """One swimmer's roll-call mark for one squad practice date. Written by
+    the coach dashboard's Attendance tab; a (squad, swimmer, date) triple is
+    unique -- re-marking the same day overwrites the previous status."""
+    __tablename__ = 'attendance_record'
+    __table_args__ = (
+        db.UniqueConstraint('squad_id', 'swimmer_id', 'session_date', name='uq_attendance_day'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    squad_id = db.Column(db.Integer, db.ForeignKey('squad.id'), nullable=False)
+    swimmer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    session_date = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(20), default='present')  # present/late/excused/absent
+    note = db.Column(db.Text)
+    recorded_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -376,4 +426,25 @@ class SavedSet(db.Model):
             except:
                 pass
         return total
+
+
+class CoachAssignment(db.Model):
+    """Links a SavedSet to a squad or an individual swimmer -- the coach
+    dashboard's active assignment queue. Exactly one of squad_id /
+    swimmer_id is set."""
+    __tablename__ = 'coach_assignment'
+
+    id = db.Column(db.Integer, primary_key=True)
+    saved_set_id = db.Column(db.Integer, db.ForeignKey('saved_set.id'), nullable=False)
+    squad_id = db.Column(db.Integer, db.ForeignKey('squad.id'), nullable=True)
+    swimmer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    assigned_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    due_date = db.Column(db.Date, nullable=True)
+    status = db.Column(db.String(20), default='Assigned')  # Assigned/Completed
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    saved_set = db.relationship('SavedSet')
+    squad = db.relationship('Squad')
+    swimmer = db.relationship('User', foreign_keys=[swimmer_id])
 

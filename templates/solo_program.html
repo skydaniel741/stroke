@@ -5,37 +5,71 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Your program — STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 <style>
   .pr-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
   .pr-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
-  .pr-nav-logo{font-family:'Antonio',sans-serif;font-size:20px;margin-left:auto;color:#111;text-decoration:none;}
-  .pr-wrap{max-width:680px;margin:0 auto;padding:16px 24px 90px;}
+  .pr-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#888;text-decoration:none;}
+  .pr-nav-logout:hover{color:#111;}
+  .pr-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#111;text-decoration:none;}
+  .pr-wrap{max-width:860px;margin:0 auto;padding:16px 20px 90px;}
   .pr-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
-  .pr-h1{font-family:'Antonio',sans-serif;font-size:32px;margin:0 0 12px;}
-  .pr-overview{font-size:14px;color:#333;line-height:1.6;margin-bottom:24px;}
-  .pr-meta-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;}
-  .pr-meta-chip{font-size:11px;font-weight:800;text-transform:uppercase;background:#f3f3ff;color:#4b52c4;padding:6px 12px;border-radius:20px;}
+  .pr-tune{font-size:12.5px;color:#555;background:#faf9ff;border:1.5px solid #e0ddf5;border-radius:10px;padding:9px 13px;margin:0 0 20px;}
+  .pr-tune b{color:#111;}
+  .pr-tune a{font-weight:800;color:#5b53d6;text-decoration:none;}
+  .pr-tune-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#111;color:#ccccff;padding:2px 8px;border-radius:20px;margin-right:6px;}
+  .pr-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;letter-spacing:-0.01em;margin:0 0 12px;}
+  .pr-overview{font-size:14px;color:#333;line-height:1.6;margin-bottom:18px;}
 
-  .pr-section-label{font-family:'Antonio',sans-serif;font-size:18px;text-transform:uppercase;letter-spacing:.03em;margin:28px 0 12px;}
+  .pr-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
+  .pr-stat{border:2.5px solid #111;border-radius:14px;padding:12px 14px;background:#fff;}
+  .pr-stat-num{font-size:22px;font-weight:800;line-height:1.1;}
+  .pr-stat-lbl{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#888;margin-top:2px;}
 
+  .pr-section-label{font-family:'Schibsted Grotesk',sans-serif;font-size:18px;letter-spacing:-0.01em;margin:26px 0 12px;}
+
+  /* Week calendar: one column on phones, fills out on bigger screens */
+  .pr-week{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:640px){.pr-week{grid-template-columns:repeat(2,1fr);}}
+  @media(min-width:920px){.pr-week{grid-template-columns:repeat(3,1fr);}}
+
+  .pr-day{border:2.5px solid #111;border-radius:16px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;box-shadow:4px 4px 0 #ccccff;}
+  .pr-day.rest{border-color:#ddd;box-shadow:none;background:#fafafc;}
+  .pr-day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .pr-day-name{font-weight:800;font-size:14px;}
+  .pr-day.rest .pr-day-name{color:#999;}
+  .pr-day-total{font-size:12px;font-weight:800;color:#111;background:#ccccff;padding:3px 10px;border-radius:20px;}
+  .pr-day-focus{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8f8ff0;margin-bottom:10px;}
+  .pr-day.rest .pr-day-focus{color:#aaa;}
+
+  .pr-blocks{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+  .pr-block{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:7px 10px;background:#f6f6fb;border-radius:9px;}
+  .pr-block.main{background:#efeffd;}
+  .pr-block-txt{font-weight:600;color:#222;}
+  .pr-block-note{display:block;font-weight:500;color:#777;font-size:11px;margin-top:1px;}
+  .pr-block-rest{flex-shrink:0;font-size:11px;font-weight:700;color:#8f8ff0;white-space:nowrap;}
+
+  .pr-day-note{font-size:12px;color:#666;line-height:1.5;margin-top:auto;padding-top:6px;border-top:1px dashed #e4e4ee;}
+  .pr-rest-body{font-size:12.5px;color:#999;line-height:1.5;padding:8px 0 2px;}
+
+  /* legacy paragraph-style programs (generated before the calendar update) */
   .pr-session{border:2.5px solid #111;border-radius:14px;padding:16px 18px;margin-bottom:12px;background:#fff;}
   .pr-session-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
   .pr-session-label{font-weight:800;font-size:13px;}
   .pr-session-focus{font-size:11px;font-weight:800;text-transform:uppercase;color:#8f8ff0;}
   .pr-session-summary{font-size:13px;color:#444;line-height:1.5;}
+  .pr-legacy-nudge{background:#fff8e6;border:2px solid #ffd766;border-radius:12px;padding:12px 14px;font-size:13px;color:#7a5b00;margin-bottom:16px;}
 
   .pr-progression{background:#f3f3ff;border:2px solid #ccccff;border-radius:14px;padding:16px 18px;font-size:13px;color:#333;line-height:1.5;margin-bottom:12px;}
-
   .pr-insight{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #eee;}
   .pr-insight:last-child{border-bottom:none;}
   .pr-insight-icon{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#111;color:#ccccff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
   .pr-insight-text{font-size:13px;color:#333;line-height:1.5;}
 
   .pr-actions{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;}
-  .pr-btn{padding:12px 18px;border:2.5px solid #111;border-radius:10px;font-weight:800;text-transform:uppercase;font-size:12px;text-decoration:none;color:#111;background:#fff;}
+  .pr-btn{padding:12px 18px;border:2.5px solid #111;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none;color:#111;background:#fff;}
   .pr-btn-primary{background:#ccccff;}
 </style>
 </head>
@@ -46,32 +80,83 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     Dashboard
   </a>
+  <a href="/logout" class="pr-nav-logout">Log out</a>
   <a href="/" class="pr-nav-logo">STROKE</a>
 </nav>
 
+{% set stroke_names = {'FR':'Free','BK':'Back','BR':'Breast','FL':'Fly','IM':'IM'} %}
+
 <div class="pr-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
   <p class="pr-eyebrow">Your AI training program</p>
-  <h1 class="pr-h1">Built for you</h1>
-
-  <div class="pr-meta-row">
-    <span class="pr-meta-chip">{{ profile.level }}</span>
-    <span class="pr-meta-chip">{{ profile.training_days_per_week }} days/week</span>
-    <span class="pr-meta-chip">{{ profile.primary_stroke }}</span>
-  </div>
-
+  <h1 class="pr-h1">Your training week</h1>
   <p class="pr-overview">{{ program.overview }}</p>
 
-  {% if program.sessions %}
-  <div class="pr-section-label">Weekly structure</div>
-  {% for s in program.sessions %}
-  <div class="pr-session">
-    <div class="pr-session-head">
-      <span class="pr-session-label">{{ s.day_label }}</span>
-      <span class="pr-session-focus">{{ s.focus }}</span>
-    </div>
-    <p class="pr-session-summary">{{ s.summary }}</p>
+  {% if current_user.is_solo_pro %}
+  <div class="pr-tune">
+    <span class="pr-tune-badge">Solo Pro</span>
+    Tuned to <b>{{ (profile.coaching_tone or 'balanced')|capitalize }}</b> tone · <b>{{ (profile.intensity or 'normal')|capitalize }}</b> intensity · <a href="/solo/onboarding">adjust &amp; rebuild</a>
   </div>
-  {% endfor %}
+  {% else %}
+  <div class="pr-tune">
+    This program uses balanced, level-matched defaults. <a href="/solo/pro">Unlock tone &amp; intensity with Solo Pro →</a>
+  </div>
+  {% endif %}
+
+  {% if program.days %}
+    {% set training_days = program.days | rejectattr('rest') | list %}
+    {% set week_total = training_days | map(attribute='total', default=0) | sum %}
+    <div class="pr-stats">
+      <div class="pr-stat"><div class="pr-stat-num">{{ training_days | length }}</div><div class="pr-stat-lbl">Sessions / week</div></div>
+      <div class="pr-stat"><div class="pr-stat-num">{{ '{:,}'.format(week_total) }}m</div><div class="pr-stat-lbl">Weekly volume</div></div>
+      <div class="pr-stat"><div class="pr-stat-num">{{ profile.level or '—' }}</div><div class="pr-stat-lbl">Level</div></div>
+    </div>
+
+    <div class="pr-week">
+      {% for d in program.days %}
+      <div class="pr-day {{ 'rest' if d.rest }}">
+        <div class="pr-day-head">
+          <span class="pr-day-name">{{ d.day }}</span>
+          {% if not d.rest and d.total %}<span class="pr-day-total">{{ '{:,}'.format(d.total) }}m</span>{% endif %}
+        </div>
+        <div class="pr-day-focus">{{ d.focus }}</div>
+        {% if d.rest %}
+          <div class="pr-rest-body">{{ d.coach_note }}</div>
+        {% else %}
+          <div class="pr-blocks">
+            {% for b in d.blocks %}
+            <div class="pr-block {{ 'main' if b.section == 'Main set' }}">
+              <span class="pr-block-txt">
+                {{ b.reps }}×{{ b.dist }} {{ stroke_names.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}
+                {% if b.note %}<span class="pr-block-note">{{ b.note }}</span>{% endif %}
+              </span>
+              {% if b.rest %}<span class="pr-block-rest">@ {{ b.rest }}</span>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% if d.coach_note %}<div class="pr-day-note">{{ d.coach_note }}</div>{% endif %}
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+  {% elif program.sessions %}
+    {# Programs generated before the calendar update -- offer a rebuild #}
+    <div class="pr-legacy-nudge">This program was built with an older format. <a href="/solo/onboarding">Rebuild it</a> to get the new day-by-day calendar with written sets.</div>
+    {% for s in program.sessions %}
+    <div class="pr-session">
+      <div class="pr-session-head">
+        <span class="pr-session-label">{{ s.day_label }}</span>
+        <span class="pr-session-focus">{{ s.focus }}</span>
+      </div>
+      <p class="pr-session-summary">{{ s.summary }}</p>
+    </div>
+    {% endfor %}
   {% endif %}
 
   {% if program.progression_tips %}
@@ -93,6 +178,9 @@
     <a href="/solo/checkin" class="pr-btn pr-btn-primary">Log today's check-in</a>
     <a href="/solo/onboarding" class="pr-btn">Rebuild program</a>
   </div>
+  <p style="font-size:12px;color:#999;margin-top:10px">
+    {% if regens_left > 0 %}{{ regens_left }} of {{ regen_limit }} rebuilds left this week.{% else %}You've used all {{ regen_limit }} rebuilds this week — resets Monday.{% endif %}
+  </p>
 </div>
 
 </body>

@@ -30,11 +30,10 @@
 }
 
 .wa-nav-logo{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:22px;
   font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.05em;
+  letter-spacing:-0.01em;
   color:#111;
   text-decoration:none;
 }
@@ -46,11 +45,10 @@
 }
 
 .wa-title{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:34px;
   font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.02em;
+  letter-spacing:-0.01em;
   color:#111;
   margin-bottom:4px;
 }
@@ -74,7 +72,7 @@
   border:2.5px solid #111;
   border-radius:10px;
   background:#fff;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-weight:800;
   font-size:13px;
   text-transform:uppercase;
@@ -115,7 +113,7 @@
   border:2px solid #111;
   font-size:15px;
   font-weight:600;
-  font-family:'Inter',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   background:#fff;
   color:#111;
   margin-bottom:16px;
@@ -136,7 +134,7 @@
   font-size:20px;
   text-align:center;
   font-weight:700;
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   color:#111;
 }
 
@@ -156,7 +154,7 @@
   font-size:24px;
   text-align:center;
   font-weight:800;
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   color:#111;
   margin-bottom:6px;
 }
@@ -172,7 +170,7 @@
 }
 
 .wa-result-val{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:56px;
   line-height:1;
   color:#ccccff;
@@ -213,10 +211,9 @@
 }
 
 .wr-name{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:28px;
   font-weight:700;
-  text-transform:uppercase;
   color:#111;
   line-height:1.05;
 }
@@ -229,7 +226,7 @@
 }
 
 .wr-time{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:40px;
   font-weight:700;
   color:#111;
@@ -324,7 +321,7 @@
 }
 
 .css-zone-pace{
-  font-family:'Antonio',sans-serif;
+  font-family:'Schibsted Grotesk',sans-serif;
   font-size:18px;
   font-weight:700;
   color:#111;

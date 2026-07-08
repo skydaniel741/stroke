@@ -15,7 +15,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   background: #fcfcff;
   color: #111111;
   line-height: 1.6;
@@ -64,11 +64,10 @@ nav {
 }
 
 .nav-logo {
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 28px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: -0.01em;
   color: #111111;
 }
 
@@ -165,11 +164,10 @@ nav {
 }
 
 .auth-card h1 {
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 42px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.01em;
   color: #111111;
   margin-bottom: 10px;
 }
@@ -210,10 +208,9 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: 'Antonio', sans-serif;
+  font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.01em;
   color: #111111;
   border-bottom: 2px solid #ccccff;
   padding-bottom: 10px;

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
@@ -241,6 +241,36 @@
         <div class="streak-label">{{ 'Keep it going.' if streak else 'Log your first swim to start' }}</div>
       </div>
     </div>
+
+    {% if todays_squad_sessions or upcoming_squad_sessions %}
+    <div class="panel" style="margin-top:20px">
+      <div class="panel-label">Your squad schedule</div>
+      {% if todays_squad_sessions %}
+        {% for e in todays_squad_sessions %}
+        <div class="session-row">
+          <span class="session-row-main">
+            <strong>Today{% if e.slot %} · {{ e.slot }}{% endif %}{% if e.event_time %} {{ e.event_time }}{% endif %}</strong> — {{ e.title }}
+            {% if e.saved_set %}
+              <span style="color:#8f8ff0;font-weight:700;font-size:12px"> · {{ e.saved_set.name }} ({{ e.saved_set.total_distance() }}m)</span>
+            {% endif %}
+          </span>
+          <span class="session-row-tag">{{ squad_names.get(e.squad_id, 'Squad') }}</span>
+        </div>
+        {% endfor %}
+        <p class="panel-note" style="margin:8px 0 0">Sessions with a set attached are logged for you automatically when your coach marks you present.</p>
+      {% else %}
+        <p class="panel-note" style="margin:0 0 8px">Nothing scheduled today — here's what's coming up.</p>
+      {% endif %}
+      {% for e in upcoming_squad_sessions %}
+      <div class="session-row">
+        <span class="session-row-main">{{ e.event_date.strftime('%a %d %b') }}{% if e.slot %} · {{ e.slot }}{% endif %} — {{ e.title }}
+          {% if e.saved_set %}<span style="color:#999;font-size:12px"> · {{ e.saved_set.total_distance() }}m</span>{% endif %}
+        </span>
+        <span class="session-row-tag">{{ squad_names.get(e.squad_id, 'Squad') }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
 
     {% if squad_announcements %}
     <div class="panel" style="margin-top:20px">

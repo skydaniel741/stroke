@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach dashboard — STROKE Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Schibsted Grotesk', 'ui-sans-serif', 'system-ui'] },
+        colors: {
+          brand: {
+            50: '#f5f5ff', 100: '#ececff', 200: '#d9d9ff', 300: '#c2c2ff',
+            400: '#a8a8f5', 500: '#8f8ff0', 600: '#7a7ae6', 700: '#6560d1',
+            800: '#5048a8', 900: '#3d3880',
+          },
+        },
+      },
+    },
+  };
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  .font-display { font-family: 'Schibsted Grotesk', sans-serif; letter-spacing: -0.01em; }
+  .cp-nav-active { background-color: #111111; color: #ccccff; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .voice-btn.voice-recording { background:#ff4d5e !important; border-color:#ff4d5e !important; color:#fff !important; animation:voicePulse 1s infinite; }
+  @keyframes voicePulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.5);} 50%{box-shadow:0 0 0 6px rgba(255,77,94,0);} }
+  @media print {
+    /* Print shows only the active tab's content (the report), full-flow,
+       with every dashboard chrome element and the tab's own controls hidden. */
+    .no-print, aside, main > header, .cp-stats-row { display: none !important; }
+    html, body, #swim_coach_workspace, main, #cpTabContent {
+      display: block !important;
+      height: auto !important;
+      max-height: none !important;
+      width: auto !important;
+      overflow: visible !important;
+      background: #fff !important;
+    }
+    #cpTabContent { padding: 0 !important; }
+    #cpTabContent .overflow-x-auto, #cpTabContent [class*="max-h-"] { overflow: visible !important; max-height: none !important; }
+    #reports_section { max-width: none !important; }
+    @page { margin: 1.4cm; }
+  }
+</style>
+</head>
+<body class="antialiased">
+
+<div class="flex h-screen w-screen bg-slate-50 text-slate-900 font-sans overflow-hidden" id="swim_coach_workspace">
+
+  <!-- Sidebar Navigation -->
+  <aside class="w-64 bg-slate-900 flex flex-col border-r border-slate-800 shrink-0">
+    <div class="p-6 border-b border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 bg-[#ccccff] rounded-lg flex items-center justify-center font-bold text-[#111111] shadow-sm">
+          <i data-lucide="waves" class="w-5 h-5"></i>
+        </div>
+        <span class="font-display text-lg text-white">Stroke Coach</span>
+      </div>
+    </div>
+
+    <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="cpSidebarNav">
+      <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-2">Management</div>
+
+      <button data-action="cp-set-tab" data-tab="roster" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="users" class="w-4 h-4"></i><span>Squad Roster</span>
+      </button>
+      <button data-action="cp-set-tab" data-tab="schedule" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="calendar-days" class="w-4 h-4"></i><span>Schedule</span>
+      </button>
+      <button data-action="cp-set-tab" data-tab="attendance" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="check-square" class="w-4 h-4"></i><span>Attendance</span>
+      </button>
+      <button data-action="cp-set-tab" data-tab="builder" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="clipboard-list" class="w-4 h-4"></i><span>Session Builder</span>
+      </button>
+      <button data-action="cp-set-tab" data-tab="announcements" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="megaphone" class="w-4 h-4"></i><span>Announcements</span>
+      </button>
+
+      <div class="pt-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-2">Performance & Analytics</div>
+
+      <button data-action="cp-set-tab" data-tab="swimmer" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="award" class="w-4 h-4"></i><span>Athlete Hub</span>
+      </button>
+      <button data-action="cp-set-tab" data-tab="testsets" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="camera" class="w-4 h-4"></i><span>Test Sets</span>
+      </button>
+      <button data-action="cp-set-tab" data-tab="analytics" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="shield-alert" class="w-4 h-4"></i><span>Team Analytics</span>
+      </button>
+      <button data-action="cp-set-tab" data-tab="reports" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="file-text" class="w-4 h-4"></i><span>Reports</span>
+      </button>
+      <button data-action="cp-set-tab" data-tab="ai" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-left">
+        <i data-lucide="sparkles" class="w-4 h-4"></i><span>AI Assistant</span>
+      </button>
+    </nav>
+
+    <div class="p-4 border-t border-slate-800 bg-slate-950/40">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-white font-bold text-xs">
+          {{ current_user.username[:2]|upper if current_user.is_authenticated else 'CH' }}
+        </div>
+        <div class="text-xs">
+          <div class="font-semibold text-white leading-tight">{{ current_user.username if current_user.is_authenticated else 'Coach' }}</div>
+          <div class="text-slate-400 text-[10px] mt-0.5">Coach</div>
+        </div>
+      </div>
+      <a href="/dashboard" class="w-full text-[10px] text-slate-400 hover:text-white flex items-center justify-center gap-1.5 py-1.5 bg-slate-800/55 hover:bg-slate-800 rounded border border-slate-800/80 transition cursor-pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M19 12H5M12 5l-7 7 7 7"></path></svg>
+        Back to swimmer app
+      </a>
+      <a href="/logout" class="w-full mt-2 text-[10px] text-slate-400 hover:text-white flex items-center justify-center gap-1.5 py-1.5 bg-slate-800/55 hover:bg-slate-800 rounded border border-slate-800/80 transition cursor-pointer">
+        Log out
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-2xs">
+      <div>
+        <h1 class="font-display text-lg text-slate-900">Coach Dashboard</h1>
+        <p class="text-[10px] text-slate-400 mt-0.5 font-medium font-mono">{{ current_user.username if current_user.is_authenticated else '' }} · WORKSPACE</p>
+      </div>
+      <div class="flex gap-3">
+        <button data-action="cp-set-tab" data-tab="roster" class="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-2xs cursor-pointer transition-all">Manage Squad</button>
+        <button data-action="cp-set-tab" data-tab="builder" class="px-4 py-2 bg-[#111111] hover:bg-slate-800 text-[#ccccff] rounded-lg text-xs font-semibold shadow-2xs cursor-pointer transition-all">+ Assign New Set</button>
+      </div>
+    </header>
+
+    <!-- Statistics Row -->
+    <div class="cp-stats-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-8 pb-0 shrink-0">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs transition-all hover:shadow-xs">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Swimmers</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="cpStatSwimmers">0</div>
+        <div class="text-[10px] text-green-600 mt-1 font-medium">Active roster members</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs transition-all hover:shadow-xs">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Avg Distance / Swimmer</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="cpStatPoints">0m</div>
+        <div class="text-[10px] text-brand-600 mt-1 font-medium">Across all logged sessions</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs transition-all hover:shadow-xs">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Attendance (30d)</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="cpStatAttendance">—</div>
+        <div class="text-[10px] text-brand-600 mt-1 font-medium">Across marked roll calls</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs transition-all hover:shadow-xs">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Sets</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="cpStatActiveSets">0</div>
+        <div class="text-[10px] text-slate-500 mt-1 font-medium">Pending assignment</div>
+      </div>
+    </div>
+
+    <!-- Dynamic Workspace Container -->
+    <div class="flex-1 p-8 overflow-y-auto" id="cpTabContent"></div>
+  </main>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/coach_pro.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voicelog.js') }}"></script>
+</body>
+</html>
