@@ -31,6 +31,8 @@
     <span class="set-detail-cat-icon">{{ set_icon(category.icon) }}</span>
     {{ category.label }}
   </span>
+  <span class="set-card-badge diff-{{ (s.difficulty or 'Medium')|lower }} no-print">{{ s.difficulty or 'Medium' }}</span>
+  {% if (s.distance_focus or 'All') != 'All' %}<span class="set-card-badge no-print">{{ s.distance_focus }} distance</span>{% endif %}
 
   <h1 class="set-detail-h1 no-print">{{ s.name }}</h1>
 
@@ -74,7 +76,7 @@
           </div>
           <div class="set-block-rest">
             {% if b.rest and b.rest not in ['0', '0:00'] %}
-            <span class="set-block-rest-label">Rest</span>
+            <span class="set-block-rest-label">{{ 'On' if b.rest_type == 'interval' else 'Rest' }}</span>
             <span class="set-block-rest-val">{{ b.rest }}</span>
             {% endif %}
           </div>
@@ -111,7 +113,7 @@
       <p class="print-section-head">{{ sec.name }} <span class="print-section-dist">— {{ sec.distance }}m</span></p>
       {% for b in sec.blocks %}
       <div class="print-line">
-        <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">@ {{ b.rest }} rest</span>{% endif %}</p>
+        <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">{{ 'on ' + b.rest if b.rest_type == 'interval' else '@ ' + b.rest + ' rest' }}</span>{% endif %}</p>
         {% if b.note %}<p class="print-line-note">{{ b.note }}</p>{% endif %}
       </div>
       {% endfor %}

@@ -9,14 +9,26 @@ logger = logging.getLogger(__name__)
 # Coaching tone for the AI's feedback (squad insights, check-in replies).
 # Lets a coach dial how blunt the AI is -- the default is deliberately warm
 # rather than harsh.
+# Every prompt that produces swimmer-facing text gets this. The whole point is
+# that the output should read like a real coach talking, not like AI filler.
+HUMAN_VOICE = (
+    "VOICE: Write like a real human swim coach talking to their swimmer on the pool deck. "
+    "Use contractions (you're, that's, let's, don't). Vary your sentence length. Be specific and "
+    "warm, never robotic or corporate. "
+    "HARD RULES: Never use an em-dash or a double-hyphen '--'. If you'd normally join two thoughts "
+    "with a dash, use a comma, a full stop, or the words 'and'/'but'/'so' instead. Don't start with "
+    "filler like 'Great question' or 'It's important to note'. Don't restate the swimmer's data back "
+    "to them. No corporate buzzwords. Just talk to them like a person who cares about their swimming."
+)
+
 TONE_GUIDANCE = {
     'encouraging': (
         "TONE: Warm and encouraging. Lead with what's going well, frame concerns gently as "
         "opportunities, and never be harsh or discouraging. Still be honest, but choose kind, "
-        "motivating wording -- this reader may be young or easily disheartened."
+        "motivating wording. This reader may be young or easily disheartened."
     ),
     'balanced': (
-        "TONE: Supportive but honest -- a good club coach. Acknowledge positives, name real "
+        "TONE: Supportive but honest, like a good club coach. Acknowledge positives, name real "
         "concerns plainly without being harsh, and keep it constructive."
     ),
     'direct': (
@@ -27,7 +39,31 @@ TONE_GUIDANCE = {
 
 
 def _tone_line(tone):
-    return TONE_GUIDANCE.get((tone or 'balanced').lower(), TONE_GUIDANCE['balanced'])
+    return f"{TONE_GUIDANCE.get((tone or 'balanced').lower(), TONE_GUIDANCE['balanced'])}\n{HUMAN_VOICE}"
+
+
+# Belt-and-braces cleanup: even with the prompt rules above, models sometimes
+# slip in an em-dash. Strip them out of anything swimmer-facing so the copy
+# never reads as AI-generated. Recurses through the dict/list tool output.
+import re as _re
+
+_DASH_RE = _re.compile(r'\s*[—–]\s*|\s+--\s+')
+
+
+def _humanize(value):
+    if isinstance(value, str):
+        # Replace dash-joins with a comma+space, then tidy any doubled spaces
+        # or stray leading punctuation the swap can leave behind.
+        out = _DASH_RE.sub(', ', value)
+        out = _re.sub(r'\s{2,}', ' ', out).replace(' ,', ',').strip()
+        # A dash right before a capital usually meant a new sentence; if we made
+        # a ", X" where X is capitalised mid-string, a full stop reads better.
+        return out
+    if isinstance(value, list):
+        return [_humanize(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _humanize(v) for k, v in value.items()}
+    return value
 
 
 # Solo Pro intensity knob -- shifts how demanding the generated program is
@@ -66,7 +102,7 @@ MAX_DIMENSION = 1568
 # (models.py) and sessionSets in log.html. 'modifier' is optional and only
 # meaningful alongside 'stroke' -- older manually-entered blocks won't have it.
 STROKE_CODES = {'FR', 'BK', 'BR', 'FL', 'IM'}
-MODIFIERS = {'', 'Kick', 'Pull', 'Drill'}
+MODIFIERS = {'', 'Kick', 'Pull', 'Drill', 'Snorkel'}
 SECTIONS = ['Warm up', 'Pre set', 'Main set', 'Sub set', 'Cool down']
 POOLS = {'25m', '50m'}
 
@@ -126,10 +162,25 @@ TOOL_SCHEMA = {
                         "rest": {
                             "type": "string",
                             "description": (
-                                "Rest or send-off interval, normalized to 'M:SS' or '0:SS' regardless of how it was "
-                                "written on the board. Coaches write this many different ways -- convert them all: "
-                                "'with 10' or '10 sec rest' -> '0:10'; 'on 45' or '@45' (send-off interval) -> '0:45'; "
-                                "'on 1.00' or 'on 1:00' -> '1:00'. Empty string only if truly no rest/interval is given."
+                                "The rest or interval TIME, normalized to 'M:SS' or '0:SS' regardless of how it was "
+                                "written on the board -- just the number, its meaning goes in 'rest_type'. "
+                                "'with 10' or '10 sec rest' -> '0:10'; 'on 45' or '@45' -> '0:45'; 'on 1.00' or "
+                                "'on 1:00' -> '1:00'. Empty string only if truly no rest/interval is given."
+                            ),
+                        },
+                        "rest_type": {
+                            "type": "string",
+                            "enum": ["interval", "rest"],
+                            "description": (
+                                "What the 'rest' number actually means -- these are NOT the same thing. "
+                                "'interval' = a send-off/cycle time: the swimmer leaves again every X, e.g. 'on 2:10', "
+                                "'on a 1:30 send-off', '@1:00' -- the number is the total cycle time from one start to "
+                                "the next, not literal rest. This is how nearly all repeat sets (8x100, 5x200, etc) are "
+                                "written, so default to 'interval' whenever reps > 1 and the board doesn't clearly say "
+                                "otherwise. 'rest' = an explicit gap/recovery duration between reps or blocks, e.g. "
+                                "'with 20 seconds rest', 'rest 30', '2 min rest before the next set' -- only use this "
+                                "when the board is explicitly describing a recovery pause, not a cycle time. For a "
+                                "single continuous swim (reps=1) followed by a break before the next block, use 'rest'."
                             ),
                         },
                         "note": {
@@ -159,8 +210,12 @@ PROMPT = (
     "with every distinct rep group you can identify. If the photo has no readable swim "
     "set, call the tool with an empty blocks array.\n\n"
     "Watch for these common patterns and don't drop them:\n"
-    "- Rest/send-off shorthand: 'with 10', 'on 45', '@45', 'on 1.00' are all rest/interval "
-    "values, not part of the distance or stroke -- always fill in the 'rest' field for them.\n"
+    "- Rest/send-off shorthand: 'with 10', 'on 45', '@45', 'on 1.00' all give a time -- always fill "
+    "in the 'rest' field with that time, AND set 'rest_type' correctly. 'on 45', '@45', 'on 1:00' are "
+    "send-off/interval times (rest_type='interval') -- the swimmer leaves again every X, that's NOT the "
+    "same as how long they rest. 'with 10', '10 sec rest' are an explicit rest duration "
+    "(rest_type='rest'). When in doubt for a repeat set (reps > 1), default to 'interval' -- that's how "
+    "swim sets are almost always written.\n"
     "- Stroke + modifier combos like 'Butterfly kick', 'Fly K', 'Free Pull', 'IM Kick': the primary "
     "stroke (FR/BK/BR/FL/IM) goes in 'stroke' and the Kick/Pull/Drill part goes in the separate "
     "'modifier' field. 'Butterfly kick' is stroke=FL, modifier=Kick -- never collapse it down to a "
@@ -191,10 +246,14 @@ def _clamp_block(raw):
     section = raw.get('section') if raw.get('section') in SECTIONS else 'Main set'
     rest = str(raw.get('rest') or '').strip()
     note = str(raw.get('note') or '').strip()
+    # 'interval' = send-off/cycle time ("on 2:10" -- leave again every 2:10);
+    # 'rest' = an explicit recovery gap. Most repeat sets (reps > 1) are written
+    # as an interval/send-off, so that's the sensible default when unspecified.
+    rest_type = raw.get('rest_type') if raw.get('rest_type') in ('interval', 'rest') else ('interval' if reps > 1 else 'rest')
 
     return {
         'section': section, 'reps': reps, 'dist': dist, 'stroke': stroke,
-        'modifier': modifier, 'rest': rest, 'note': note,
+        'modifier': modifier, 'rest': rest, 'rest_type': rest_type, 'note': note,
     }
 
 
@@ -268,6 +327,78 @@ def extract_set_from_image(image_bytes, api_key, model):
     return {'ok': True, 'blocks': blocks, 'pool': pool, 'session_type': session_type}
 
 
+TRANSCRIPT_PROMPT = (
+    "This is a voice-dictated transcript of a swimmer describing the workout they just did, "
+    "e.g. \"100 free warmup then 100 back on 2:10 rest with pads holding 1:30\". Read it carefully "
+    "and call the log_swim_set tool with every distinct rep group you can identify. If the "
+    "transcript describes no readable swim set, call the tool with an empty blocks array.\n\n"
+    "Watch for these common spoken patterns and don't drop them:\n"
+    "- CRITICAL: 'on' vs 'rest'/'resting' are NOT the same thing, even when they appear right next to "
+    "each other. 'on 2:10', 'on a 2:10 send-off', '@2:10' mean the swimmer leaves again every 2:10 -- "
+    "that's an interval/cycle time (rest_type='interval'), it does NOT mean they rest for 2:10. "
+    "'with 20 seconds rest', 'resting 30', 'rest 30 seconds' describe an actual recovery gap "
+    "(rest_type='rest'). A phrase like 'on 2:10 rest' is still describing the interval (rest_type="
+    "'interval') -- the word 'rest' there is just casual speech for 'send-off', not a separate "
+    "rest duration. Put the time itself in 'rest' either way; 'rest_type' records which kind it is.\n"
+    "- A held/target time spoken as part of a rep, e.g. 'holding 1:30' or 'trying to hold 1:20', is "
+    "a pace goal for that rep -- put it in 'note' (e.g. note='holding 1:30'), not in 'rest'.\n"
+    "- Equipment mentioned by name -- paddles, pads, fins, snorkel, pull buoy -- maps to the "
+    "'modifier' field where it fits (Pull for paddles/pull buoy, Kick for fins used on a kick set, "
+    "Snorkel for a snorkel) or otherwise into 'note' if it doesn't cleanly become a modifier (e.g. "
+    "'with pads' on a swim set -> note='with pads').\n"
+    "- Casual sequencing words like 'then', 'after that', 'followed by' just separate blocks in order "
+    "-- they aren't part of any field.\n"
+    "- Stroke + modifier combos like 'butterfly kick', 'free pull', 'backstroke drill': the primary "
+    "stroke (FR/BK/BR/FL/IM) goes in 'stroke' and the Kick/Pull/Drill/Snorkel part goes in the "
+    "separate 'modifier' field.\n"
+    "- Don't hallucinate IM: only set stroke=IM when the swimmer actually says IM/medley or describes "
+    "swimming fly-back-breast-free in that order.\n"
+    "- If the swimmer doesn't say a section (warmup/main set/cooldown), infer it from context -- 'warm "
+    "up' or 'warmup' words mean section='Warm up', 'cool down' means section='Cool down', otherwise "
+    "default to 'Main set'."
+)
+
+
+def extract_set_from_transcript(transcript, api_key, model):
+    """Call Claude with forced tool-use to turn a dictated workout transcript into
+    structured swim set blocks. Returns {'ok': True, 'blocks', 'pool', 'session_type'}
+    on success or {'ok': False, 'error'} on any failure -- never raises."""
+    text = (transcript or '').strip()
+    if not text:
+        return {'ok': False, 'error': "Didn't catch anything — try dictating again."}
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=2048,
+            tools=[TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "log_swim_set"},
+            messages=[{
+                "role": "user",
+                "content": [{"type": "text", "text": f'{TRANSCRIPT_PROMPT}\n\nTranscript: "{text}"'}],
+            }],
+        )
+    except Exception:
+        logger.exception('extract_set_from_transcript: API call failed')
+        return {'ok': False, 'error': "Couldn't parse that — try again or enter it manually."}
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use:
+        return {'ok': False, 'error': "Couldn't parse that — try again or enter it manually."}
+
+    data = tool_use.input or {}
+    blocks = [b for b in (_clamp_block(r) for r in data.get('blocks', [])) if b is not None]
+
+    if not blocks:
+        return {'ok': False, 'error': "Couldn't find a set in that — try describing it differently."}
+
+    pool = data.get('pool') if data.get('pool') in POOLS else '25m'
+    session_type = (data.get('session_type') or 'Training').strip() or 'Training'
+
+    return {'ok': True, 'blocks': blocks, 'pool': pool, 'session_type': session_type}
+
+
 # ============================================================
 # SOLO-TIER AI COACHING: onboarding -> program, and daily check-ins
 # ============================================================
@@ -280,7 +411,17 @@ SWIM_BLOCK_ITEM_SCHEMA = {
         "dist": {"type": "integer", "description": "Distance per rep in metres (multiples of 25)."},
         "stroke": {"type": "string", "enum": sorted(STROKE_CODES), "description": "Primary stroke code."},
         "modifier": {"type": "string", "enum": sorted(MODIFIERS), "description": "Kick/Pull/Drill modifier, or empty."},
-        "rest": {"type": "string", "description": "Rest or send-off as 'M:SS' / '0:SS'. Empty if none."},
+        "rest": {"type": "string", "description": "The rest or interval TIME as 'M:SS' / '0:SS'. Empty if none."},
+        "rest_type": {
+            "type": "string",
+            "enum": ["interval", "rest"],
+            "description": (
+                "What 'rest' means. 'interval' = a send-off/cycle time -- the swimmer leaves again every "
+                "X (e.g. 8x100 on 1:30) -- use this for basically every repeat set (reps > 1), which is "
+                "how real swim sets are almost always written. 'rest' = an explicit recovery gap between "
+                "blocks, e.g. after a single continuous warm-up swim before the main set starts."
+            ),
+        },
         "note": {"type": "string", "description": "Short cue for this block, e.g. 'descend 1-4', 'build to race pace'. Empty if none."},
     },
     "required": ["section", "reps", "dist", "stroke"],
@@ -330,48 +471,151 @@ PROGRAM_TOOL_SCHEMA = {
                 "type": "array",
                 "items": {"type": "string"},
                 "description": (
-                    "Exactly 3 short, punchy coaching cues (each max ~15 words), specific to THIS swimmer's "
-                    "age/level/goal. No generic filler, no full sentences padded with fluff."
+                    "Exactly 4 short, punchy coaching cues (each max ~18 words), specific to THIS swimmer's "
+                    "age/level/goal/swimmer-type. Make them feel like a real coach who knows them: one on technique, "
+                    "one on how to race/pace, one on the mental side or consistency, one on what to prioritise next. "
+                    "No generic filler, no full sentences padded with fluff, and never use an em-dash."
                 ),
             },
+            "nutrition": {
+                "type": "object",
+                "description": "Personalized nutrition guidance built from the swimmer's eating habits, NOT a generated meal plan.",
+                "properties": {
+                    "focus_note": {
+                        "type": "string",
+                        "description": "ONE short sentence (max ~20 words) on their single biggest nutrition lever given their eating habits and training load.",
+                    },
+                    "tip": {
+                        "type": "string",
+                        "description": "ONE short, concrete, actionable tip (max ~20 words) specific to their eating habits answer.",
+                    },
+                    "recommended_meal_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "3-5 meal IDs picked ONLY from the provided meal catalog below (copy the id exactly, "
+                            "never invent one). Favor pre/post-training meals on their training days; if they said "
+                            "they struggle to eat enough, favor higher-calorie options; if they skip meals often, "
+                            "favor faster/simpler ones."
+                        ),
+                    },
+                    "recommended_supplement_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "0-3 supplement IDs picked ONLY from the provided supplement catalog below (copy the id "
+                            "exactly, never invent one). Only suggest ones that genuinely fit this swimmer. Prefer the "
+                            "strongest-evidence options (creatine has the best research for swimmers). Fine to return "
+                            "an empty list if food already covers their needs, don't push supplements for the sake of it."
+                        ),
+                    },
+                },
+                "required": ["focus_note", "tip", "recommended_meal_ids"],
+            },
+            "dryland": {
+                "type": "object",
+                "description": "Which existing dryland library programs fit this swimmer, NOT newly written exercises.",
+                "properties": {
+                    "focus_note": {
+                        "type": "string",
+                        "description": "ONE short sentence (max ~20 words) on what their dryland work should prioritise this block (e.g. shoulder stability for a sprinter, hip mobility for breaststroke).",
+                    },
+                    "recommended_program_ids": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": (
+                            "1-3 program IDs picked ONLY from the provided dryland catalog below (copy the id "
+                            "exactly, never invent one). Respect any stated limitations/injuries -- do not "
+                            "recommend a program that would aggravate them."
+                        ),
+                    },
+                    "note": {
+                        "type": "string",
+                        "description": "ONE short line (max ~15 words) on how these fit around their swim training this week.",
+                    },
+                },
+                "required": ["focus_note", "recommended_program_ids", "note"],
+            },
         },
-        "required": ["overview", "days", "insights"],
+        "required": ["overview", "days", "insights", "nutrition", "dryland"],
     },
 }
 
 
-def generate_training_program(profile, api_key, model):
+EATING_HABITS_LABELS = {
+    'undereating': "Struggles to eat enough, especially around training",
+    'balanced': "Eats a pretty balanced diet already",
+    'skip_meals': "Often skips meals / eats on the run",
+    'structured': "Follows a fairly structured diet already",
+}
+
+COACHING_SITUATION_LABELS = {
+    'none': "Not currently coached by anyone else",
+    'club_want_extra': "Club-coached, wants extra edge on top of that",
+    'club_want_structure': "Coached but wants structure for rest/extra days",
+    'self_coached': "Fully self-coached, no other coach involved",
+}
+
+
+def generate_training_program(profile, meal_catalog, dryland_catalog, supplement_catalog, api_key, model):
     """Call Claude to turn a swimmer's onboarding answers into a structured
-    week-calendar program (7 day boxes with real swim blocks). `profile` is an
-    AthleteProfile instance. Returns {'ok': True, 'program': {...}} or
-    {'ok': False, 'error': '...'}."""
+    week-calendar program (7 day boxes with real swim blocks) PLUS matched
+    nutrition, supplement and dryland recommendations. `profile` is an
+    AthleteProfile instance. `meal_catalog`/`dryland_catalog`/`supplement_catalog`
+    are lists of {'id', 'name'/'title', 'category'} the model must pick real IDs
+    from -- it never invents new meals, supplements or dryland programs, it only
+    curates from what already exists (see routes_solo.onboarding for how the
+    catalogs are built and how the returned IDs get validated). Returns
+    {'ok': True, 'program': {...}} or {'ok': False, 'error': '...'}."""
+    meal_lines = "\n".join(
+        f"- id={m['id']} | {m['name']} | {m['category']}" for m in meal_catalog
+    ) or "No meals available."
+    dryland_lines = "\n".join(
+        f"- id={p['id']} | {p['title']} | {p['category']}" for p in dryland_catalog
+    ) or "No dryland programs available."
+    supplement_lines = "\n".join(
+        f"- id={s['id']} | {s['name']} | {s['category']} | evidence: {s.get('evidence', 'n/a')}"
+        for s in supplement_catalog
+    ) or "No supplements available."
+
     prompt = (
-        "You are an experienced swim coach building a personalized weekly training calendar. "
-        "Here is what the swimmer told you about themselves:\n\n"
+        "You are an experienced swim coach building a personalized weekly training calendar, plus "
+        "matching nutrition and dryland guidance. Here is what the swimmer told you about themselves:\n\n"
         f"- Level: {profile.level or 'not specified'}\n"
         f"- Age: {profile.age or 'not specified'}\n"
         f"- Can train {profile.training_days_per_week or 'an unspecified number of'} days per week\n"
         f"- Self-rated fitness ability: {profile.fitness_ability or 'not specified'}\n"
         f"- Primary/favourite stroke: {profile.primary_stroke or 'not specified'}\n"
-        f"- Main goal: {profile.main_goal or 'not specified'}\n\n"
+        f"- Swimmer type: {profile.swimmer_type or 'not specified'}\n"
+        f"- Main goal: {profile.main_goal or 'not specified'}\n"
+        f"- Current coaching situation: {COACHING_SITUATION_LABELS.get(profile.coaching_situation, 'not specified')}"
+        + (f" -- what they work on with that coach: \"{profile.coaching_focus}\"" if profile.coaching_focus else "") + "\n"
+        f"- Eating habits: {EATING_HABITS_LABELS.get(profile.eating_habits, 'not specified')}\n"
+        + (f"- Injuries/limitations to respect: \"{profile.limitations}\"\n" if profile.limitations else "")
+        + "\n"
         f"{_intensity_line(getattr(profile, 'intensity', 'normal'))}\n"
         f"{_tone_line(getattr(profile, 'coaching_tone', 'balanced'))} Apply this tone to the "
-        "overview, coach notes and insights.\n\n"
+        "overview, coach notes, insights and nutrition/dryland notes.\n\n"
         "Call the create_training_program tool with a full 7-day week (Monday-Sunday). "
         "The number of non-rest days MUST exactly equal the days per week they said they can train. "
         "Give each training day a complete written session -- warm up, main set, cool down -- as "
         "concrete blocks (reps x distance, stroke, rest interval, short cue), with total volume and "
         "intensity pitched honestly at their level and fitness. Beginners get short sessions "
         "(under ~1500m) with generous rest; competitive swimmers get real volume and race-pace work. "
-        "Non-training days are rest days.\n\n"
+        "Non-training days are rest days. Let swimmer type shape the emphasis (e.g. a sprinter gets more "
+        "speed/power work, a distance swimmer more aerobic volume, technique-focused gets more drill work).\n\n"
+        f"Available meals to choose from for the nutrition section (pick real IDs only):\n{meal_lines}\n\n"
+        f"Available supplements to choose from (pick real IDs only, or none):\n{supplement_lines}\n\n"
+        f"Available dryland programs to choose from for the dryland section (pick real IDs only):\n{dryland_lines}\n\n"
         "STYLE: The swim blocks carry the detail -- keep all the text (overview, focus, coach notes, "
-        "insights) short and punchy. Quality over quantity: no filler, no repeating their answers back."
+        "insights, nutrition/dryland notes) short and punchy. Quality over quantity: no filler, no "
+        "repeating their answers back."
     )
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
-        # 7 full days of structured blocks plus insights is a long response --
-        # a small budget here truncates the tool JSON and the whole call fails.
+        # 7 full days of structured blocks plus insights/nutrition/dryland is a long
+        # response -- a small budget here truncates the tool JSON and the whole call fails.
         response = client.messages.create(
             model=model,
             max_tokens=8192,
@@ -399,7 +643,33 @@ def generate_training_program(profile, api_key, model):
     if not program.get('days'):
         logger.error('generate_training_program: program came back with no days')
         return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
-    return {'ok': True, 'program': program}
+
+    # The model is instructed to only pick real IDs from the catalogs we gave it,
+    # but never trust that blindly -- drop anything hallucinated before it can
+    # turn into a dead link on the program page.
+    valid_meal_ids = {m['id'] for m in meal_catalog}
+    valid_dryland_ids = {p['id'] for p in dryland_catalog}
+    valid_supplement_ids = {s['id'] for s in supplement_catalog}
+
+    nutrition = program.pop('nutrition', None) or {}
+    nutrition['recommended_meal_ids'] = [
+        mid for mid in nutrition.get('recommended_meal_ids', []) if mid in valid_meal_ids
+    ]
+    nutrition['recommended_supplement_ids'] = [
+        sid for sid in nutrition.get('recommended_supplement_ids', []) if sid in valid_supplement_ids
+    ]
+
+    dryland = program.pop('dryland', None) or {}
+    dryland['recommended_program_ids'] = [
+        pid for pid in dryland.get('recommended_program_ids', []) if pid in valid_dryland_ids
+    ]
+
+    return {
+        'ok': True,
+        'program': _humanize(program),
+        'nutrition': _humanize(nutrition),
+        'dryland': _humanize(dryland),
+    }
 
 
 INSIGHT_TOOL_SCHEMA = {
@@ -421,22 +691,39 @@ INSIGHT_TOOL_SCHEMA = {
 }
 
 
-def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, api_key, model, tone='encouraging'):
+def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, api_key, model, tone='encouraging',
+                              fatigue_rating=None, sleep_quality=None):
     """Call Claude to respond to a single check-in with a short personalized insight.
-    `recent_checkins` is a list of {'date', 'feeling_rating', 'notes'} dicts, most recent
-    last, excluding the one just submitted. `tone` defaults to encouraging since this
-    talks straight to the swimmer. Returns a plain string insight, or a friendly
+    `recent_checkins` is a list of {'date', 'feeling_rating', 'fatigue_rating', 'sleep_quality',
+    'notes'} dicts, most recent last, excluding the one just submitted. `fatigue_rating`/
+    `sleep_quality` are today's optional 1-5 taps (None if skipped) -- early signals of a
+    plateau that often show up before the stopwatch does. `tone` defaults to encouraging
+    since this talks straight to the swimmer. Returns a plain string insight, or a friendly
     fallback string on any failure -- never raises."""
-    history_lines = "\n".join(
-        f"- {c['date']}: felt {c['feeling_rating']}/5 — \"{c['notes']}\"" for c in recent_checkins
-    ) or "No previous check-ins."
+    def _fmt(c):
+        extra = []
+        if c.get('fatigue_rating'):
+            extra.append(f"fatigue {c['fatigue_rating']}/5")
+        if c.get('sleep_quality'):
+            extra.append(f"sleep {c['sleep_quality']}/5")
+        extra_str = f" ({', '.join(extra)})" if extra else ""
+        return f"- {c['date']}: felt {c['feeling_rating']}/5{extra_str} — \"{c['notes']}\""
+
+    history_lines = "\n".join(_fmt(c) for c in recent_checkins) or "No previous check-ins."
+
+    today_extra = []
+    if fatigue_rating:
+        today_extra.append(f"fatigue {fatigue_rating}/5")
+    if sleep_quality:
+        today_extra.append(f"sleep {sleep_quality}/5")
+    today_extra_str = f" ({', '.join(today_extra)})" if today_extra else ""
 
     prompt = (
         "You are a swim coach reviewing a swimmer's daily training check-in.\n\n"
         f"{_tone_line(tone)}\n\n"
         f"Swimmer level: {profile.level or 'not specified'}, goal: {profile.main_goal or 'not specified'}.\n\n"
         f"Recent check-in history:\n{history_lines}\n\n"
-        f"Today's check-in: felt {feeling_rating}/5 — \"{notes}\"\n\n"
+        f"Today's check-in: felt {feeling_rating}/5{today_extra_str} — \"{notes}\"\n\n"
         "Call the give_checkin_insight tool with your response."
     )
 
@@ -451,11 +738,78 @@ def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, ap
         )
         tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
         if tool_use and tool_use.input and tool_use.input.get('insight'):
-            return tool_use.input['insight']
+            return _humanize(tool_use.input['insight'])
     except Exception:
         pass
 
-    return "Logged — keep it up. Come back tomorrow and check in again to start building a trend I can learn from."
+    return "Logged, keep it up. Come back tomorrow and check in again so I can start building a trend to learn from."
+
+
+PROGRESS_INSIGHT_TOOL_SCHEMA = {
+    "name": "give_progress_insight",
+    "description": "Explain a swimmer's progression trend from their computed training digest.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "summary": {
+                "type": "string",
+                "description": (
+                    "1-2 tight sentences (max ~30 words) on the single most important trend in the data -- "
+                    "improving, plateaued, or slipping -- and by roughly how much. Talk directly to the swimmer as 'you'."
+                ),
+            },
+            "likely_cause": {
+                "type": "string",
+                "description": (
+                    "ONE sentence (max ~25 words) on the most likely driver visible in the data (e.g. training "
+                    "load dropped, fatigue/sleep trending down, or simply early in a new block). Don't invent a "
+                    "cause the data doesn't support -- say the data doesn't show a clear cause if it doesn't."
+                ),
+            },
+            "suggested_focus": {
+                "type": "string",
+                "description": "ONE concrete, actionable suggestion (max ~20 words) for what to focus on next.",
+            },
+        },
+        "required": ["summary", "likely_cause", "suggested_focus"],
+    },
+}
+
+
+def generate_progress_insight(digest, api_key, model, tone='encouraging'):
+    """Call Claude to explain a single swimmer's progression digest (see
+    routes.personal_bests for how it's built -- rolling-window time trends,
+    training load, consistency, PB recency, check-in correlation). Talks
+    directly to the swimmer, so tone defaults to encouraging same as
+    generate_checkin_insight. Returns {'ok': True, 'insight': {...}} or
+    {'ok': False, 'error': '...'} -- never raises."""
+    prompt = (
+        "You are a swim coach explaining a swimmer's own progression data back to them.\n\n"
+        f"{_tone_line(tone)}\n\n"
+        f"Their training digest:\n{digest}\n\n"
+        "Call the give_progress_insight tool. Be specific and honest -- cite the actual numbers/trends "
+        "above, don't invent anything the data doesn't support. If the data is too thin for a real "
+        "trend, say so plainly rather than manufacturing one."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            tools=[PROGRESS_INSIGHT_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "give_progress_insight"},
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception:
+        logger.exception('generate_progress_insight: API call failed')
+        return {'ok': False, 'error': "Couldn't generate an analysis right now — try again in a moment."}
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input:
+        return {'ok': False, 'error': "Couldn't generate an analysis right now — try again in a moment."}
+
+    return {'ok': True, 'insight': _humanize(tool_use.input)}
 
 
 # ============================================================
@@ -554,7 +908,7 @@ def generate_squad_insights(squad_name, swimmers_digest, api_key, model, tone='b
     if not tool_use or not tool_use.input:
         return {'ok': False, 'error': "Couldn't generate insights right now — try again in a moment."}
 
-    return {'ok': True, 'insights': tool_use.input}
+    return {'ok': True, 'insights': _humanize(tool_use.input)}
 
 
 # ============================================================

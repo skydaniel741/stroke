@@ -36,6 +36,23 @@ NEW_COLUMNS = {
         ("intensity", "VARCHAR(20) DEFAULT 'normal'"),
         ("regen_week_start", "DATE"),
         ("regen_count", "INTEGER DEFAULT 0"),
+        ("swimmer_type", "VARCHAR(30)"),
+        ("coaching_situation", "VARCHAR(40)"),
+        ("coaching_focus", "TEXT"),
+        ("eating_habits", "VARCHAR(30)"),
+        ("limitations", "TEXT"),
+        ("nutrition_json", "TEXT"),
+        ("dryland_json", "TEXT"),
+        ("progress_insight", "TEXT"),
+        ("progress_insight_at", "DATETIME"),
+    ],
+    'saved_set': [
+        ("difficulty", "VARCHAR(20) DEFAULT 'Medium'"),
+        ("distance_focus", "VARCHAR(20) DEFAULT 'All'"),
+    ],
+    'check_in': [
+        ("fatigue_rating", "INTEGER"),
+        ("sleep_quality", "INTEGER"),
     ],
 }
 

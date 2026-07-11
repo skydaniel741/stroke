@@ -27,7 +27,7 @@
 
   <div class="sets-card-grid">
     {% for p in programs %}
-    <a href="/solo/dryland/{{ p.id }}" class="set-card" style="--cat-color:#8f8ff0">
+    <a href="/solo/dryland/{{ p.id }}" class="set-card" style="--cat-color:#6f7fe0">
       <span class="set-card-cat">{{ p.category }}</span>
       <p class="set-card-name">{{ p.title }}</p>
       <p class="set-card-meta">{{ p.get_blocks()|length }} block{{ 's' if p.get_blocks()|length != 1 else '' }}</p>

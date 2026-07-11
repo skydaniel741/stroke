@@ -11,7 +11,7 @@
 </head>
 <body>
 
-{% set is_solo = current_user.plan == 'solo' or current_user.is_admin %}
+{% set is_solo = current_user.is_solo or current_user.is_admin %}
 
 <div class="app-container">
 
@@ -53,15 +53,9 @@
     </a>
     {% endif %}
 
-    {% if show_rest_nudge %}
-    <div class="rest-nudge-banner">
-      <span>🌊 {{ streak }} days in a row — nice work. Consider a rest day so the training actually sinks in.</span>
-    </div>
-    {% endif %}
-
     <!-- STATS BLOCKS -->
     <div class="stats-row">
-      <div class="stat">
+      <div class="stat stat--blue">
         <div class="stat-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
         </div>
@@ -77,7 +71,7 @@
         <div class="stat-val"><span data-count="{{ volume_this_week }}">0</span><span class="unit-label">m</span></div>
         <div class="stat-sub">total this week</div>
       </div>
-      <div class="stat">
+      <div class="stat stat--peach">
         <div class="stat-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
         </div>
@@ -94,6 +88,44 @@
         <div class="stat-sub">{{ 'in a row' if streak else 'log your first swim' }}</div>
       </div>
     </div>
+
+    {% if todays_program %}
+    {% set stroke_names = {'FR':'Free','BK':'Back','BR':'Breast','FL':'Fly','IM':'IM'} %}
+    <div class="today-set-card">
+      <div class="today-set-head">
+        <div>
+          <p class="today-set-eyebrow">Today's session · {{ todays_program_weekday }}</p>
+          <h2 class="today-set-focus">{{ todays_program.focus }}</h2>
+        </div>
+        {% if not todays_program.rest and todays_program.total %}
+        <span class="today-set-total">{{ '{:,}'.format(todays_program.total) }}m</span>
+        {% endif %}
+      </div>
+      {% if todays_program.rest %}
+      <p class="today-set-rest">{{ todays_program.coach_note or 'Rest day. Recovery is where the work sinks in.' }}</p>
+      {% else %}
+      <div class="today-set-blocks">
+        {% for b in todays_program.blocks %}
+        <div class="today-set-block {{ 'main' if b.section == 'Main set' }}">
+          <span class="today-set-block-txt">{{ b.reps }}×{{ b.dist }} {{ stroke_names.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.note %}<span class="today-set-block-note">{{ b.note }}</span>{% endif %}</span>
+          {% if b.rest %}<span class="today-set-block-rest">@ {{ b.rest }}</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% if todays_program.coach_note %}<p class="today-set-note">{{ todays_program.coach_note }}</p>{% endif %}
+      {% endif %}
+      <div class="today-set-actions">
+        <a href="/solo/program" class="today-set-link">Full week →</a>
+        <a href="/solo/analytics" class="today-set-link">Analytics →</a>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if show_rest_nudge %}
+    <div class="rest-nudge-banner">
+      <span>🌊 {{ streak }} days in a row — nice work. Consider a rest day so the training actually sinks in.</span>
+    </div>
+    {% endif %}
 
     <!-- CHART + QUICK LOG -->
     <div class="grid-main">
@@ -136,7 +168,12 @@
         {% else %}
         <button class="log-btn locked" disabled> Scan whiteboard <span class="log-btn-badge">Solo</span></button>
         {% endif %}
+        {% if is_solo %}
+        <button class="log-btn" type="button" id="voiceLogBtn" onclick="toggleVoiceLog()"> Voice log <span class="log-btn-badge">Solo</span></button>
+        <p class="scan-status" id="voiceStatus"></p>
+        {% else %}
         <button class="log-btn locked" disabled> Voice log <span class="log-btn-badge">Solo</span></button>
+        {% endif %}
         <a href="/sets" class="log-btn"> Browse set library <span class="log-btn-badge">Free</span></a>
         {% if not is_solo %}
         <div class="upgrade-banner">
@@ -251,7 +288,7 @@
           <span class="session-row-main">
             <strong>Today{% if e.slot %} · {{ e.slot }}{% endif %}{% if e.event_time %} {{ e.event_time }}{% endif %}</strong> — {{ e.title }}
             {% if e.saved_set %}
-              <span style="color:#8f8ff0;font-weight:700;font-size:12px"> · {{ e.saved_set.name }} ({{ e.saved_set.total_distance() }}m)</span>
+              <span style="color:#6f7fe0;font-weight:700;font-size:12px"> · {{ e.saved_set.name }} ({{ e.saved_set.total_distance() }}m)</span>
             {% endif %}
           </span>
           <span class="session-row-tag">{{ squad_names.get(e.squad_id, 'Squad') }}</span>
@@ -264,7 +301,7 @@
       {% for e in upcoming_squad_sessions %}
       <div class="session-row">
         <span class="session-row-main">{{ e.event_date.strftime('%a %d %b') }}{% if e.slot %} · {{ e.slot }}{% endif %} — {{ e.title }}
-          {% if e.saved_set %}<span style="color:#999;font-size:12px"> · {{ e.saved_set.total_distance() }}m</span>{% endif %}
+          {% if e.saved_set %}<span style="color:#9a96b0;font-size:12px"> · {{ e.saved_set.total_distance() }}m</span>{% endif %}
         </span>
         <span class="session-row-tag">{{ squad_names.get(e.squad_id, 'Squad') }}</span>
       </div>
@@ -353,24 +390,19 @@
       </a>
 
       <div class="drawer-section-divider"><span>Solo</span></div>
-      <a href="{{ ('/solo/program' if is_solo else '#') }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/program' else '' }}">
-        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"></path></svg></span>
-        AI Program
+      <a href="{{ ('/solo/program' if is_solo else '#') }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path in ('/solo/program', '/solo/onboarding', '/solo/dryland', '/solo/nutrition') or request.path.startswith('/solo/dryland/') else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span>
+        My AI plan
+        {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
+      </a>
+      <a href="{{ '/solo/analytics' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/analytics' else '' }}">
+        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path></svg></span>
+        Performance analytics
         {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
       </a>
       <a href="{{ '/solo/checkin' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/checkin' else '' }}">
         <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
         Daily check-in
-        {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
-      </a>
-      <a href="{{ '/solo/dryland' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/dryland' else '' }}">
-        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M4 6.5l1-3h14l1 3M4 17.5l1 3h14l1-3"></path></svg></span>
-        Dryland
-        {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
-      </a>
-      <a href="{{ '/solo/nutrition' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/nutrition' else '' }}">
-        <span class="drawer-icon-box"><svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg></span>
-        Nutrition
         {% if not is_solo %}<span class="drawer-soon-tag">Solo</span>{% endif %}
       </a>
       <a href="{{ '/solo/leaderboard' if is_solo else '#' }}" class="drawer-link {{ '' if is_solo else 'drawer-link--soon' }} {{ 'active' if request.path == '/solo/leaderboard' else '' }}">
@@ -517,6 +549,68 @@ function handleScanUpload(input){
     })
     .finally(() => { input.value = ''; });
 }
+
+// Voice log — dictate a workout out loud, AI turns it into structured blocks
+// for review on the log page (same "hand parsed blocks to the log flow" pattern
+// as the whiteboard scan above).
+(function () {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('voiceLogBtn');
+  if (!btn) return; // not solo, or logged out
+  if (!SR) { btn.disabled = true; btn.classList.add('locked'); return; }
+
+  let rec = null;
+  let transcript = '';
+
+  window.toggleVoiceLog = function () {
+    const status = document.getElementById('voiceStatus');
+    if (rec) { rec.stop(); return; }
+
+    transcript = '';
+    status.textContent = 'Listening… tap again when done';
+    status.className = 'scan-status';
+    btn.classList.add('voice-recording');
+
+    rec = new SR();
+    rec.lang = 'en-US';
+    rec.interimResults = true;
+    rec.continuous = true;
+
+    rec.onresult = function (ev) {
+      let txt = '';
+      for (let i = 0; i < ev.results.length; i++) txt += ev.results[i][0].transcript;
+      transcript = txt;
+    };
+    rec.onerror = function () { rec = null; btn.classList.remove('voice-recording'); };
+    rec.onend = function () {
+      rec = null;
+      btn.classList.remove('voice-recording');
+      if (!transcript.trim()) { status.textContent = "Didn't catch anything — try again."; status.classList.add('error'); return; }
+
+      status.textContent = 'Parsing your set…';
+      const body = new FormData();
+      body.append('transcript', transcript);
+
+      fetch('/solo/parse-transcript', { method: 'POST', body })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            sessionStorage.setItem('voiceSet', JSON.stringify(data));
+            window.location.href = '/log?fromvoice=1';
+          } else {
+            status.textContent = data.error || 'Could not parse that.';
+            status.classList.add('error');
+          }
+        })
+        .catch(() => {
+          status.textContent = 'Could not parse that — try again.';
+          status.classList.add('error');
+        });
+    };
+
+    try { rec.start(); } catch (e) { rec = null; btn.classList.remove('voice-recording'); }
+  };
+})();
 </script>
 
 </body>

@@ -28,7 +28,26 @@
     <div>
       <p class="sets-eyebrow">Set library</p>
       <h1 class="sets-h1">{{ category.label }}</h1>
-      <p class="sets-sub">{{ category.blurb }} — {{ sets|length }} set{{ 's' if sets|length != 1 else '' }} in this category.</p>
+      <p class="sets-sub">{{ category.blurb }} — {{ total_count }} set{{ 's' if total_count != 1 else '' }} in this category.</p>
+    </div>
+  </div>
+
+  <div class="sets-filter-row">
+    <div class="sets-filter-group">
+      <span class="sets-filter-label">Difficulty</span>
+      <a href="?distance={{ active_distance }}" class="sets-filter-chip{{ ' active' if not active_difficulty else '' }}">All</a>
+      {% for d in difficulties %}
+      <a href="?difficulty={{ d }}{{ '&distance=' + active_distance if active_distance else '' }}" class="sets-filter-chip{{ ' active' if active_difficulty == d else '' }}">{{ d }}</a>
+      {% endfor %}
+    </div>
+    <div class="sets-filter-group">
+      <span class="sets-filter-label">Swimmer type</span>
+      <a href="?difficulty={{ active_difficulty }}" class="sets-filter-chip{{ ' active' if not active_distance else '' }}">All</a>
+      {% for d in distances %}
+      {% if d != 'All' %}
+      <a href="?distance={{ d }}{{ '&difficulty=' + active_difficulty if active_difficulty else '' }}" class="sets-filter-chip{{ ' active' if active_distance == d else '' }}">{{ d }} distance</a>
+      {% endif %}
+      {% endfor %}
     </div>
   </div>
 
@@ -38,11 +57,15 @@
       <span class="set-card-cat">{{ category.label }}</span>
       <p class="set-card-name">{{ s.name }}</p>
       <p class="set-card-meta">{{ s.total_distance() }}m · {{ s.pool }} pool · {{ s.session_type }}</p>
+      <div class="set-card-badges">
+        <span class="set-card-badge diff-{{ (s.difficulty or 'Medium')|lower }}">{{ s.difficulty or 'Medium' }}</span>
+        {% if (s.distance_focus or 'All') != 'All' %}<span class="set-card-badge">{{ s.distance_focus }} distance</span>{% endif %}
+      </div>
       {% if s.description %}<p class="set-card-desc">{{ s.description }}</p>{% endif %}
       <span class="set-card-cta">Read set →</span>
     </a>
     {% else %}
-    <div class="sets-empty">No sets in this category yet.</div>
+    <div class="sets-empty">No sets match these filters yet.</div>
     {% endfor %}
   </div>
 </div>

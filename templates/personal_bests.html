@@ -11,31 +11,31 @@
 <style>
   .pb-wrap{max-width:920px;margin:0 auto;padding:36px 24px 90px;}
   .pb-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
-  .pb-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
-  .pb-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:auto;color:#111;text-decoration:none;}
+  .pb-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#2c2942;text-decoration:none;}
+  .pb-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:auto;color:#2c2942;text-decoration:none;}
   .pb-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:34px;margin:0 0 4px;}
-  .pb-sub{color:#666;font-size:14px;margin:0 0 28px;}
+  .pb-sub{color:#6a6683;font-size:14px;margin:0 0 28px;}
 
   .pb-filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;}
   .pb-filter-bar input, .pb-filter-bar select{
-    padding:10px 14px;border:2px solid #ccccff;background:#fcfcff;border-radius:10px;font-size:13px;font-weight:600;font-family:'Schibsted Grotesk',sans-serif;
+    padding:10px 14px;border:2px solid #c8d5f6;background:#f4f6fd;border-radius:10px;font-size:13px;font-weight:600;font-family:'Schibsted Grotesk',sans-serif;
   }
   .pb-filter-bar button{
-    padding:10px 18px;border:2.5px solid #111;background:#ccccff;border-radius:10px;font-size:13px;font-weight:800;text-transform:uppercase;cursor:pointer;
+    padding:10px 18px;border:1px solid #e4e8f4;background:#c8d5f6;border-radius:10px;font-size:13px;font-weight:800;text-transform:uppercase;cursor:pointer;
   }
 
   .pb-standard-diff{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;}
-  .pb-standard-diff.met{background:#e3f7e9;color:#1a7a3d;}
-  .pb-standard-diff.off{background:#f3f3ff;color:#4b52c4;}
+  .pb-standard-diff.met{background:#dff5ec;color:#1f7a5a;}
+  .pb-standard-diff.off{background:#e9eefc;color:#5474d4;}
 
-  .pb-tag{font-size:10px;font-weight:800;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:#111;color:#ccccff;margin-right:6px;}
-  .pb-tag.practice{background:#f3f3ff;color:#4b52c4;}
+  .pb-tag{font-size:10px;font-weight:800;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:#2c2942;color:#c8d5f6;margin-right:6px;}
+  .pb-tag.practice{background:#e9eefc;color:#5474d4;}
 
-  .pb-row-actions a{font-size:12px;font-weight:700;color:#4b52c4;text-decoration:none;margin-left:10px;}
+  .pb-row-actions a{font-size:12px;font-weight:700;color:#5474d4;text-decoration:none;margin-left:10px;}
 
   .pb-export-row{display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap;}
   .pb-export-row a, .pb-export-row label{
-    display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:2.5px solid #111;border-radius:10px;font-size:13px;font-weight:700;background:#fff;cursor:pointer;text-decoration:none;color:#111;
+    display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:1px solid #e4e8f4;border-radius:10px;font-size:13px;font-weight:700;background:#fff;cursor:pointer;text-decoration:none;color:#2c2942;
   }
 </style>
 </head>
@@ -50,6 +50,14 @@
 </nav>
 
 <div class="pb-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
   <h1 class="pb-h1">Personal bests</h1>
   <p class="pb-sub">Your fastest time in every event, with your full swim history below.</p>
 
@@ -93,9 +101,9 @@
       <span class="session-row-main">
         {{ t.event }}
         <span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;margin-left:8px;
-          {% if t.direction == 'improving' %}background:#e7f8ef;color:#0f8a4d;
-          {% elif t.direction == 'slipping' %}background:#feeef0;color:#d33a52;
-          {% else %}background:#f1f1f6;color:#666;{% endif %}">
+          {% if t.direction == 'improving' %}background:#dff5ec;color:#0f8a4d;
+          {% elif t.direction == 'slipping' %}background:#fbe4df;color:#d33a52;
+          {% else %}background:#eef2fc;color:#6a6683;{% endif %}">
           {% if t.direction == 'improving' %}▲ {{ t.change_pct }}% faster
           {% elif t.direction == 'slipping' %}▼ {{ t.change_pct }}% slower
           {% else %}— steady{% endif %}
@@ -107,6 +115,26 @@
     {% endfor %}
   </div>
   {% endif %}
+
+  <div class="panel" style="margin-bottom:28px">
+    <div class="panel-label">AI progression analysis</div>
+    {% set insight = progress_profile.get_progress_insight() if progress_profile else {} %}
+    {% if insight and insight.summary %}
+    <p class="panel-note" style="margin:0 0 10px"><b>{{ insight.summary }}</b></p>
+    {% if insight.likely_cause %}<p class="panel-note" style="margin:0 0 6px">{{ insight.likely_cause }}</p>{% endif %}
+    {% if insight.suggested_focus %}<p class="panel-note" style="margin:0 0 10px">→ {{ insight.suggested_focus }}</p>{% endif %}
+    {% else %}
+    <p class="panel-note" style="margin:0 0 10px">Get an AI read on whether you're trending up or down and why, built from your actual trend, training load, PB recency and check-in data — not a guess.</p>
+    {% endif %}
+    <form method="POST" action="/personal-bests/analyze">
+      <button type="submit" class="pb-filter-bar" style="padding:10px 18px;border:1px solid #e4e8f4;background:#c8d5f6;border-radius:10px;font-size:13px;font-weight:800;text-transform:uppercase;cursor:pointer;" {{ 'disabled' if analysis_wait_hours }}>
+        {{ 'Refresh analysis' if insight and insight.summary else 'Get AI analysis' }}
+      </button>
+      {% if analysis_wait_hours %}
+      <span style="font-size:12px;color:#9a96b0;margin-left:10px">Available again in ~{{ analysis_wait_hours }}h</span>
+      {% endif %}
+    </form>
+  </div>
 
   {% if prediction_rows %}
   <div class="panel" style="margin-bottom:28px">
@@ -145,7 +173,7 @@
         <span class="session-row-main">
           <span class="pb-tag {{ s.tag or 'practice' }}">{{ (s.tag or 'practice')|capitalize }}</span>
           {{ s.event }}
-          {% if s.get_splits() %}<span style="color:#999;font-size:11px"> · {{ s.get_splits()|length }} splits</span>{% endif %}
+          {% if s.get_splits() %}<span style="color:#9a96b0;font-size:11px"> · {{ s.get_splits()|length }} splits</span>{% endif %}
         </span>
         <span class="session-row-tag">{{ s.pool }}</span>
         <span class="session-row-time">{{ s.time }}</span>

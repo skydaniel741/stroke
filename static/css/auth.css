@@ -11,7 +11,7 @@
 
 .split-visual{
   position:relative;
-  background:linear-gradient(135deg,#111 0%,#1e1e2c 100%);
+  background:linear-gradient(135deg,#2c2942 0%,#1e1e2c 100%);
   overflow:hidden;
   display:flex;
   flex-direction:column;
@@ -37,14 +37,14 @@
   font-weight:800;
   letter-spacing:.14em;
   text-transform:uppercase;
-  color:#ccccff;
+  color:#c8d5f6;
   z-index:2;
 }
 
 .split-tag .line{
   width:40px;
   height:2px;
-  background:#ccccff;
+  background:#c8d5f6;
 }
 
 .split-content{
@@ -64,7 +64,7 @@
 .split-content p{
   font-size:15px;
   font-weight:500;
-  color:#ccc;
+  color:#d0cde0;
   line-height:1.7;
   max-width:420px;
 }
@@ -73,7 +73,7 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  background:#fcfcff;
+  background:#f4f6fd;
   padding:40px;
 }
 
@@ -97,10 +97,10 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  color:#555;
+  color:#595571;
 }
 
-.pw-toggle:hover{color:#6d6d8a}
+.pw-toggle:hover{color:#6a6683}
 
 .pw-toggle svg{width:20px;height:20px}
 
@@ -125,7 +125,7 @@
 .check-box{
   width:18px;
   height:18px;
-  border:2.5px solid #111;
+  border:1px solid #e4e8f4;
   border-radius:4px;
   background:#fff;
   display:flex;
@@ -142,13 +142,13 @@
   transition:opacity .1s;
 }
 
-.remember-check input:checked + .check-box{background:#ccccff}
+.remember-check input:checked + .check-box{background:#c8d5f6}
 .remember-check input:checked + .check-box svg{opacity:1}
 
 .remember-label{
   font-size:13px;
   font-weight:700;
-  color:#111;
+  color:#2c2942;
   text-transform:uppercase;
   letter-spacing:.04em;
 }
@@ -156,9 +156,9 @@
 .forgot-link{
   font-size:13px;
   font-weight:700;
-  color:#111;
+  color:#2c2942;
   text-decoration:underline;
-  text-decoration-color:#ccccff;
+  text-decoration-color:#c8d5f6;
 }
 
 /* ---------- SOCIAL SIGN-IN ---------- */
@@ -174,7 +174,7 @@
   content:'';
   flex:1;
   height:2px;
-  background:#eee;
+  background:#e9edf7;
 }
 
 .auth-divider span{
@@ -182,7 +182,7 @@
   font-weight:800;
   text-transform:uppercase;
   letter-spacing:.1em;
-  color:#aaa;
+  color:#a9a5bd;
 }
 
 .social-btn{
@@ -194,20 +194,20 @@
   padding:13px;
   margin-bottom:10px;
   background:#fff;
-  border:2.5px solid #111;
+  border:1px solid #e4e8f4;
   border-radius:12px;
   font-size:13px;
   font-weight:800;
   text-transform:uppercase;
   letter-spacing:.03em;
-  color:#111;
+  color:#2c2942;
   text-decoration:none;
   transition:transform .15s,box-shadow .15s;
 }
 
 .social-btn:hover{
-  transform:translate(-1px,-1px);
-  box-shadow:3px 3px 0 #ccccff;
+  transform:translateY(-3px);
+  box-shadow:0 10px 26px rgba(58,66,120,.10);
 }
 
 .auth-wrap--compact{

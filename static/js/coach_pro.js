@@ -808,7 +808,8 @@ function cpRenderRoster() {
 /* ================= TAB 3: SESSION BUILDER (real SavedSet + CoachAssignment) ================= */
 
 function cpBlockSummary(b) {
-  return `${b.reps}×${b.dist}m ${STROKE_LABELS[b.stroke] || b.stroke}${b.rest ? ' @ ' + b.rest : ''}`;
+  const restBit = b.rest ? (b.rest_type === 'rest' ? ' · rest ' + b.rest : ' on ' + b.rest) : '';
+  return `${b.reps}×${b.dist}m ${STROKE_LABELS[b.stroke] || b.stroke}${restBit}`;
 }
 
 function cpRenderBuilder() {
@@ -856,7 +857,7 @@ function cpRenderBuilder() {
 
       <div class="border-t border-slate-200 pt-3">
         <label class="block text-[10px] text-slate-500 font-mono mb-2">Add a block (reps × distance × stroke)</label>
-        <div class="grid grid-cols-5 gap-2">
+        <div class="grid grid-cols-6 gap-2">
           <select id="cpBlockSection" class="text-xs px-2 py-1.5 bg-white border border-slate-200 rounded col-span-1">
             <option>Warm up</option><option>Pre set</option><option selected>Main set</option><option>Sub set</option><option>Cool down</option>
           </select>
@@ -865,7 +866,11 @@ function cpRenderBuilder() {
           <select id="cpBlockStroke" class="text-xs px-2 py-1.5 bg-white border border-slate-200 rounded">
             ${Object.entries(STROKE_LABELS).map(([code, label]) => `<option value="${code}">${label}</option>`).join('')}
           </select>
-          <input id="cpBlockRest" type="text" placeholder="Rest e.g. 1:30" class="text-xs px-2 py-1.5 bg-white border border-slate-200 rounded">
+          <input id="cpBlockRest" type="text" placeholder="Rest/interval e.g. 1:30" class="text-xs px-2 py-1.5 bg-white border border-slate-200 rounded">
+          <select id="cpBlockRestType" class="text-xs px-2 py-1.5 bg-white border border-slate-200 rounded">
+            <option value="interval" selected>On (interval)</option>
+            <option value="rest">Rest</option>
+          </select>
         </div>
         <button type="button" data-action="cp-add-block" class="mt-2 text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Add block</button>
         <div class="mt-2 space-y-1.5">${blocksList || '<p class="text-[11px] text-slate-400 italic">No blocks added yet.</p>'}</div>
@@ -1445,7 +1450,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const dist = Number(document.getElementById('cpBlockDist').value) || 0;
       const stroke = document.getElementById('cpBlockStroke').value;
       const rest = document.getElementById('cpBlockRest').value;
-      CP.ui.builder.blocks.push({ section, reps, dist, stroke, rest });
+      const rest_type = document.getElementById('cpBlockRestType').value;
+      CP.ui.builder.blocks.push({ section, reps, dist, stroke, rest, rest_type });
       cpRenderTab();
     } else if (action === 'cp-remove-block') {
       CP.ui.builder.blocks.splice(Number(el.dataset.index), 1);

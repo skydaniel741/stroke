@@ -10,23 +10,23 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 <style>
   .pr-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
-  .pr-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
-  .pr-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#888;text-decoration:none;}
-  .pr-nav-logout:hover{color:#111;}
-  .pr-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#111;text-decoration:none;}
+  .pr-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#2c2942;text-decoration:none;}
+  .pr-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#8b87a3;text-decoration:none;}
+  .pr-nav-logout:hover{color:#2c2942;}
+  .pr-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#2c2942;text-decoration:none;}
   .pr-wrap{max-width:860px;margin:0 auto;padding:16px 20px 90px;}
-  .pr-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
-  .pr-tune{font-size:12.5px;color:#555;background:#faf9ff;border:1.5px solid #e0ddf5;border-radius:10px;padding:9px 13px;margin:0 0 20px;}
-  .pr-tune b{color:#111;}
-  .pr-tune a{font-weight:800;color:#5b53d6;text-decoration:none;}
-  .pr-tune-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#111;color:#ccccff;padding:2px 8px;border-radius:20px;margin-right:6px;}
+  .pr-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6f7fe0;margin-bottom:8px;}
+  .pr-tune{font-size:12.5px;color:#595571;background:#f6f8fe;border:1.5px solid #dde6f7;border-radius:10px;padding:9px 13px;margin:0 0 20px;}
+  .pr-tune b{color:#2c2942;}
+  .pr-tune a{font-weight:800;color:#5474d4;text-decoration:none;}
+  .pr-tune-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#2c2942;color:#c8d5f6;padding:2px 8px;border-radius:20px;margin-right:6px;}
   .pr-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;letter-spacing:-0.01em;margin:0 0 12px;}
-  .pr-overview{font-size:14px;color:#333;line-height:1.6;margin-bottom:18px;}
+  .pr-overview{font-size:14px;color:#403c58;line-height:1.6;margin-bottom:18px;}
 
   .pr-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
-  .pr-stat{border:2.5px solid #111;border-radius:14px;padding:12px 14px;background:#fff;}
+  .pr-stat{border:1px solid #e4e8f4;border-radius:14px;padding:12px 14px;background:#fff;}
   .pr-stat-num{font-size:22px;font-weight:800;line-height:1.1;}
-  .pr-stat-lbl{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#888;margin-top:2px;}
+  .pr-stat-lbl{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8b87a3;margin-top:2px;}
 
   .pr-section-label{font-family:'Schibsted Grotesk',sans-serif;font-size:18px;letter-spacing:-0.01em;margin:26px 0 12px;}
 
@@ -35,42 +35,77 @@
   @media(min-width:640px){.pr-week{grid-template-columns:repeat(2,1fr);}}
   @media(min-width:920px){.pr-week{grid-template-columns:repeat(3,1fr);}}
 
-  .pr-day{border:2.5px solid #111;border-radius:16px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;box-shadow:4px 4px 0 #ccccff;}
-  .pr-day.rest{border-color:#ddd;box-shadow:none;background:#fafafc;}
+  .pr-day{border:1px solid #e4e8f4;border-radius:16px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;box-shadow:0 10px 26px rgba(58,66,120,.10);}
+  .pr-day.rest{border-color:#dfe3f0;box-shadow:none;background:#f4f6fd;}
   .pr-day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
   .pr-day-name{font-weight:800;font-size:14px;}
-  .pr-day.rest .pr-day-name{color:#999;}
-  .pr-day-total{font-size:12px;font-weight:800;color:#111;background:#ccccff;padding:3px 10px;border-radius:20px;}
-  .pr-day-focus{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8f8ff0;margin-bottom:10px;}
-  .pr-day.rest .pr-day-focus{color:#aaa;}
+  .pr-day.rest .pr-day-name{color:#9a96b0;}
+  .pr-day-total{font-size:12px;font-weight:800;color:#2c2942;background:#c8d5f6;padding:3px 10px;border-radius:20px;}
+  .pr-day-focus{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6f7fe0;margin-bottom:10px;}
+  .pr-day.rest .pr-day-focus{color:#a9a5bd;}
 
   .pr-blocks{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
-  .pr-block{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:7px 10px;background:#f6f6fb;border-radius:9px;}
-  .pr-block.main{background:#efeffd;}
+  .pr-block{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:7px 10px;background:#f0f4fd;border-radius:9px;}
+  .pr-block.main{background:#eef2fc;}
   .pr-block-txt{font-weight:600;color:#222;}
-  .pr-block-note{display:block;font-weight:500;color:#777;font-size:11px;margin-top:1px;}
-  .pr-block-rest{flex-shrink:0;font-size:11px;font-weight:700;color:#8f8ff0;white-space:nowrap;}
+  .pr-block-note{display:block;font-weight:500;color:#8b87a3;font-size:11px;margin-top:1px;}
+  .pr-block-rest{flex-shrink:0;font-size:11px;font-weight:700;color:#6f7fe0;white-space:nowrap;}
 
-  .pr-day-note{font-size:12px;color:#666;line-height:1.5;margin-top:auto;padding-top:6px;border-top:1px dashed #e4e4ee;}
-  .pr-rest-body{font-size:12.5px;color:#999;line-height:1.5;padding:8px 0 2px;}
+  .pr-day-note{font-size:12px;color:#6a6683;line-height:1.5;margin-top:auto;padding-top:6px;border-top:1px dashed #e4e8f4;}
+  .pr-rest-body{font-size:12.5px;color:#9a96b0;line-height:1.5;padding:8px 0 2px;}
 
   /* legacy paragraph-style programs (generated before the calendar update) */
-  .pr-session{border:2.5px solid #111;border-radius:14px;padding:16px 18px;margin-bottom:12px;background:#fff;}
+  .pr-session{border:1px solid #e4e8f4;border-radius:14px;padding:16px 18px;margin-bottom:12px;background:#fff;}
   .pr-session-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
   .pr-session-label{font-weight:800;font-size:13px;}
-  .pr-session-focus{font-size:11px;font-weight:800;text-transform:uppercase;color:#8f8ff0;}
-  .pr-session-summary{font-size:13px;color:#444;line-height:1.5;}
-  .pr-legacy-nudge{background:#fff8e6;border:2px solid #ffd766;border-radius:12px;padding:12px 14px;font-size:13px;color:#7a5b00;margin-bottom:16px;}
+  .pr-session-focus{font-size:11px;font-weight:800;text-transform:uppercase;color:#6f7fe0;}
+  .pr-session-summary{font-size:13px;color:#4d4966;line-height:1.5;}
+  .pr-legacy-nudge{background:#fdf6e3;border:2px solid #f7e2a6;border-radius:12px;padding:12px 14px;font-size:13px;color:#7a5b00;margin-bottom:16px;}
 
-  .pr-progression{background:#f3f3ff;border:2px solid #ccccff;border-radius:14px;padding:16px 18px;font-size:13px;color:#333;line-height:1.5;margin-bottom:12px;}
-  .pr-insight{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #eee;}
+  .pr-progression{background:#e9eefc;border:2px solid #c8d5f6;border-radius:14px;padding:16px 18px;font-size:13px;color:#403c58;line-height:1.5;margin-bottom:12px;}
+  .pr-insight{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #e9edf7;}
   .pr-insight:last-child{border-bottom:none;}
-  .pr-insight-icon{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#111;color:#ccccff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
-  .pr-insight-text{font-size:13px;color:#333;line-height:1.5;}
+  .pr-insight-icon{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#2c2942;color:#c8d5f6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
+  .pr-insight-text{font-size:13px;color:#403c58;line-height:1.5;}
 
   .pr-actions{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;}
-  .pr-btn{padding:12px 18px;border:2.5px solid #111;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none;color:#111;background:#fff;}
-  .pr-btn-primary{background:#ccccff;}
+  .pr-btn{padding:12px 18px;border:1px solid #e4e8f4;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none;color:#2c2942;background:#fff;}
+  .pr-btn-primary{background:#c8d5f6;}
+
+  /* nutrition + dryland personalization cards */
+  .pr-note-card{background:#f6f8fe;border:1.5px solid #dde6f7;border-radius:14px;padding:14px 16px;margin-bottom:16px;}
+  .pr-note-card p{margin:0;font-size:13px;color:#403c58;line-height:1.55;}
+  .pr-note-card p + p{margin-top:6px;}
+  .pr-note-card b{color:#2c2942;}
+
+  .pr-meal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px;}
+  .pr-meal-card{border:1px solid #e4e8f4;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 8px 20px rgba(58,66,120,.08);text-decoration:none;color:inherit;}
+  .pr-meal-photo{height:90px;background-size:cover;background-position:center;background-color:#eef2fc;}
+  .pr-meal-body{padding:10px 12px 12px;}
+  .pr-meal-name{font-weight:800;font-size:13px;line-height:1.25;margin-bottom:4px;}
+  .pr-meal-stats{font-size:11px;color:#8b87a3;font-weight:600;}
+
+  .pr-dryland-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+  .pr-dryland-card{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #e4e8f4;border-radius:12px;padding:12px 14px;background:#fff;text-decoration:none;color:inherit;}
+  .pr-dryland-name{font-weight:800;font-size:13px;}
+  .pr-dryland-cat{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6f7fe0;}
+  .pr-dryland-cta{font-size:12px;font-weight:800;color:#5474d4;white-space:nowrap;}
+
+  .pr-supp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px;}
+  .pr-supp-card{border:1px solid #e4e8f4;border-radius:12px;padding:12px 14px;background:#fff;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:6px;}
+  .pr-supp-head{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;}
+  .pr-supp-name{font-weight:800;font-size:13px;}
+  .pr-supp-ev{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:20px;}
+  .pr-supp-ev--strong{background:#dff5ec;color:#1f7a5a;}
+  .pr-supp-ev--moderate{background:#fbf1cf;color:#a6720a;}
+  .pr-supp-ev--emerging{background:#eef2fc;color:#8b87a3;}
+  .pr-supp-brands{font-size:11.5px;color:#6a6683;margin:0;}
+  .pr-supp-cta{font-size:11.5px;font-weight:800;color:#5474d4;}
+  .pr-demo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:6px;}
+  .pr-demo-card{border:1px solid #e4e8f4;border-radius:14px;padding:12px 14px 14px;background:#fff;}
+  .pr-demo-card svg{width:100%;height:auto;display:block;margin-bottom:8px;color:#2c2942;}
+  .pr-demo-title{font-weight:800;font-size:13px;margin-bottom:6px;}
+  .pr-demo-steps{margin:0;padding-left:16px;font-size:11.5px;color:#6a6683;line-height:1.5;}
 </style>
 </head>
 <body>
@@ -97,16 +132,9 @@
   <h1 class="pr-h1">Your training week</h1>
   <p class="pr-overview">{{ program.overview }}</p>
 
-  {% if current_user.is_solo_pro %}
   <div class="pr-tune">
-    <span class="pr-tune-badge">Solo Pro</span>
     Tuned to <b>{{ (profile.coaching_tone or 'balanced')|capitalize }}</b> tone · <b>{{ (profile.intensity or 'normal')|capitalize }}</b> intensity · <a href="/solo/onboarding">adjust &amp; rebuild</a>
   </div>
-  {% else %}
-  <div class="pr-tune">
-    This program uses balanced, level-matched defaults. <a href="/solo/pro">Unlock tone &amp; intensity with Solo Pro →</a>
-  </div>
-  {% endif %}
 
   {% if program.days %}
     {% set training_days = program.days | rejectattr('rest') | list %}
@@ -174,11 +202,87 @@
   {% endfor %}
   {% endif %}
 
+  {% if nutrition and nutrition.focus_note %}
+  <div class="pr-section-label">Nutrition for you</div>
+  <div class="pr-note-card">
+    <p><b>{{ nutrition.focus_note }}</b></p>
+    {% if nutrition.tip %}<p>{{ nutrition.tip }}</p>{% endif %}
+  </div>
+  {% if nutrition_meals %}
+  <div class="pr-meal-grid">
+    {% for m in nutrition_meals %}
+    <a class="pr-meal-card" href="/solo/nutrition">
+      <div class="pr-meal-photo" style="background-image:url('{{ url_for('static', filename=m.photo) }}')"></div>
+      <div class="pr-meal-body">
+        <div class="pr-meal-name">{{ m.name }}</div>
+        <div class="pr-meal-stats">{{ m.calories }} kcal · {{ m.protein_g }}g protein</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if nutrition_supplements %}
+  <div class="pr-supp-grid">
+    {% for p in nutrition_supplements %}
+    <a class="pr-supp-card" href="/solo/nutrition">
+      <div class="pr-supp-head">
+        <span class="pr-supp-name">{{ p.name }}</span>
+        {% if p.evidence %}<span class="pr-supp-ev pr-supp-ev--{{ p.evidence }}">{{ {'strong':'Strong','moderate':'Some','emerging':'Emerging'}[p.evidence] }} evidence</span>{% endif %}
+      </div>
+      {% if p.brands %}<p class="pr-supp-brands">{{ p.brands[0] }}</p>{% endif %}
+      <span class="pr-supp-cta">See brands →</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if stroke_demos %}
+  <div class="pr-demo-grid">
+    {% for d in stroke_demos %}
+    <div class="pr-demo-card">
+      {{ d.svg | safe }}
+      <div class="pr-demo-title">{{ d.title }}</div>
+      <ol class="pr-demo-steps">{% for s in d.steps %}<li>{{ s }}</li>{% endfor %}</ol>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if dryland and dryland.focus_note %}
+  <div class="pr-section-label">Dryland for you</div>
+  <div class="pr-note-card">
+    <p><b>{{ dryland.focus_note }}</b></p>
+    {% if dryland.note %}<p>{{ dryland.note }}</p>{% endif %}
+  </div>
+  {% if dryland_programs %}
+  <div class="pr-dryland-grid">
+    {% for p in dryland_programs %}
+    <a class="pr-dryland-card" href="/solo/dryland/{{ p.id }}">
+      <span><span class="pr-dryland-cat">{{ p.category }}</span><br><span class="pr-dryland-name">{{ p.title }}</span></span>
+      <span class="pr-dryland-cta">Open →</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if dryland_demos %}
+  <div class="pr-demo-grid">
+    {% for d in dryland_demos %}
+    <div class="pr-demo-card">
+      {{ d.svg | safe }}
+      <div class="pr-demo-title">{{ d.title }}</div>
+      <ol class="pr-demo-steps">{% for s in d.steps %}<li>{{ s }}</li>{% endfor %}</ol>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endif %}
+
   <div class="pr-actions">
-    <a href="/solo/checkin" class="pr-btn pr-btn-primary">Log today's check-in</a>
+    <a href="/solo/analytics" class="pr-btn pr-btn-primary">View performance analytics</a>
+    <a href="/solo/checkin" class="pr-btn">Log today's check-in</a>
     <a href="/solo/onboarding" class="pr-btn">Rebuild program</a>
   </div>
-  <p style="font-size:12px;color:#999;margin-top:10px">
+  <p style="font-size:12px;color:#9a96b0;margin-top:10px">
     {% if regens_left > 0 %}{{ regens_left }} of {{ regen_limit }} rebuilds left this week.{% else %}You've used all {{ regen_limit }} rebuilds this week — resets Monday.{% endif %}
   </p>
 </div>

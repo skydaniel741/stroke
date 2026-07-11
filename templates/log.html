@@ -48,7 +48,7 @@
       <p class="repeat-meta">{{ last_session.total_distance() }}m · {{ last_session.pool }} pool · {{ last_session.logged_at.strftime('%d %b') }}</p>
     </div>
     <div class="repeat-arrow">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2c2942" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </div>
   </div>
   {% endif %}
@@ -202,7 +202,9 @@
     </div>
 
     <div class="wizard-step" id="wstep3">
-      <p class="wizard-q">Rest between reps?</p>
+      <p class="wizard-q">On the clock, or resting?</p>
+      <div class="wizard-options wizard-options-sm" id="wRestType"></div>
+      <p class="wizard-q wizard-q-sub">"On" = send-off/interval — you leave again every X. "Rest" = an actual break before the next set.</p>
       <div class="wizard-options" id="wRest"></div>
       <input class="wizard-custom-input" type="text" id="wRestCustom" placeholder="e.g. 1:15" oninput="wizardCustom('rest', this.value)">
       <div class="wizard-advanced-toggle" onclick="toggleAdvanced()">+ Add a note or heart rate target (optional)</div>
@@ -268,8 +270,8 @@
   <div style="position:relative">
     <textarea class="save-notes" id="sessionNotes" rows="2" placeholder="How did it feel? (optional)" style="padding-right:44px"></textarea>
     <button type="button" class="voice-btn" data-voice-target="sessionNotes" title="Dictate with your voice" aria-label="Voice input"
-      style="position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;border:2px solid #111;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+      style="position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;border:2px solid #2c2942;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2c2942" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
     </button>
   </div>
 
@@ -343,6 +345,22 @@ function loadScannedBlocks(){
   sessionSets = scanned.blocks.map((s,i)=>({id:'set_'+Date.now()+i, ...s}));
   document.getElementById('sessionPool').value = scanned.pool || '25m';
   document.getElementById('sessionType').value = scanned.session_type || 'Training';
+  goTo(3);
+  renderSetsSummary();
+}
+
+// ─── VOICE-DICTATED WORKOUT (from dashboard voice log) ───
+function loadVoiceBlocks(){
+  const raw = sessionStorage.getItem('voiceSet');
+  sessionStorage.removeItem('voiceSet');
+  if(!raw) return;
+  let voiced;
+  try{ voiced = JSON.parse(raw); }catch(e){ return; }
+  if(!voiced || !voiced.blocks || !voiced.blocks.length) return;
+
+  sessionSets = voiced.blocks.map((s,i)=>({id:'set_'+Date.now()+i, ...s}));
+  document.getElementById('sessionPool').value = voiced.pool || '25m';
+  document.getElementById('sessionType').value = voiced.session_type || 'Training';
   goTo(3);
   renderSetsSummary();
 }
@@ -510,10 +528,12 @@ const modifierOptions = [
   {label:'None', code:''}, {label:'Kick', code:'Kick'}, {label:'Pull', code:'Pull'}, {label:'Drill', code:'Drill'}
 ];
 const restOptions = ['None','0:15','0:30','0:45','1:00','1:30','2:00'];
+const restTypeOptions = [{label:'On (interval)', code:'interval'}, {label:'Rest', code:'rest'}];
 
 function openWizard(setToEdit){
   wizardStep = 0;
-  wizardSet = setToEdit ? {...setToEdit} : {reps:null, dist:null, stroke:null, modifier:'', rest:'', note:'', hr:''};
+  wizardSet = setToEdit ? {...setToEdit} : {reps:null, dist:null, stroke:null, modifier:'', rest:'', rest_type:'interval', note:'', hr:''};
+  if(!wizardSet.rest_type) wizardSet.rest_type = (wizardSet.reps > 1) ? 'interval' : 'rest';
   editingSetId = setToEdit ? setToEdit.id : null;
   document.getElementById('wRepsCustom').value = '';
   document.getElementById('wDistCustom').value = '';
@@ -547,6 +567,9 @@ function renderWizardOptions(){
     const val = r==='None' ? '' : r;
     return `<div class="wizard-opt ${wizardSet.rest===val?'selected':''}" onclick="pickWizard('rest','${val}')">${r}</div>`;
   }).join('');
+  document.getElementById('wRestType').innerHTML = restTypeOptions.map(t=>
+    `<div class="wizard-opt wizard-opt-sm ${(wizardSet.rest_type||'interval')===t.code?'selected':''}" onclick="pickWizard('rest_type','${t.code}')">${t.label}</div>`
+  ).join('');
 }
 
 function pickWizard(field, value){
@@ -649,7 +672,7 @@ function renderSetsSummary(){
         <div class="set-summary-num">${i+1}</div>
         <div class="set-summary-text">
           <span class="set-summary-main">${s.reps} × ${s.dist}m ${strokeDisplay(s)}</span>
-          <span class="set-summary-sub">${s.rest ? 'Rest '+s.rest : 'No rest set'}${s.hr ? ' · HR '+s.hr : ''}</span>
+          <span class="set-summary-sub">${s.rest ? (s.rest_type === 'rest' ? 'Rest '+s.rest : 'On '+s.rest) : 'No rest set'}${s.hr ? ' · HR '+s.hr : ''}</span>
           ${s.note ? `<span class="set-summary-note">${escapeHtml(s.note)}</span>` : ''}
         </div>
         <div class="set-summary-actions">
@@ -727,9 +750,12 @@ loadLibrarySet({{ preload_set|tojson }});
 {% if request.args.get('fromscan') %}
 loadScannedBlocks();
 {% endif %}
+{% if request.args.get('fromvoice') %}
+loadVoiceBlocks();
+{% endif %}
 </script>
 <style>
-  .voice-btn.voice-recording{background:#ff4d5e !important;border-color:#ff4d5e !important;animation:voicePulse 1s infinite;}
+  .voice-btn.voice-recording{background:#ef7d6a !important;border-color:#ef7d6a !important;animation:voicePulse 1s infinite;}
   .voice-btn.voice-recording svg{stroke:#fff !important;}
   @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.5);}50%{box-shadow:0 0 0 6px rgba(255,77,94,0);}}
 </style>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Performance analytics — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  .an-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .an-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#2c2942;text-decoration:none;}
+  .an-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#8b87a3;text-decoration:none;}
+  .an-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#2c2942;text-decoration:none;}
+  .an-wrap{max-width:1100px;margin:0 auto;padding:16px 24px 90px;}
+  .an-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6f7fe0;margin-bottom:8px;}
+  .an-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:32px;margin:0 0 6px;}
+  .an-sub{color:#6a6683;font-size:14px;margin:0 0 26px;line-height:1.5;max-width:640px;}
+
+  .an-section-label{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;letter-spacing:-0.01em;margin:30px 0 4px;}
+  .an-section-note{font-size:13px;color:#9a96b0;margin:0 0 16px;}
+
+  .an-card{border:1px solid #e4e8f4;border-radius:16px;background:#fff;padding:16px 18px;box-shadow:0 10px 26px rgba(58,66,120,.08);}
+
+  /* Horizontal on desktop, stacks on phones (no swipe-rail). */
+  .an-grid-2{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:760px){.an-grid-2{grid-template-columns:1fr 1fr;}}
+
+  /* progression charts */
+  .an-chart-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px;}
+  .an-chart-event{font-weight:800;font-size:15px;}
+  .an-chart-badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .an-up{background:#dff5ec;color:#0f8a4d;} .an-down{background:#fbe4df;color:#d33a52;} .an-flat{background:#eef2fc;color:#6a6683;}
+  .an-chart-svg{width:100%;height:auto;display:block;overflow:visible;}
+  .an-chart-foot{display:flex;justify-content:space-between;font-size:11px;color:#8b87a3;font-weight:600;margin-top:6px;}
+  .an-chart-foot b{color:#2c2942;}
+
+  /* volume bars */
+  .an-vol{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px;}
+  .an-vol-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;}
+  .an-vol-bar{width:100%;max-width:34px;background:linear-gradient(180deg,#8fa4e8,#c8d5f6);border-radius:6px 6px 3px 3px;min-height:2px;transition:height .3s;}
+  .an-vol-lbl{font-size:8.5px;color:#9a96b0;font-weight:700;transform:rotate(-45deg);white-space:nowrap;transform-origin:center;height:22px;}
+  .an-vol-total{font-size:13px;color:#595571;margin-top:10px;}
+  .an-vol-total b{color:#2c2942;}
+
+  /* split analysis */
+  .an-split-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:8px;}
+  .an-split-event{font-weight:800;font-size:15px;}
+  .an-split-date{font-size:11px;color:#9a96b0;font-weight:600;}
+  .an-split-bars{display:flex;align-items:flex-end;gap:5px;height:90px;margin-bottom:10px;}
+  .an-split-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;}
+  .an-split-bar{width:100%;border-radius:5px 5px 2px 2px;min-height:3px;}
+  .an-split-bar.fast{background:linear-gradient(180deg,#6cc7a1,#a6e0ca);}
+  .an-split-bar.slow{background:linear-gradient(180deg,#e89a8b,#f3c7bd);}
+  .an-split-bar.mid{background:linear-gradient(180deg,#8fa4e8,#c8d5f6);}
+  .an-split-val{font-size:9px;color:#6a6683;font-weight:700;}
+  .an-split-idx{font-size:8px;color:#b3aec7;font-weight:700;}
+  .an-split-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .an-split-tag{font-size:11px;font-weight:700;color:#595571;background:#f0f4fd;border-radius:8px;padding:4px 9px;}
+  .an-split-tag b{color:#2c2942;}
+  .an-split-pat{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:4px 9px;border-radius:8px;}
+  .an-split-pat.negative{background:#dff5ec;color:#0f8a4d;}
+  .an-split-pat.even{background:#e9eefc;color:#5474d4;}
+  .an-split-pat.slight-fade{background:#fbf1cf;color:#a6720a;}
+  .an-split-pat.positive{background:#fbe4df;color:#d33a52;}
+  .an-split-note{font-size:12.5px;color:#4d4966;line-height:1.5;}
+
+  /* target splits */
+  .an-target-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;gap:8px;}
+  .an-target-event{font-weight:800;font-size:15px;}
+  .an-target-goal{font-size:12px;font-weight:800;color:#5474d4;background:#e9eefc;padding:3px 9px;border-radius:20px;}
+  .an-target-sub{font-size:12px;color:#8b87a3;margin:0 0 10px;}
+  .an-target-scroll{overflow-x:auto;}
+  .an-target-row{display:flex;gap:5px;min-width:min-content;}
+  .an-target-cell{flex:0 0 auto;min-width:54px;text-align:center;border:1px solid #e4e8f4;border-radius:9px;padding:7px 6px;background:#f8faff;}
+  .an-target-cell .lap{font-size:9px;color:#b3aec7;font-weight:800;}
+  .an-target-cell .cum{font-size:13px;font-weight:800;color:#2c2942;}
+  .an-target-cell .spl{font-size:9.5px;color:#8b87a3;font-weight:600;}
+
+  .an-insight{background:#e9eefc;border:1.5px solid #c8d5f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;}
+  .an-insight p{margin:0 0 6px;font-size:13.5px;color:#403c58;line-height:1.55;}
+  .an-insight p:last-child{margin:0;}
+  .an-insight b{color:#2c2942;}
+  .an-insight-link{font-size:12px;font-weight:800;color:#5474d4;text-decoration:none;}
+
+  .an-empty{border:2px dashed #d0cde0;border-radius:16px;padding:28px 22px;text-align:center;color:#8b87a3;font-size:14px;background:#f8faff;}
+  .an-empty a{font-weight:800;color:#5474d4;text-decoration:none;}
+
+  /* comparison chart */
+  .an-cmp-svg{width:100%;height:auto;display:block;overflow:visible;margin-bottom:10px;}
+  .an-cmp-legend{display:flex;flex-wrap:wrap;gap:12px;}
+  .an-cmp-key{font-size:12px;color:#595571;font-weight:600;display:flex;align-items:center;gap:6px;}
+  .an-cmp-key b{color:#2c2942;}
+  .an-cmp-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+
+  /* personal baselines + learned patterns */
+  .an-baseline-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:14px;}
+  .an-baseline{border:1px solid #e4e8f4;border-radius:14px;background:#fff;padding:14px;box-shadow:0 8px 20px rgba(58,66,120,.06);}
+  .an-baseline-val{font-family:'Schibsted Grotesk',sans-serif;font-size:22px;font-weight:800;line-height:1.1;color:#2c2942;}
+  .an-baseline-lbl{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#6f7fe0;margin-top:4px;}
+  .an-baseline-sub{font-size:11px;color:#9a96b0;margin-top:2px;}
+  .an-pattern{display:flex;gap:10px;align-items:flex-start;background:#f6f8fe;border:1.5px solid #dde6f7;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:13px;color:#403c58;line-height:1.55;}
+  .an-pattern-icon{color:#6f7fe0;font-weight:800;flex-shrink:0;}
+  .an-pattern-empty{font-size:13px;color:#8b87a3;line-height:1.55;background:#f8faff;border:1.5px dashed #dde6f7;border-radius:12px;padding:12px 14px;}
+</style>
+</head>
+<body>
+
+<nav class="an-nav">
+  <a href="/dashboard" class="an-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/logout" class="an-nav-logout">Log out</a>
+  <a href="/" class="an-nav-logo">STROKE</a>
+</nav>
+
+<div class="an-wrap">
+  <p class="an-eyebrow">Solo · Performance analytics</p>
+  <h1 class="an-h1">Your numbers, in depth.</h1>
+  <p class="an-sub">Everything here is built from your own logged swims and 50m splits. Progression over time, where you fade in a race, and the exact pace you need to hit your goals.</p>
+
+  {% if not has_any %}
+  <div class="an-empty">
+    Log a few swims (and add 50m splits when you can) to unlock your analytics.<br>
+    <a href="/log">Log a swim →</a>
+  </div>
+  {% endif %}
+
+  {% if insight and insight.summary %}
+  <div class="an-section-label">AI read</div>
+  <p class="an-section-note">Your progression, explained in plain English.</p>
+  <div class="an-insight">
+    <p><b>{{ insight.summary }}</b></p>
+    {% if insight.likely_cause %}<p>{{ insight.likely_cause }}</p>{% endif %}
+    {% if insight.suggested_focus %}<p>→ {{ insight.suggested_focus }}</p>{% endif %}
+  </div>
+  <a class="an-insight-link" href="/personal-bests">Refresh the AI read on your Personal bests page →</a>
+  {% endif %}
+
+  {% if baselines or patterns %}
+  <div class="an-section-label">What I've learned about you</div>
+  <p class="an-section-note">Your own normals, and the patterns I've started to spot. These sharpen the more you log.</p>
+  {% if baselines %}
+  <div class="an-baseline-grid">
+    {% for b in baselines %}
+    <div class="an-baseline">
+      <div class="an-baseline-val">{{ b.value }}</div>
+      <div class="an-baseline-lbl">{{ b.label }}</div>
+      <div class="an-baseline-sub">{{ b.sub }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if patterns %}
+  {% for p in patterns %}
+  <div class="an-pattern"><span class="an-pattern-icon">✦</span><span>{{ p }}</span></div>
+  {% endfor %}
+  {% else %}
+  <p class="an-pattern-empty">Keep logging swims and daily check-ins (sleep, energy) and I'll start surfacing your personal patterns here, like how sleep affects your training.</p>
+  {% endif %}
+  {% endif %}
+
+  {% if progression %}
+  <div class="an-section-label">Progression over time</div>
+  <p class="an-section-note">Each point is a logged swim. Higher on the chart = faster.</p>
+  <div class="an-grid-2">
+    {% for c in progression %}
+    <div class="an-card">
+      <div class="an-chart-head">
+        <span class="an-chart-event">{{ c.event }}</span>
+        <span class="an-chart-badge {{ 'an-up' if c.trend == 'improving' else 'an-down' if c.trend == 'slipping' else 'an-flat' }}">
+          {% if c.trend == 'improving' %}▲ {{ c.change_pct }}% faster{% elif c.trend == 'slipping' %}▼ {{ c.change_pct }}% slower{% else %}— steady{% endif %}
+        </span>
+      </div>
+      <svg class="an-chart-svg" viewBox="0 0 320 118" role="img" aria-label="{{ c.event }} progression">
+        <!-- horizontal gridlines + y-axis time labels (top = fastest) -->
+        {% for t in c.y_ticks %}
+        <line x1="38" y1="{{ t.y }}" x2="312" y2="{{ t.y }}" stroke="#eef1f9" stroke-width="1"/>
+        <text x="33" y="{{ t.y + 3 }}" text-anchor="end" font-size="8" fill="#9a96b0">{{ t.label }}</text>
+        {% endfor %}
+        <!-- smooth progression curve -->
+        <path d="{{ c.path }}" fill="none" stroke="#5474d4" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        {% for p in c.points %}
+        <circle cx="{{ p.x }}" cy="{{ p.y }}" r="2.6" fill="#5474d4"/>
+        {% endfor %}
+        <!-- x-axis date labels -->
+        {% for t in c.x_ticks %}
+        <text x="{{ t.x }}" y="112" text-anchor="{{ t.anchor }}" font-size="8" fill="#9a96b0">{{ t.label }}</text>
+        {% endfor %}
+      </svg>
+      <div class="an-chart-foot">
+        <span>{{ c.count }} swims</span>
+        <span>PB <b>{{ c.best }}</b> · latest <b>{{ c.latest }}</b></span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if comparison %}
+  <div class="an-section-label">Which events are improving fastest</div>
+  <p class="an-section-note">Every event indexed to its own starting point. Higher = more improvement since you began logging it.</p>
+  <div class="an-card">
+    <svg class="an-cmp-svg" viewBox="0 0 320 118" role="img" aria-label="Event improvement comparison">
+      <line x1="38" y1="{{ comparison.zero_y }}" x2="312" y2="{{ comparison.zero_y }}" stroke="#d7deec" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="33" y="{{ comparison.zero_y + 3 }}" text-anchor="end" font-size="8" fill="#9a96b0">0%</text>
+      <text x="33" y="14" text-anchor="end" font-size="8" fill="#9a96b0">{{ comparison.top_label }}</text>
+      {% for s in comparison.series %}
+      <path d="{{ s.path }}" fill="none" stroke="{{ s.color }}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="{{ s.end.x }}" cy="{{ s.end.y }}" r="3" fill="{{ s.color }}"/>
+      {% endfor %}
+    </svg>
+    <div class="an-cmp-legend">
+      {% for s in comparison.series %}
+      <span class="an-cmp-key"><span class="an-cmp-dot" style="background:{{ s.color }}"></span>{{ s.event }} <b>{{ '+' if s.latest_pct >= 0 else '' }}{{ s.latest_pct }}%</b></span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if total_12wk %}
+  <div class="an-section-label">Training load</div>
+  <p class="an-section-note">Total distance per week over the last 12 weeks.</p>
+  <div class="an-card">
+    <div class="an-vol">
+      {% for w in weeks %}
+      <div class="an-vol-col">
+        <div class="an-vol-bar" style="height:{{ w.h }}%" title="{{ '{:,}'.format(w.vol) }}m"></div>
+        <div class="an-vol-lbl">{{ w.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="an-vol-total"><b>{{ '{:,}'.format(total_12wk) }}m</b> total over 12 weeks</p>
+  </div>
+  {% endif %}
+
+  {% if split_analyses %}
+  <div class="an-section-label">Split analysis</div>
+  <p class="an-section-note">How you paced each swim you logged splits for. Green = your fastest 50, red = your slowest.</p>
+  <div class="an-grid-2">
+    {% for s in split_analyses %}
+    <div class="an-card">
+      <div class="an-split-head">
+        <span class="an-split-event">{{ s.event }} · {{ s.time }}</span>
+        <span class="an-split-date">{{ s.date }}</span>
+      </div>
+      {% set fastest = s.bars|map(attribute='secs')|min %}
+      {% set slowest = s.bars|map(attribute='secs')|max %}
+      <div class="an-split-bars">
+        {% for b in s.bars %}
+        <div class="an-split-col">
+          <span class="an-split-val">{{ b.label }}</span>
+          <div class="an-split-bar {{ 'fast' if b.secs == fastest else 'slow' if b.secs == slowest else 'mid' }}" style="height:{{ b.h }}%"></div>
+          <span class="an-split-idx">{{ b.idx * 50 }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="an-split-tags">
+        <span class="an-split-tag">1st half avg <b>{{ s.first_avg }}</b></span>
+        <span class="an-split-tag">2nd half avg <b>{{ s.second_avg }}</b></span>
+        <span class="an-split-pat {{ s.pattern }}">{{ 'Negative split (rare!)' if s.pattern == 'negative' else 'Well paced' if s.pattern == 'even' else 'Normal fade' if s.pattern == 'normal-fade' else 'Big fade' }}</span>
+      </div>
+      <p class="an-split-note">{{ s.note }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if target_splits %}
+  <div class="an-section-label">Race pace targets</div>
+  <p class="an-section-note">The even 50m splits you'd need to hit each goal time. Print them on your hand.</p>
+  <div class="an-grid-2">
+    {% for t in target_splits %}
+    <div class="an-card">
+      <div class="an-target-head">
+        <span class="an-target-event">{{ t.event }}</span>
+        <span class="an-target-goal">Goal {{ t.target_time }}</span>
+      </div>
+      <p class="an-target-sub">{{ t.per50 }} per 50m, all the way through.</p>
+      <div class="an-target-scroll">
+        <div class="an-target-row">
+          {% for r in t.rows %}
+          <div class="an-target-cell">
+            <div class="lap">{{ r.idx * 50 }}m</div>
+            <div class="cum">{{ r.cum }}</div>
+            <div class="spl">+{{ r.split }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    {% if has_any %}
+    <div class="an-section-label">Race pace targets</div>
+    <p class="an-section-note">Set a goal time and I'll break it into the exact 50m splits you need.</p>
+    <div class="an-card" style="text-align:center;color:#8b87a3;font-size:13px;">
+      No goals set yet. <a href="/goals" style="font-weight:800;color:#5474d4;text-decoration:none;">Add a goal time →</a>
+    </div>
+    {% endif %}
+  {% endif %}
+
+</div>
+
+</body>
+</html>

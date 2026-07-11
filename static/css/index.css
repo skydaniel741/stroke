@@ -2,15 +2,15 @@
    INDEX PAGE STYLES — v2
    Bevel-inspired landing: clean white space, soft cards, subtle
    borders, floating app mockups. Keeps the STROKE palette
-   (lavender #ccccff, deep lavender #8f8ff0, ink #111) and the
+   (lavender #c8d5f6, deep lavender #6f7fe0, ink #2c2942) and the
    Schibsted Grotesk type system.
    ============================================================ */
 
 :root{
-  --ink:#111111;
-  --lav:#ccccff;
-  --lav-deep:#8f8ff0;
-  --bg-alt:#f7f7ff;
+  --ink:#2c2942;
+  --lav:#c8d5f6;
+  --lav-deep:#6f7fe0;
+  --bg-alt:#f0f4fd;
   --line:rgba(17,17,17,0.08);
   --shadow-soft:0 24px 60px -24px rgba(17,17,40,0.22);
   --shadow-tiny:0 10px 30px -14px rgba(17,17,40,0.18);
@@ -50,7 +50,7 @@
 .land-nav-links a{
   font-size:13px;
   font-weight:600;
-  color:#444;
+  color:#4d4966;
   text-decoration:none;
   transition:color .2s;
 }
@@ -230,7 +230,7 @@
   font-weight:800;
   letter-spacing:.1em;
   text-transform:uppercase;
-  color:#555;
+  color:#595571;
   box-shadow:var(--shadow-tiny);
 }
 
@@ -255,7 +255,7 @@
 .hero-sub{
   font-size:16px;
   font-weight:500;
-  color:#555;
+  color:#595571;
   max-width:520px;
   margin:22px 0 0;
   line-height:1.75;
@@ -297,7 +297,7 @@
   width:86px;
   height:8px;
   border-radius:10px;
-  background:#ececf6;
+  background:#eef2fc;
   margin:0 auto 20px;
 }
 
@@ -318,7 +318,7 @@
   padding:5px 12px;
   font-size:10px;
   font-weight:700;
-  color:#555;
+  color:#595571;
 }
 
 .mock-phone-time{
@@ -423,7 +423,7 @@
 .mock-card-sub{
   font-size:10.5px;
   font-weight:500;
-  color:#888;
+  color:#8b87a3;
   margin-top:4px;
 }
 
@@ -456,7 +456,7 @@
   font-weight:800;
   letter-spacing:.08em;
   text-transform:uppercase;
-  color:#bbb;
+  color:#c2bed4;
   max-width:90px;
   line-height:1.3;
   text-align:left;
@@ -488,7 +488,7 @@
   font-size:15px;
   font-weight:700;
   letter-spacing:-0.01em;
-  color:#666;
+  color:#6a6683;
   white-space:nowrap;
 }
 
@@ -510,7 +510,7 @@
 .lsec-label{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lav-deep);margin-bottom:16px}
 .lsec-label--ondark{color:var(--lav)}
 .lsec-h{font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(30px,4.2vw,50px);font-weight:700;letter-spacing:-0.01em;line-height:1.06;color:var(--ink)}
-.lsec-sub{font-size:15.5px;font-weight:500;color:#555;line-height:1.8;margin-top:18px;max-width:520px}
+.lsec-sub{font-size:15.5px;font-weight:500;color:#595571;line-height:1.8;margin-top:18px;max-width:520px}
 .lsec-sub--center{margin-left:auto;margin-right:auto}
 
 .lreveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
@@ -590,7 +590,7 @@
 .log3-icon svg{width:22px;height:22px}
 
 .log3-title{font-family:'Schibsted Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--ink);margin-bottom:8px}
-.log3-desc{font-size:13.5px;color:#666;font-weight:500;line-height:1.7}
+.log3-desc{font-size:13.5px;color:#6a6683;font-weight:500;line-height:1.7}
 .log3-badge{display:inline-block;margin-top:16px;font-size:10px;font-weight:800;padding:5px 13px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
 .log3-badge.free{background:var(--bg-alt);color:var(--ink);border:1px solid var(--line)}
 .log3-badge.solo{background:var(--ink);color:var(--lav)}
@@ -631,7 +631,7 @@
 .stat-moment-sub{
   font-size:15px;
   font-weight:500;
-  color:#777;
+  color:#8b87a3;
   max-width:420px;
   margin:26px auto 0;
   line-height:1.75;
@@ -656,8 +656,8 @@
   font-weight:700;
   letter-spacing:-0.01em;
   color:var(--ink);
-  box-shadow:0 6px 18px -8px var(--chip,#ccccff);
-  border-bottom:3px solid var(--chip,#ccccff);
+  box-shadow:0 6px 18px -8px var(--chip,#c8d5f6);
+  border-bottom:1.5px solid var(--chip,#c8d5f6);
   transition:transform .18s;
 }
 
@@ -677,7 +677,7 @@
 .lib-mini-label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--lav-deep);margin-bottom:8px}
 .lib-mini-name{font-family:'Schibsted Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff}
 .lib-mini-line{font-size:15px;font-weight:700;color:var(--lav);margin-top:10px}
-.lib-mini-note{font-size:12px;font-weight:500;font-style:italic;color:#999;margin-top:3px}
+.lib-mini-note{font-size:12px;font-weight:500;font-style:italic;color:#9a96b0;margin-top:3px}
 
 /* ---------- WORLD AQUATICS POINTS ---------- */
 .pts-panel{
@@ -698,7 +698,7 @@
 .pts-lbl{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--lav-deep);margin-top:4px}
 .pts-copy-h{font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(26px,3.4vw,42px);font-weight:700;color:#fff;line-height:1.1}
 .pts-copy-h em{font-style:normal;color:var(--lav)}
-.pts-copy-p{font-size:14.5px;color:#bbb;font-weight:500;line-height:1.8;margin-top:16px}
+.pts-copy-p{font-size:14.5px;color:#c2bed4;font-weight:500;line-height:1.8;margin-top:16px}
 
 .pts-mini-calc{margin-top:22px;text-align:left;display:grid;gap:10px;min-width:0}
 .pts-mini-row{display:flex;gap:10px;min-width:0}
@@ -729,8 +729,8 @@
 }
 
 .conv-result-val{font-family:'Schibsted Grotesk',sans-serif;font-size:44px;font-weight:700;color:var(--lav);line-height:1}
-.conv-result-lbl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#aaa;margin-top:8px}
-.conv-note{font-size:11.5px;color:#999;font-weight:500;margin-top:16px;line-height:1.6}
+.conv-result-lbl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#a9a5bd;margin-top:8px}
+.conv-note{font-size:11.5px;color:#9a96b0;font-weight:500;margin-top:16px;line-height:1.6}
 
 /* ---------- MORE FEATURES BENTO ---------- */
 .more-grid{
@@ -820,7 +820,7 @@
 }
 
 .feat-title{font-family:'Schibsted Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
-.feat-desc{font-size:13px;color:#666;font-weight:500;line-height:1.65}
+.feat-desc{font-size:13px;color:#6a6683;font-weight:500;line-height:1.65}
 
 /* ---------- PRICING ---------- */
 .price-grid{
@@ -855,7 +855,7 @@
 .price-card.hot .price-per,
 .price-card.hot .price-desc{color:#fff}
 .price-card.hot .price-divider{border-top-color:rgba(204,204,255,0.25)}
-.price-card.hot .price-feats li{color:#eee}
+.price-card.hot .price-feats li{color:#e9edf7}
 .price-card.hot .price-feats li::before{background-color:var(--lav)}
 
 .price-badge{
@@ -873,13 +873,13 @@
   box-shadow:var(--shadow-tiny);
 }
 
-.price-tier{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#999}
+.price-tier{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#9a96b0}
 .price-val{font-family:'Schibsted Grotesk',sans-serif;font-size:54px;font-weight:700;color:var(--ink);margin:10px 0 2px;line-height:1}
-.price-per{font-size:12px;font-weight:700;color:#777}
-.price-desc{font-size:13.5px;color:#555;font-weight:500;margin-top:12px;line-height:1.65;min-height:40px}
+.price-per{font-size:12px;font-weight:700;color:#8b87a3}
+.price-desc{font-size:13.5px;color:#595571;font-weight:500;margin-top:12px;line-height:1.65;min-height:40px}
 .price-divider{border:none;border-top:1px solid var(--line);margin:24px 0}
 .price-feats{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:28px}
-.price-feats li{font-size:13.5px;font-weight:500;color:#333;display:flex;gap:9px;align-items:flex-start}
+.price-feats li{font-size:13.5px;font-weight:500;color:#403c58;display:flex;gap:9px;align-items:flex-start}
 .price-feats li::before{
   content:'';
   display:inline-block;
@@ -917,7 +917,7 @@
 
 /* ---------- COACH WAITLIST ---------- */
 .coach-panel{
-  background:linear-gradient(150deg,var(--lav) 0%,#dcdcff 55%,#efeffc 100%);
+  background:linear-gradient(150deg,var(--lav) 0%,#dcdcff 55%,#eef2fc 100%);
   border-radius:36px;
   padding:76px 32px;
   text-align:center;
@@ -925,7 +925,7 @@
 }
 
 .coach-panel .lsec-label{color:#5b5bd6}
-.coach-panel .lsec-sub{color:#333}
+.coach-panel .lsec-sub{color:#403c58}
 .coach-sub{margin-left:auto;margin-right:auto}
 
 .coach-form{
@@ -953,7 +953,7 @@
   color:var(--ink);
 }
 
-.coach-input::placeholder{color:#999}
+.coach-input::placeholder{color:#9a96b0}
 
 .coach-submit{
   background:var(--ink);
@@ -970,7 +970,7 @@
 }
 
 .coach-submit:hover{transform:translateY(-2px);box-shadow:var(--shadow-tiny)}
-.coach-note{font-size:12px;font-weight:600;color:#555;margin-top:16px}
+.coach-note{font-size:12px;font-weight:600;color:#595571;margin-top:16px}
 
 /* ---------- CTA ---------- */
 .cta-sec{
@@ -995,7 +995,7 @@
 }
 
 .cta-h{font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(36px,5.5vw,66px);font-weight:700;line-height:1.04;color:var(--ink);position:relative;z-index:1}
-.cta-sub{font-size:15px;font-weight:500;color:#666;margin-top:18px;position:relative;z-index:1}
+.cta-sub{font-size:15px;font-weight:500;color:#6a6683;margin-top:18px;position:relative;z-index:1}
 .cta-btns{margin-top:36px;display:flex;justify-content:center;gap:14px;position:relative;z-index:1;flex-wrap:wrap}
 
 /* ---------- FOOTER ---------- */
@@ -1011,9 +1011,9 @@
 }
 
 .lfooter-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--ink);}
-.lfooter-sub{font-size:11.5px;color:#999;margin-top:4px;font-weight:500}
+.lfooter-sub{font-size:11.5px;color:#9a96b0;margin-top:4px;font-weight:500}
 .lfooter-links{display:flex;gap:22px;flex-wrap:wrap}
-.lfooter-links a{font-size:12px;font-weight:600;color:#666;text-decoration:none}
+.lfooter-links a{font-size:12px;font-weight:600;color:#6a6683;text-decoration:none}
 .lfooter-links a:hover{color:var(--ink)}
 
 /* ---------- RESPONSIVE ---------- */

@@ -8,51 +8,51 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <style>
-  body{font-family:'Schibsted Grotesk',sans-serif;background:#f7f7fa;margin:0;color:#111;}
-  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#111;color:#fff;}
+  body{font-family:'Schibsted Grotesk',sans-serif;background:#f0f4fd;margin:0;color:#2c2942;}
+  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#2c2942;color:#fff;}
   .adm-nav a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;margin-left:20px;}
   .adm-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;}
   .adm-wrap{max-width:1000px;margin:0 auto;padding:32px 20px 60px;}
   .adm-title{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;margin:0 0 20px;}
 
   .adm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px;}
-  .adm-stat{background:#fff;border-radius:12px;padding:18px;border:1px solid #eee;}
+  .adm-stat{background:#fff;border-radius:12px;padding:18px;border:1px solid #e9edf7;}
   .adm-stat-num{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;color:#7C89D0;}
-  .adm-stat-lbl{font-size:12px;color:#777;text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-top:2px;}
+  .adm-stat-lbl{font-size:12px;color:#8b87a3;text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-top:2px;}
 
-  .adm-panel{background:#fff;border-radius:14px;border:1px solid #eee;overflow:hidden;margin-bottom:24px;}
+  .adm-panel{background:#fff;border-radius:14px;border:1px solid #e9edf7;overflow:hidden;margin-bottom:24px;}
   .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;}
-  .alert-success{background:#e3f7e9;color:#1a7a3d;border:1px solid #1a7a3d;}
-  .alert-error{background:#fbe9e9;color:#b23b3b;border:1px solid #b23b3b;}
-  .adm-panel-head{padding:16px 20px;border-bottom:1px solid #eee;font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:center;}
+  .alert-success{background:#dff5ec;color:#1f7a5a;border:1px solid #1f7a5a;}
+  .alert-error{background:#fbe4df;color:#b3402c;border:1px solid #b3402c;}
+  .adm-panel-head{padding:16px 20px;border-bottom:1px solid #e9edf7;font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:center;}
   table{width:100%;border-collapse:collapse;}
-  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:12px 20px;border-bottom:1px solid #eee;}
-  td{padding:12px 20px;border-bottom:1px solid #f2f2f4;font-size:14px;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#8b87a3;padding:12px 20px;border-bottom:1px solid #e9edf7;}
+  td{padding:12px 20px;border-bottom:1px solid #eef2fc;font-size:14px;}
   .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
-  .badge.yes{background:#e3f7e9;color:#1a7a3d;}
-  .badge.no{background:#fbe9e9;color:#b23b3b;}
-  .badge.admin{background:#e6e8fb;color:#4b52c4;}
+  .badge.yes{background:#dff5ec;color:#1f7a5a;}
+  .badge.no{background:#fbe4df;color:#b3402c;}
+  .badge.admin{background:#e6ebfb;color:#5474d4;}
 
-  .adm-filter-bar{display:flex;gap:10px;padding:16px 20px;border-bottom:1px solid #eee;flex-wrap:wrap;}
+  .adm-filter-bar{display:flex;gap:10px;padding:16px 20px;border-bottom:1px solid #e9edf7;flex-wrap:wrap;}
   .adm-filter-bar input, .adm-filter-bar select{
-    padding:8px 12px;border:2px solid #ccccff;background:#fcfcff;border-radius:8px;font-size:13px;font-family:'Schibsted Grotesk',sans-serif;
+    padding:8px 12px;border:2px solid #c8d5f6;background:#f4f6fd;border-radius:8px;font-size:13px;font-family:'Schibsted Grotesk',sans-serif;
   }
-  .adm-filter-bar button{padding:8px 16px;border:2px solid #111;background:#ccccff;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+  .adm-filter-bar button{padding:8px 16px;border:2px solid #2c2942;background:#c8d5f6;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
 
   .adm-override-form{display:flex;gap:6px;align-items:center;}
-  .adm-override-form select{padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;}
-  .adm-override-form button{padding:5px 10px;border:none;background:#111;color:#fff;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;}
+  .adm-override-form select{padding:5px 8px;border:1px solid #d0cde0;border-radius:6px;font-size:12px;}
+  .adm-override-form button{padding:5px 10px;border:none;background:#2c2942;color:#fff;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;}
 
   .adm-chart{display:flex;align-items:flex-end;gap:8px;height:90px;padding:20px;}
-  .adm-chart-bar{flex:1;background:#ccccff;border-radius:4px 4px 0 0;min-height:3px;position:relative;}
-  .adm-chart-bar span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#777;}
+  .adm-chart-bar{flex:1;background:#c8d5f6;border-radius:4px 4px 0 0;min-height:3px;position:relative;}
+  .adm-chart-bar span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#8b87a3;}
 
   .adm-announce-form{display:flex;gap:10px;padding:16px 20px;}
-  .adm-announce-form input{flex:1;padding:10px 14px;border:2px solid #ccccff;background:#fcfcff;border-radius:8px;font-size:13px;}
-  .adm-announce-form button{padding:10px 18px;border:2px solid #111;background:#ccccff;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;}
-  .adm-announce-current{padding:0 20px 16px;font-size:13px;color:#333;}
+  .adm-announce-form input{flex:1;padding:10px 14px;border:2px solid #c8d5f6;background:#f4f6fd;border-radius:8px;font-size:13px;}
+  .adm-announce-form button{padding:10px 18px;border:2px solid #2c2942;background:#c8d5f6;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;}
+  .adm-announce-current{padding:0 20px 16px;font-size:13px;color:#403c58;}
   .adm-announce-current form{display:inline;margin-left:10px;}
-  .adm-announce-current button{background:none;border:none;color:#b23b3b;font-weight:700;font-size:12px;cursor:pointer;}
+  .adm-announce-current button{background:none;border:none;color:#b3402c;font-weight:700;font-size:12px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -61,12 +61,13 @@
   <span class="adm-logo">STROKE Admin</span>
   <div>
     <a href="/admin">Overview</a>
+    <a href="/admin?role=coach">Coaches</a>
     <a href="/admin/clubs">Clubs</a>
     <a href="/admin/sets">Swim sets</a>
     <a href="/admin/standards">Standards</a>
     <a href="/admin/programs">Programs</a>
     <a href="/admin/audit">Audit log</a>
-    <a href="/dashboard">Back to app</a>
+    <a href="/coach">Coach view</a>
     <a href="/logout">Log out</a>
   </div>
 </nav>
@@ -83,9 +84,9 @@
   {% endwith %}
 
   {% if pending_clubs_count %}
-  <div class="alert" style="background:#fff4e0;color:#7a4b00;border:1px solid #a86400;">
+  <div class="alert" style="background:#fbf1cf;color:#8a5a12;border:1px solid #a6720a;">
     ⏳ {{ pending_clubs_count }} club{{ 's' if pending_clubs_count != 1 else '' }} waiting on approval.
-    <a href="/admin/clubs" style="color:#7a4b00;font-weight:800;">Review now →</a>
+    <a href="/admin/clubs" style="color:#8a5a12;font-weight:800;">Review now →</a>
   </div>
   {% endif %}
 
@@ -122,9 +123,16 @@
   </div>
 
   <div class="adm-panel">
-    <div class="adm-panel-head">All signups</div>
+    <div class="adm-panel-head">
+      {% if role_filter == 'coach' %}Coaches — {{ total_coaches }}{% else %}All signups{% endif %}
+    </div>
     <form class="adm-filter-bar" method="GET" action="/admin">
       <input type="text" name="q" placeholder="Search username or email…" value="{{ q }}">
+      <select name="role">
+        <option value="">All roles</option>
+        <option value="swimmer" {{ 'selected' if role_filter=='swimmer' }}>Swimmers</option>
+        <option value="coach" {{ 'selected' if role_filter=='coach' }}>Coaches</option>
+      </select>
       <select name="plan">
         <option value="">All plans</option>
         <option value="free" {{ 'selected' if plan_filter=='free' }}>Free</option>

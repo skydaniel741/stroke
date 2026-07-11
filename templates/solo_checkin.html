@@ -9,41 +9,48 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <style>
   .ci-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
-  .ci-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
-  .ci-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#888;text-decoration:none;}
-  .ci-nav-logout:hover{color:#111;}
-  .ci-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#111;text-decoration:none;}
+  .ci-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#2c2942;text-decoration:none;}
+  .ci-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#8b87a3;text-decoration:none;}
+  .ci-nav-logout:hover{color:#2c2942;}
+  .ci-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#2c2942;text-decoration:none;}
   .ci-wrap{max-width:560px;margin:0 auto;padding:16px 24px 90px;}
-  .ci-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
+  .ci-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6f7fe0;margin-bottom:8px;}
   .ci-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:32px;margin:0 0 8px;}
-  .ci-sub{color:#666;font-size:14px;margin:0 0 24px;}
+  .ci-sub{color:#6a6683;font-size:14px;margin:0 0 24px;}
 
   .ci-scale{display:flex;gap:8px;margin-bottom:20px;}
-  .ci-scale-opt{flex:1;padding:14px 4px;border:2.5px solid #111;border-radius:12px;text-align:center;cursor:pointer;font-weight:800;background:#fff;}
-  .ci-scale-opt.selected{background:#ccccff;box-shadow:2px 2px 0 #111;}
+  .ci-scale-opt{flex:1;padding:14px 4px;border:1px solid #e4e8f4;border-radius:12px;text-align:center;cursor:pointer;font-weight:800;background:#fff;}
+  .ci-scale-opt.selected{background:#c8d5f6;box-shadow:0 10px 26px rgba(58,66,120,.10);}
   .ci-scale-opt-emoji{display:block;font-size:20px;margin-bottom:4px;}
-  .ci-scale-opt-label{display:block;font-size:9px;text-transform:uppercase;color:#777;}
+  .ci-scale-opt-label{display:block;font-size:9px;text-transform:uppercase;color:#8b87a3;}
+
+  .ci-mini{margin-bottom:18px;}
+  .ci-mini-label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#8b87a3;margin-bottom:8px;}
+  .ci-mini-label span{text-transform:none;font-weight:600;color:#b3aec7;}
+  .ci-mini-scale{display:flex;gap:6px;}
+  .ci-mini-opt{flex:1;padding:10px 4px;border:1px solid #e4e8f4;border-radius:10px;text-align:center;cursor:pointer;font-weight:800;font-size:13px;background:#fff;color:#8b87a3;}
+  .ci-mini-opt.selected{background:#c8d5f6;color:#2c2942;}
 
   .ci-field{position:relative;}
-  .ci-field textarea{width:100%;padding:12px 46px 12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;font-family:'Schibsted Grotesk',sans-serif;min-height:90px;resize:vertical;box-sizing:border-box;}
-  .voice-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid #111;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+  .ci-field textarea{width:100%;padding:12px 46px 12px 14px;border:1px solid #e4e8f4;border-radius:10px;font-size:14px;font-family:'Schibsted Grotesk',sans-serif;min-height:90px;resize:vertical;box-sizing:border-box;}
+  .voice-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid #2c2942;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
   .voice-btn svg{width:16px;height:16px;}
-  .voice-btn.voice-recording{background:#ff4d5e;border-color:#ff4d5e;animation:voicePulse 1s infinite;}
+  .voice-btn.voice-recording{background:#ef7d6a;border-color:#ef7d6a;animation:voicePulse 1s infinite;}
   .voice-btn.voice-recording svg{stroke:#fff;}
   @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.5);}50%{box-shadow:0 0 0 6px rgba(255,77,94,0);}}
-  .voice-hint{font-size:11px;color:#aaa;margin:6px 0 0;}
-  .ci-btn{width:100%;padding:15px;background:#ccccff;border:2.5px solid #111;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;margin-top:14px;}
+  .voice-hint{font-size:11px;color:#a9a5bd;margin:6px 0 0;}
+  .ci-btn{width:100%;padding:15px;background:#c8d5f6;border:1px solid #e4e8f4;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;margin-top:14px;}
 
-  .ci-today-card{border:2.5px solid #111;border-radius:14px;padding:18px;background:#fff;margin-bottom:28px;}
+  .ci-today-card{border:1px solid #e4e8f4;border-radius:14px;padding:18px;background:#fff;margin-bottom:28px;}
   .ci-today-rating{font-family:'Schibsted Grotesk',sans-serif;font-size:24px;margin-bottom:8px;}
-  .ci-today-notes{font-size:13px;color:#555;font-style:italic;margin-bottom:12px;}
-  .ci-insight{background:#f3f3ff;border:2px solid #ccccff;border-radius:12px;padding:12px 14px;font-size:13px;color:#333;line-height:1.5;}
-  .ci-insight-label{font-size:10px;font-weight:800;text-transform:uppercase;color:#8f8ff0;margin-bottom:6px;}
+  .ci-today-notes{font-size:13px;color:#595571;font-style:italic;margin-bottom:12px;}
+  .ci-insight{background:#e9eefc;border:2px solid #c8d5f6;border-radius:12px;padding:12px 14px;font-size:13px;color:#403c58;line-height:1.5;}
+  .ci-insight-label{font-size:10px;font-weight:800;text-transform:uppercase;color:#6f7fe0;margin-bottom:6px;}
 
-  .ci-history-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;}
+  .ci-history-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #e9edf7;}
   .ci-history-date{font-family:'Schibsted Grotesk',sans-serif;font-weight:700;font-size:13px;min-width:52px;}
-  .ci-history-rating{font-size:11px;font-weight:800;background:#f3f3ff;color:#4b52c4;padding:3px 8px;border-radius:20px;flex-shrink:0;}
-  .ci-history-notes{flex:1;font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ci-history-rating{font-size:11px;font-weight:800;background:#e9eefc;color:#5474d4;padding:3px 8px;border-radius:20px;flex-shrink:0;}
+  .ci-history-notes{flex:1;font-size:12px;color:#6a6683;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -72,6 +79,13 @@
   {% if todays_checkin %}
     <div class="ci-today-card">
       <div class="ci-today-rating">{{ todays_checkin.feeling_rating }}/5</div>
+      {% if todays_checkin.fatigue_rating or todays_checkin.sleep_quality %}
+      <p class="ci-today-notes" style="font-style:normal">
+        {% if todays_checkin.fatigue_rating %}Fatigue {{ todays_checkin.fatigue_rating }}/5{% endif %}
+        {% if todays_checkin.fatigue_rating and todays_checkin.sleep_quality %} · {% endif %}
+        {% if todays_checkin.sleep_quality %}Sleep {{ todays_checkin.sleep_quality }}/5{% endif %}
+      </p>
+      {% endif %}
       {% if todays_checkin.notes %}<p class="ci-today-notes">"{{ todays_checkin.notes }}"</p>{% endif %}
       {% if todays_checkin.ai_insight %}
       <div class="ci-insight">
@@ -96,10 +110,30 @@
       {% endfor %}
     </div>
 
+    <div class="ci-mini">
+      <label class="ci-mini-label">Fatigue / soreness <span>(optional, 1 = fresh, 5 = wrecked)</span></label>
+      <input type="hidden" name="fatigue_rating" id="fatigueRatingInput" value="{{ todays_checkin.fatigue_rating if todays_checkin and todays_checkin.fatigue_rating else '' }}">
+      <div class="ci-mini-scale" data-target="fatigueRatingInput">
+        {% for n in range(1, 6) %}
+        <div class="ci-mini-opt {{ 'selected' if todays_checkin and todays_checkin.fatigue_rating == n }}" data-val="{{ n }}">{{ n }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="ci-mini">
+      <label class="ci-mini-label">Sleep quality <span>(optional, 1 = poor, 5 = great)</span></label>
+      <input type="hidden" name="sleep_quality" id="sleepQualityInput" value="{{ todays_checkin.sleep_quality if todays_checkin and todays_checkin.sleep_quality else '' }}">
+      <div class="ci-mini-scale" data-target="sleepQualityInput">
+        {% for n in range(1, 6) %}
+        <div class="ci-mini-opt {{ 'selected' if todays_checkin and todays_checkin.sleep_quality == n }}" data-val="{{ n }}">{{ n }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
     <div class="ci-field">
       <textarea name="notes" id="notesField" placeholder="What could have gone better? How did it feel?">{{ todays_checkin.notes if todays_checkin else '' }}</textarea>
       <button type="button" class="voice-btn" data-voice-target="notesField" title="Dictate with your voice" aria-label="Voice input">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2c2942" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
       </button>
     </div>
     <p class="voice-hint">🎙️ Tap the mic to speak your notes instead of typing.</p>
@@ -125,6 +159,22 @@
       document.querySelectorAll('.ci-scale-opt').forEach(o => o.classList.remove('selected'));
       opt.classList.add('selected');
       document.getElementById('feelingRatingInput').value = opt.dataset.val;
+    });
+  });
+
+  document.querySelectorAll('.ci-mini-scale').forEach(scale => {
+    const input = document.getElementById(scale.dataset.target);
+    scale.querySelectorAll('.ci-mini-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const already = opt.classList.contains('selected');
+        scale.querySelectorAll('.ci-mini-opt').forEach(o => o.classList.remove('selected'));
+        if (!already) {
+          opt.classList.add('selected');
+          input.value = opt.dataset.val;
+        } else {
+          input.value = '';
+        }
+      });
     });
   });
 

@@ -8,31 +8,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <style>
-  body{font-family:'Schibsted Grotesk',sans-serif;background:#f7f7fa;margin:0;color:#111;}
-  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#111;color:#fff;}
+  body{font-family:'Schibsted Grotesk',sans-serif;background:#f0f4fd;margin:0;color:#2c2942;}
+  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#2c2942;color:#fff;}
   .adm-nav a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;margin-left:20px;}
   .adm-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;}
   .adm-wrap{max-width:1000px;margin:0 auto;padding:32px 20px 60px;}
   .adm-title{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;margin:0 0 20px;}
-  .adm-panel{background:#fff;border-radius:14px;border:1px solid #eee;overflow:hidden;margin-bottom:24px;}
-  .adm-panel-head{padding:16px 20px;border-bottom:1px solid #eee;font-weight:800;font-size:15px;}
+  .adm-panel{background:#fff;border-radius:14px;border:1px solid #e9edf7;overflow:hidden;margin-bottom:24px;}
+  .adm-panel-head{padding:16px 20px;border-bottom:1px solid #e9edf7;font-weight:800;font-size:15px;}
   table{width:100%;border-collapse:collapse;}
-  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:12px 20px;border-bottom:1px solid #eee;}
-  td{padding:12px 20px;border-bottom:1px solid #f2f2f4;font-size:14px;vertical-align:top;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#8b87a3;padding:12px 20px;border-bottom:1px solid #e9edf7;}
+  td{padding:12px 20px;border-bottom:1px solid #eef2fc;font-size:14px;vertical-align:top;}
   .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
-  .badge.pending{background:#fff4e0;color:#a86400;}
-  .badge.active{background:#e3f7e9;color:#1a7a3d;}
-  .btn-approve{background:#1a7a3d;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:12px;}
+  .badge.pending{background:#fbf1cf;color:#a6720a;}
+  .badge.active{background:#dff5ec;color:#1f7a5a;}
+  .btn-approve{background:#1f7a5a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:12px;}
   .btn-approve:hover{background:#145c2e;}
-  .btn-delete{background:#ff6b6b;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:12px;}
-  .btn-delete:hover{background:#d63031;}
+  .btn-delete{background:#ef7d6a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:12px;}
+  .btn-delete:hover{background:#c0503c;}
   .row-actions{display:flex;gap:8px;}
   .row-actions form{display:inline;}
-  .empty-state{text-align:center;padding:40px;color:#888;font-size:14px;}
+  .empty-state{text-align:center;padding:40px;color:#8b87a3;font-size:14px;}
   .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;}
-  .alert-success{background:#e3f7e9;color:#1a7a3d;border:1px solid #1a7a3d;}
-  .alert-error{background:#fbe9e9;color:#b23b3b;border:1px solid #b23b3b;}
-  .club-meta{font-size:11px;color:#999;margin-top:2px;}
+  .alert-success{background:#dff5ec;color:#1f7a5a;border:1px solid #1f7a5a;}
+  .alert-error{background:#fbe4df;color:#b3402c;border:1px solid #b3402c;}
+  .club-meta{font-size:11px;color:#9a96b0;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -53,7 +53,7 @@
 
 <div class="adm-wrap">
   <p class="adm-title">Clubs</p>
-  <p style="color:#777;margin-top:-14px">A coach's first club is auto-approved. Any club after that needs your sign-off before they can add squads to it.</p>
+  <p style="color:#8b87a3;margin-top:-14px">A coach's first club is auto-approved. Any club after that needs your sign-off before they can add squads to it.</p>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}

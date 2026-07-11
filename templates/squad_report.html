@@ -20,7 +20,7 @@
         <div class="rp-pb-row">{{ pb.event }} — {{ pb.time }}</div>
         {% endfor %}
       {% else %}
-        <div class="rp-pb-row" style="color:#888">No PBs logged this period.</div>
+        <div class="rp-pb-row" style="color:#8b87a3">No PBs logged this period.</div>
       {% endif %}
     </div>
     {% else %}
@@ -56,9 +56,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sets.css') }}">
 <style>
   .rp-swimmer{margin-top:14px;break-inside:avoid;}
-  .rp-swimmer-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:8px;}
+  .rp-swimmer-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #2c2942;padding-bottom:6px;margin-bottom:8px;}
   .rp-swimmer-name{font-family:'Schibsted Grotesk',sans-serif;font-size:18px;}
-  .rp-swimmer-attend{font-size:12px;font-weight:700;color:#444;}
+  .rp-swimmer-attend{font-size:12px;font-weight:700;color:#4d4966;}
   .rp-pb-row{font-size:13px;padding:3px 0;}
 </style>
 {% endblock %}

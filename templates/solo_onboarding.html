@@ -9,34 +9,50 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <style>
   .ob-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
-  .ob-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#111;text-decoration:none;}
-  .ob-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#888;text-decoration:none;}
-  .ob-nav-logout:hover{color:#111;}
-  .ob-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#111;text-decoration:none;}
+  .ob-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#2c2942;text-decoration:none;}
+  .ob-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:#8b87a3;text-decoration:none;}
+  .ob-nav-logout:hover{color:#2c2942;}
+  .ob-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:#2c2942;text-decoration:none;}
   .ob-wrap{max-width:560px;margin:0 auto;padding:16px 24px 90px;}
-  .ob-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8f8ff0;margin-bottom:8px;}
+  .ob-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6f7fe0;margin-bottom:8px;}
   .ob-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:32px;margin:0 0 8px;}
-  .ob-sub{color:#666;font-size:14px;margin:0 0 28px;line-height:1.5;}
+  .ob-sub{color:#6a6683;font-size:14px;margin:0 0 24px;line-height:1.5;}
 
   .ob-field{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
-  .ob-field label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#777;}
-  .ob-field select, .ob-field input, .ob-field textarea{padding:12px 14px;border:2.5px solid #111;border-radius:10px;font-size:14px;font-family:'Schibsted Grotesk',sans-serif;background:#fff;}
+  .ob-field label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#8b87a3;}
+  .ob-field-hint{font-size:11.5px;color:#9a96b0;margin-top:-2px;}
+  .ob-field select, .ob-field input, .ob-field textarea{padding:12px 14px;border:1px solid #e4e8f4;border-radius:10px;font-size:14px;font-family:'Schibsted Grotesk',sans-serif;background:#fff;}
   .ob-field textarea{min-height:80px;resize:vertical;}
   .ob-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 
-  .ob-btn{width:100%;padding:15px;background:#ccccff;border:2.5px solid #111;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;margin-top:6px;}
+  .ob-btn{padding:15px;background:#c8d5f6;border:1px solid #e4e8f4;border-radius:12px;font-weight:800;text-transform:uppercase;font-size:14px;cursor:pointer;}
   .ob-btn:disabled{opacity:.6;cursor:wait;}
-  .ob-btn-sub{text-align:center;font-size:12px;color:#999;margin-top:10px;}
+  .ob-btn-sub{text-align:center;font-size:12px;color:#9a96b0;margin-top:10px;}
+  .ob-btn-ghost{background:#fff;}
 
-  .ob-pro{border:2.5px solid #111;border-radius:14px;padding:16px;margin:6px 0 20px;background:#faf9ff;}
+  .ob-pro{border:1px solid #e4e8f4;border-radius:14px;padding:16px;margin:6px 0 6px;background:#f6f8fe;}
   .ob-pro-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
-  .ob-pro-badge{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#111;color:#ccccff;padding:4px 10px;border-radius:20px;}
-  .ob-pro-head span{font-size:12px;color:#666;}
-  .ob-upsell{border:2.5px dashed #ccc;border-radius:14px;padding:16px;margin:6px 0 20px;background:#fafafc;}
+  .ob-pro-badge{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#2c2942;color:#c8d5f6;padding:4px 10px;border-radius:20px;}
+  .ob-pro-head span{font-size:12px;color:#6a6683;}
+  .ob-upsell{border:2.5px dashed #d0cde0;border-radius:14px;padding:16px;margin:6px 0 6px;background:#f4f6fd;}
   .ob-upsell-title{font-weight:800;font-size:14px;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
-  .ob-lock{font-size:10px;font-weight:800;text-transform:uppercase;background:#eee;color:#888;padding:3px 8px;border-radius:20px;}
-  .ob-upsell p{font-size:13px;color:#666;margin:0 0 10px;line-height:1.5;}
-  .ob-upsell a{font-weight:800;color:#5b53d6;text-decoration:none;}
+  .ob-lock{font-size:10px;font-weight:800;text-transform:uppercase;background:#e9edf7;color:#8b87a3;padding:3px 8px;border-radius:20px;}
+  .ob-upsell p{font-size:13px;color:#6a6683;margin:0 0 10px;line-height:1.5;}
+  .ob-upsell a{font-weight:800;color:#5474d4;text-decoration:none;}
+
+  /* --- wizard chrome --- */
+  .ob-dots{display:flex;gap:6px;margin-bottom:22px;}
+  .ob-dot{flex:1;height:4px;border-radius:4px;background:#e9edf7;}
+  .ob-dot.done{background:#8fa4e8;}
+  .ob-dot.current{background:#5474d4;}
+  .ob-step{display:none;}
+  .ob-step.active{display:block;animation:obFadeIn .18s ease;}
+  @keyframes obFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .ob-step-num{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6f7fe0;margin-bottom:6px;}
+  .ob-step-q{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin:0 0 16px;}
+  .ob-wizard-nav{display:flex;gap:10px;margin-top:6px;}
+  .ob-wizard-nav .ob-btn{flex:1;}
+  .ob-skip{background:none;border:none;color:#9a96b0;font-size:12px;font-weight:700;cursor:pointer;padding:0;margin-top:8px;text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -52,8 +68,8 @@
 
 <div class="ob-wrap">
   <p class="ob-eyebrow">Solo · AI Coaching</p>
-  <h1 class="ob-h1">{{ 'Rebuild your program' if profile else "Let's build your program" }}</h1>
-  <p class="ob-sub">Answer a few questions and the AI will write a training program tailored to you — a weekly structure, a progression plan, and coaching insights specific to your answers.</p>
+  <h1 class="ob-h1">{{ 'Rebuild your program' if profile else "Let's get to know you" }}</h1>
+  <p class="ob-sub">A few quick questions and the AI will build training, nutrition and dryland guidance tailored to you specifically — not a generic plan.</p>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -63,108 +79,232 @@
     {% endif %}
   {% endwith %}
 
+  <div class="ob-dots" id="obDots"></div>
+
   <form method="POST" action="/solo/onboarding" id="onboardingForm">
-    <div class="ob-field">
-      <label>What's your level?</label>
-      <select name="level" required>
-        <option value="Beginner" {{ 'selected' if profile and profile.level=='Beginner' }}>Beginner — still building comfort and technique</option>
-        <option value="Intermediate" {{ 'selected' if profile and profile.level=='Intermediate' }}>Intermediate — solid technique, building fitness</option>
-        <option value="Advanced" {{ 'selected' if profile and profile.level=='Advanced' }}>Advanced — trains regularly, chasing times</option>
-        <option value="Competitive" {{ 'selected' if profile and profile.level=='Competitive' }}>Competitive — races and trains seriously</option>
-      </select>
-    </div>
 
-    <div class="ob-grid">
+    <div class="ob-step active" data-step>
+      <p class="ob-step-num">Level</p>
+      <h2 class="ob-step-q">What's your level?</h2>
       <div class="ob-field">
-        <label>Age</label>
-        <input type="number" name="age" min="5" max="99" value="{{ profile.age if profile else '' }}" required>
-      </div>
-      <div class="ob-field">
-        <label>Days per week</label>
-        <select name="training_days_per_week" required>
-          {% for n in range(1, 8) %}
-          <option value="{{ n }}" {{ 'selected' if profile and profile.training_days_per_week==n }}>{{ n }} day{{ 's' if n != 1 else '' }}</option>
-          {% endfor %}
+        <select name="level" required>
+          <option value="Beginner" {{ 'selected' if profile and profile.level=='Beginner' }}>Beginner — still building comfort and technique</option>
+          <option value="Intermediate" {{ 'selected' if profile and profile.level=='Intermediate' }}>Intermediate — solid technique, building fitness</option>
+          <option value="Advanced" {{ 'selected' if profile and profile.level=='Advanced' }}>Advanced — trains regularly, chasing times</option>
+          <option value="Competitive" {{ 'selected' if profile and profile.level=='Competitive' }}>Competitive — races and trains seriously</option>
         </select>
       </div>
     </div>
 
-    <div class="ob-field">
-      <label>How's your fitness right now?</label>
-      <select name="fitness_ability" required>
-        <option value="Low" {{ 'selected' if profile and profile.fitness_ability=='Low' }}>Low — coming back from a break, or just starting</option>
-        <option value="Moderate" {{ 'selected' if profile and profile.fitness_ability=='Moderate' }}>Moderate — training somewhat consistently</option>
-        <option value="Good" {{ 'selected' if profile and profile.fitness_ability=='Good' }}>Good — solid aerobic base</option>
-        <option value="High" {{ 'selected' if profile and profile.fitness_ability=='High' }}>High — very fit, high training load</option>
-      </select>
-    </div>
-
-    <div class="ob-field">
-      <label>Favourite / strongest stroke</label>
-      <select name="primary_stroke" required>
-        <option value="Freestyle" {{ 'selected' if profile and profile.primary_stroke=='Freestyle' }}>Freestyle</option>
-        <option value="Backstroke" {{ 'selected' if profile and profile.primary_stroke=='Backstroke' }}>Backstroke</option>
-        <option value="Breaststroke" {{ 'selected' if profile and profile.primary_stroke=='Breaststroke' }}>Breaststroke</option>
-        <option value="Butterfly" {{ 'selected' if profile and profile.primary_stroke=='Butterfly' }}>Butterfly</option>
-        <option value="IM" {{ 'selected' if profile and profile.primary_stroke=='IM' }}>IM / all-rounder</option>
-      </select>
-    </div>
-
-    <div class="ob-field">
-      <label>What's your main goal?</label>
-      <textarea name="main_goal" placeholder="e.g. Break 1:00 for 100m free, swim my first triathlon, just get fitter and more consistent…" required>{{ profile.main_goal if profile else '' }}</textarea>
-    </div>
-
-    {% if current_user.is_solo_pro %}
-    <div class="ob-pro">
-      <div class="ob-pro-head">
-        <span class="ob-pro-badge">Solo Pro</span>
-        <span>Tune how the AI coaches you</span>
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">The basics</p>
+      <h2 class="ob-step-q">Age & training days</h2>
+      <div class="ob-grid">
+        <div class="ob-field">
+          <label>Age</label>
+          <input type="number" name="age" min="5" max="99" value="{{ profile.age if profile else '' }}" required>
+        </div>
+        <div class="ob-field">
+          <label>Days per week</label>
+          <select name="training_days_per_week" required>
+            {% for n in range(1, 8) %}
+            <option value="{{ n }}" {{ 'selected' if profile and profile.training_days_per_week==n }}>{{ n }} day{{ 's' if n != 1 else '' }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
+    </div>
+
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">Fitness</p>
+      <h2 class="ob-step-q">How's your fitness right now?</h2>
       <div class="ob-field">
-        <label>Coaching tone</label>
-        <select name="coaching_tone">
-          <option value="encouraging" {{ 'selected' if profile and profile.coaching_tone=='encouraging' }}>Encouraging — gentle and motivating</option>
-          <option value="balanced" {{ 'selected' if not profile or profile.coaching_tone=='balanced' }}>Balanced — supportive but honest</option>
-          <option value="direct" {{ 'selected' if profile and profile.coaching_tone=='direct' }}>Direct — blunt, performance-focused</option>
-        </select>
-      </div>
-      <div class="ob-field" style="margin-bottom:0">
-        <label>Program intensity</label>
-        <select name="intensity">
-          <option value="easier" {{ 'selected' if profile and profile.intensity=='easier' }}>Easier — more recovery, less volume</option>
-          <option value="normal" {{ 'selected' if not profile or profile.intensity=='normal' }}>Normal — pitched at my level</option>
-          <option value="harder" {{ 'selected' if profile and profile.intensity=='harder' }}>Harder — push me a notch above</option>
+        <select name="fitness_ability" required>
+          <option value="Low" {{ 'selected' if profile and profile.fitness_ability=='Low' }}>Low — coming back from a break, or just starting</option>
+          <option value="Moderate" {{ 'selected' if profile and profile.fitness_ability=='Moderate' }}>Moderate — training somewhat consistently</option>
+          <option value="Good" {{ 'selected' if profile and profile.fitness_ability=='Good' }}>Good — solid aerobic base</option>
+          <option value="High" {{ 'selected' if profile and profile.fitness_ability=='High' }}>High — very fit, high training load</option>
         </select>
       </div>
     </div>
-    {% else %}
-    <div class="ob-upsell">
-      <p class="ob-upsell-title">Tune the AI <span class="ob-lock">Solo Pro</span></p>
-      <p>Choose your coaching tone (gentle → blunt) and program intensity, and regenerate anytime. Free programs use balanced, level-matched defaults.</p>
-      <a href="/solo/pro">Unlock Solo Pro →</a>
-    </div>
-    {% endif %}
 
-    {% if is_rebuild %}
-      {% if regens_left > 0 %}
-      <p class="ob-btn-sub" style="margin:0 0 8px">{{ regens_left }} of {{ regen_limit }} program rebuilds left this week.</p>
-      {% else %}
-      <p class="ob-btn-sub" style="margin:0 0 8px;color:#c0392b;font-weight:800">No rebuilds left this week — your limit resets Monday.</p>
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">Stroke</p>
+      <h2 class="ob-step-q">Favourite / strongest stroke</h2>
+      <div class="ob-field">
+        <select name="primary_stroke" required>
+          <option value="Freestyle" {{ 'selected' if profile and profile.primary_stroke=='Freestyle' }}>Freestyle</option>
+          <option value="Backstroke" {{ 'selected' if profile and profile.primary_stroke=='Backstroke' }}>Backstroke</option>
+          <option value="Breaststroke" {{ 'selected' if profile and profile.primary_stroke=='Breaststroke' }}>Breaststroke</option>
+          <option value="Butterfly" {{ 'selected' if profile and profile.primary_stroke=='Butterfly' }}>Butterfly</option>
+          <option value="IM" {{ 'selected' if profile and profile.primary_stroke=='IM' }}>IM / all-rounder</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">Swimmer type</p>
+      <h2 class="ob-step-q">What kind of swimmer are you?</h2>
+      <div class="ob-field">
+        <select name="swimmer_type" required>
+          <option value="Sprinter" {{ 'selected' if profile and profile.swimmer_type=='Sprinter' }}>Sprinter — short, fast, explosive</option>
+          <option value="Distance" {{ 'selected' if profile and profile.swimmer_type=='Distance' }}>Distance — endurance, long sets</option>
+          <option value="IM & all-rounder" {{ 'selected' if profile and profile.swimmer_type=='IM & all-rounder' }}>IM & all-rounder — a bit of everything</option>
+          <option value="Technique-focused" {{ 'selected' if profile and profile.swimmer_type=='Technique-focused' }}>Technique-focused — fixing form over chasing volume</option>
+          <option value="Fitness & health" {{ 'selected' if profile and profile.swimmer_type=='Fitness & health' }}>Fitness & health — swimming to stay fit, not to race</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">Goal</p>
+      <h2 class="ob-step-q">What's your main goal?</h2>
+      <div class="ob-field">
+        <textarea name="main_goal" placeholder="e.g. Break 1:00 for 100m free, swim my first triathlon, just get fitter and more consistent…" required>{{ profile.main_goal if profile else '' }}</textarea>
+      </div>
+    </div>
+
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">Coaching</p>
+      <h2 class="ob-step-q">Are you coached anywhere else?</h2>
+      <div class="ob-field">
+        <select name="coaching_situation" id="coachingSituation">
+          <option value="none" {{ 'selected' if not profile or profile.coaching_situation=='none' }}>Not coached — I'm on my own</option>
+          <option value="club_want_extra" {{ 'selected' if profile and profile.coaching_situation=='club_want_extra' }}>Club-coached — want an extra edge on top</option>
+          <option value="club_want_structure" {{ 'selected' if profile and profile.coaching_situation=='club_want_structure' }}>Coached — want structure for rest/extra days</option>
+          <option value="self_coached" {{ 'selected' if profile and profile.coaching_situation=='self_coached' }}>Fully self-coached, no other coach involved</option>
+        </select>
+      </div>
+      <div class="ob-field" id="coachingFocusField" style="display:none">
+        <label>What are you working on with them?</label>
+        <textarea name="coaching_focus" placeholder="e.g. Technique on my breaststroke pull, building race pace…">{{ profile.coaching_focus if profile and profile.coaching_focus }}</textarea>
+      </div>
+    </div>
+
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">Nutrition</p>
+      <h2 class="ob-step-q">How's your eating around training?</h2>
+      <div class="ob-field">
+        <select name="eating_habits" required>
+          <option value="balanced" {{ 'selected' if not profile or profile.eating_habits=='balanced' }}>Pretty balanced already</option>
+          <option value="undereating" {{ 'selected' if profile and profile.eating_habits=='undereating' }}>I struggle to eat enough, especially around training</option>
+          <option value="skip_meals" {{ 'selected' if profile and profile.eating_habits=='skip_meals' }}>I skip meals / eat on the run often</option>
+          <option value="structured" {{ 'selected' if profile and profile.eating_habits=='structured' }}>I already follow a fairly structured diet</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">Limitations <span style="text-transform:none;font-weight:600;color:#b3aec7">(optional)</span></p>
+      <h2 class="ob-step-q">Any injuries or limitations?</h2>
+      <div class="ob-field">
+        <textarea name="limitations" placeholder="e.g. Sore left shoulder, avoid heavy overhead work — leave blank if none">{{ profile.limitations if profile and profile.limitations }}</textarea>
+        <p class="ob-field-hint">The AI will steer dryland work away from anything you flag here.</p>
+      </div>
+    </div>
+
+    <div class="ob-step" data-step>
+      <p class="ob-step-num">Last step</p>
+      <h2 class="ob-step-q">Tune how the AI coaches you</h2>
+      <div class="ob-pro">
+        <div class="ob-field">
+          <label>Coaching tone</label>
+          <select name="coaching_tone">
+            <option value="encouraging" {{ 'selected' if profile and profile.coaching_tone=='encouraging' }}>Encouraging — gentle and motivating</option>
+            <option value="balanced" {{ 'selected' if not profile or profile.coaching_tone=='balanced' }}>Balanced — supportive but honest</option>
+            <option value="direct" {{ 'selected' if profile and profile.coaching_tone=='direct' }}>Direct — blunt, performance-focused</option>
+          </select>
+        </div>
+        <div class="ob-field" style="margin-bottom:0">
+          <label>Program intensity</label>
+          <select name="intensity">
+            <option value="easier" {{ 'selected' if profile and profile.intensity=='easier' }}>Easier — more recovery, less volume</option>
+            <option value="normal" {{ 'selected' if not profile or profile.intensity=='normal' }}>Normal — pitched at my level</option>
+            <option value="harder" {{ 'selected' if profile and profile.intensity=='harder' }}>Harder — push me a notch above</option>
+          </select>
+        </div>
+      </div>
+
+      {% if is_rebuild %}
+        {% if regens_left > 0 %}
+        <p class="ob-btn-sub" style="margin:0 0 8px">{{ regens_left }} of {{ regen_limit }} program rebuilds left this week.</p>
+        {% else %}
+        <p class="ob-btn-sub" style="margin:0 0 8px;color:#b3402c;font-weight:800">No rebuilds left this week — your limit resets Monday.</p>
+        {% endif %}
       {% endif %}
-    {% endif %}
-    <button type="submit" class="ob-btn" id="onboardingSubmit" {{ 'disabled' if is_rebuild and regens_left == 0 }}>{{ 'Generate my program' if not is_rebuild else 'Rebuild my program' }}</button>
+    </div>
+
+    <div class="ob-wizard-nav">
+      <button type="button" class="ob-btn ob-btn-ghost" id="obBack">Back</button>
+      <button type="button" class="ob-btn" id="obNext">Next</button>
+      <button type="submit" class="ob-btn" id="onboardingSubmit" style="display:none" {{ 'disabled' if is_rebuild and regens_left == 0 }}>{{ 'Generate my program' if not is_rebuild else 'Rebuild my program' }}</button>
+    </div>
     <p class="ob-btn-sub" id="onboardingStatus"></p>
   </form>
 </div>
 
 <script>
+(function(){
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.ob-step'));
+  var dotsWrap = document.getElementById('obDots');
+  var backBtn = document.getElementById('obBack');
+  var nextBtn = document.getElementById('obNext');
+  var submitBtn = document.getElementById('onboardingSubmit');
+  var current = 0;
+
+  steps.forEach(function(_, i){
+    var d = document.createElement('div');
+    d.className = 'ob-dot';
+    dotsWrap.appendChild(d);
+  });
+
+  function render(){
+    steps.forEach(function(s, i){ s.classList.toggle('active', i === current); });
+    var dots = dotsWrap.children;
+    for (var i = 0; i < dots.length; i++){
+      dots[i].className = 'ob-dot' + (i < current ? ' done' : i === current ? ' current' : '');
+    }
+    backBtn.style.visibility = current === 0 ? 'hidden' : 'visible';
+    var last = current === steps.length - 1;
+    nextBtn.style.display = last ? 'none' : '';
+    submitBtn.style.display = last ? '' : 'none';
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function currentStepValid(){
+    var inputs = steps[current].querySelectorAll('input, select, textarea');
+    for (var i = 0; i < inputs.length; i++){
+      var el = inputs[i];
+      if (el.offsetParent === null) continue; // hidden (e.g. conditional coaching_focus)
+      if (!el.checkValidity()){ el.reportValidity(); return false; }
+    }
+    return true;
+  }
+
+  nextBtn.addEventListener('click', function(){
+    if (!currentStepValid()) return;
+    if (current < steps.length - 1){ current++; render(); }
+  });
+  backBtn.addEventListener('click', function(){
+    if (current > 0){ current--; render(); }
+  });
+
+  var coachingSelect = document.getElementById('coachingSituation');
+  var coachingFocusField = document.getElementById('coachingFocusField');
+  function syncCoachingFocus(){
+    coachingFocusField.style.display = coachingSelect.value === 'none' ? 'none' : '';
+  }
+  coachingSelect.addEventListener('change', syncCoachingFocus);
+  syncCoachingFocus();
+
+  render();
+
   document.getElementById('onboardingForm').addEventListener('submit', function(){
-    const btn = document.getElementById('onboardingSubmit');
-    btn.disabled = true;
-    btn.textContent = 'Building your program…';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Building your program…';
     document.getElementById('onboardingStatus').textContent = 'This takes a few seconds — the AI is writing it just for you.';
   });
+})();
 </script>
 
 </body>

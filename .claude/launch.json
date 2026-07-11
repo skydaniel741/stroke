@@ -7,6 +7,13 @@
       "runtimeArgs": ["app.py"],
       "port": 5000,
       "autoPort": false
+    },
+    {
+      "name": "flask-preview",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["preview_app.py"],
+      "port": 5001,
+      "autoPort": false
     }
   ]
 }

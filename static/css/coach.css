@@ -6,7 +6,7 @@
 .coach-shell {
   display: flex;
   min-height: 100vh;
-  background: #fafafd;
+  background: #f4f6fd;
 }
 
 /* ---------- MOBILE TOPBAR ---------- */
@@ -17,14 +17,14 @@
 .coach-menu-btn {
   width: 38px;
   height: 38px;
-  border: 2.5px solid #111111;
+  border: 1px solid #e4e8f4;
   border-radius: 10px;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #111111;
+  color: #2c2942;
   flex-shrink: 0;
 }
 
@@ -32,11 +32,11 @@
   font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 20px;
   letter-spacing: -0.01em;
-  color: #111111;
+  color: #2c2942;
 }
 
 .coach-topbar-logo span {
-  color: #8f8ff0;
+  color: #6f7fe0;
 }
 
 .coach-sidebar-backdrop {
@@ -47,7 +47,7 @@
 .coach-sidebar {
   width: 264px;
   flex-shrink: 0;
-  background: #111111;
+  background: #2c2942;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -60,7 +60,7 @@
 
 .coach-sidebar-head {
   padding: 26px 22px 20px;
-  border-bottom: 2px solid #2a2a2a;
+  border-bottom: 2px solid #37344c;
 }
 
 .coach-logo {
@@ -68,7 +68,7 @@
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #ccccff;
+  color: #c8d5f6;
   text-decoration: none;
   display: block;
 }
@@ -79,7 +79,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #777777;
+  color: #8b87a3;
   margin-top: 4px;
 }
 
@@ -99,7 +99,7 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #666666;
+  color: #6a6683;
   margin: 0;
 }
 
@@ -133,7 +133,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #555;
+  background: #595571;
   flex-shrink: 0;
   margin-left: 3px;
   transition: background 0.15s;
@@ -151,18 +151,18 @@
 }
 
 .coach-nav-link.active {
-  background: #ccccff;
-  color: #111111;
+  background: #c8d5f6;
+  color: #2c2942;
 }
 
 .coach-nav-link.active .coach-nav-dot {
-  background: #111111;
+  background: #2c2942;
 }
 
 .coach-subnav {
   margin: 2px 0 10px 25px;
   padding-left: 12px;
-  border-left: 2px solid #2a2a2a;
+  border-left: 2px solid #37344c;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -173,7 +173,7 @@
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #999999;
+  color: #9a96b0;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
@@ -184,12 +184,12 @@
 
 .coach-subnav-link.active {
   background: #2a2a38;
-  color: #ccccff;
+  color: #c8d5f6;
 }
 
 .coach-sidebar-foot {
   padding: 16px;
-  border-top: 2px solid #2a2a2a;
+  border-top: 2px solid #37344c;
 }
 
 .coach-user {
@@ -203,8 +203,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #ccccff;
-  color: #111111;
+  background: #c8d5f6;
+  color: #2c2942;
   font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 16px;
   font-weight: 700;
@@ -232,7 +232,7 @@
 .coach-user-tag {
   font-size: 10px;
   font-weight: 700;
-  color: #8f8ff0;
+  color: #6f7fe0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -243,7 +243,7 @@
   gap: 8px;
   font-size: 12px;
   font-weight: 700;
-  color: #999999;
+  color: #9a96b0;
   text-decoration: none;
   padding: 8px 4px;
   transition: color 0.15s;
@@ -264,7 +264,7 @@
 }
 
 .coach-logout-link:hover {
-  color: #ff6b6b;
+  color: #ef7d6a;
 }
 
 /* ---------- MAIN AREA ---------- */
@@ -289,7 +289,7 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #8f8ff0;
+  color: #6f7fe0;
   margin: 0 0 6px;
 }
 
@@ -298,13 +298,13 @@
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #111111;
+  color: #2c2942;
   margin: 0;
 }
 
 .coach-header-sub {
   font-size: 13px;
-  color: #666666;
+  color: #6a6683;
   margin: 6px 0 0;
 }
 
@@ -328,10 +328,10 @@
   align-items: center;
   gap: 8px;
   padding: 11px 18px;
-  border: 2.5px solid #111111;
+  border: 1px solid #e4e8f4;
   border-radius: 10px;
   background: #ffffff;
-  color: #111111;
+  color: #2c2942;
   font-size: 12.5px;
   font-weight: 800;
   text-transform: uppercase;
@@ -342,12 +342,12 @@
 }
 
 .coach-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 3px 3px 0 #111111;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(58,66,120,.10);
 }
 
 .coach-btn-primary {
-  background: #ccccff;
+  background: #c8d5f6;
 }
 
 .coach-card-link {
@@ -355,19 +355,19 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  border: 2.5px solid #111111;
+  border: 1px solid #e4e8f4;
   border-radius: 16px;
   padding: 18px 20px;
   margin-bottom: 12px;
   text-decoration: none;
-  color: #111111;
+  color: #2c2942;
   background: #ffffff;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .coach-card-link:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 4px 4px 0 #111111;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(58,66,120,.10);
 }
 
 .coach-card-name {
@@ -377,7 +377,7 @@
 
 .coach-card-meta {
   font-size: 12px;
-  color: #777777;
+  color: #8b87a3;
   margin-top: 4px;
 }
 
@@ -394,7 +394,7 @@
     gap: 14px;
     padding: 14px 18px;
     background: #ffffff;
-    border-bottom: 3px solid #111111;
+    border-bottom: 1px solid #e4e8f4;
     position: sticky;
     top: 0;
     z-index: 500;

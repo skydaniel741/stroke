@@ -27,8 +27,11 @@ def _find_category(slug=None, key=None):
 
 STROKE_LABELS = {
     'FR': 'Freestyle', 'BK': 'Backstroke', 'BR': 'Breaststroke', 'FL': 'Butterfly',
-    'IM': 'IM', 'Kick': 'Kick', 'Pull': 'Pull', 'Drill': 'Drill',
+    'IM': 'IM', 'Kick': 'Kick', 'Pull': 'Pull', 'Drill': 'Drill', 'Snorkel': 'Snorkel',
 }
+
+DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Technical']
+DISTANCE_FOCUS = ['Short', 'Middle', 'Long', 'All']
 
 @main.route('/')
 def home():
@@ -149,6 +152,8 @@ def login():
             login_user(user)
             if user.is_admin:
                 return redirect(url_for('main.admin_dashboard'))
+            if user.role == 'coach':
+                return redirect(url_for('coach.coach_dashboard'))
             return redirect(url_for('main.dashboard'))
         else:
             flash('Incorrect email or password.', 'error')
@@ -234,6 +239,8 @@ def oauth_callback(provider):
     login_user(user)
     if user.is_admin:
         return redirect(url_for('main.admin_dashboard'))
+    if user.role == 'coach':
+        return redirect(url_for('coach.coach_dashboard'))
     return redirect(url_for('main.dashboard'))
 
 
@@ -250,10 +257,22 @@ def dashboard():
     from models import Swim, Session, Announcement, SquadMembership, AthleteProfile, SquadEvent, Squad
     from datetime import timedelta
 
+    # Coaches live on the coach side — keep coach accounts there (admins keep full access).
+    if current_user.role == 'coach' and not current_user.is_admin:
+        return redirect(url_for('coach.coach_dashboard'))
+
     needs_ai_onboarding = False
+    todays_program = None
     if current_user.is_solo:
-        has_profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
-        needs_ai_onboarding = has_profile is None
+        solo_profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+        needs_ai_onboarding = solo_profile is None
+        # Today's session from the AI program, matched to the weekday.
+        if solo_profile and solo_profile.program_json:
+            program = solo_profile.get_program()
+            today_name = datetime.utcnow().strftime('%A')
+            todays_program = next(
+                (d for d in program.get('days', []) if d.get('day') == today_name), None
+            )
 
     site_announcement = (
         db.session.query(Announcement)
@@ -434,6 +453,8 @@ def dashboard():
         pool_split_25=pool_split_25,
         pool_split_50=pool_split_50,
         needs_ai_onboarding=needs_ai_onboarding,
+        todays_program=todays_program,
+        todays_program_weekday=datetime.utcnow().strftime('%A'),
         todays_squad_sessions=todays_squad_sessions,
         upcoming_squad_sessions=upcoming_squad_sessions,
         squad_names=squad_names,
@@ -531,13 +552,20 @@ def log():
     )
 
 
+def _library_sets_query(db):
+    """Public Set Library only shows admin-curated sets, not other users'
+    private (e.g. coach AI-generated) SavedSet rows."""
+    from models import SavedSet, User
+    admin_ids = [u.id for u in db.session.query(User.id).filter_by(is_admin=True).all()]
+    return db.session.query(SavedSet).filter(SavedSet.created_by.in_(admin_ids))
+
+
 @main.route('/sets')
 @login_required
 def sets_library():
     from app import db
-    from models import SavedSet
 
-    saved_sets = db.session.query(SavedSet).all()
+    saved_sets = _library_sets_query(db).all()
     categories = []
     for c in SET_CATEGORIES:
         count = sum(1 for s in saved_sets if (s.category or 'Fitness') == c['key'])
@@ -557,13 +585,26 @@ def sets_category(slug):
     if not category:
         abort(404)
 
-    sets = (
-        db.session.query(SavedSet)
-        .filter_by(category=category['key'])
+    all_sets = (
+        _library_sets_query(db)
+        .filter(SavedSet.category == category['key'])
         .order_by(SavedSet.created_at.desc())
         .all()
     )
-    return render_template('sets_category.html', category=category, sets=sets)
+
+    difficulty = request.args.get('difficulty') or ''
+    distance = request.args.get('distance') or ''
+    sets = all_sets
+    if difficulty in DIFFICULTIES:
+        sets = [s for s in sets if (s.difficulty or 'Medium') == difficulty]
+    if distance in DISTANCE_FOCUS:
+        sets = [s for s in sets if (s.distance_focus or 'All') in (distance, 'All')]
+
+    return render_template(
+        'sets_category.html', category=category, sets=sets[:50], total_count=len(all_sets),
+        difficulties=DIFFICULTIES, distances=DISTANCE_FOCUS,
+        active_difficulty=difficulty, active_distance=distance,
+    )
 
 
 @main.route('/sets/view/<int:set_id>')
@@ -574,7 +615,7 @@ def sets_view(set_id):
     from models import SavedSet
     from flask import abort
 
-    s = db.session.query(SavedSet).get(set_id)
+    s = _library_sets_query(db).filter(SavedSet.id == set_id).first()
     if not s:
         abort(404)
 
@@ -583,6 +624,14 @@ def sets_view(set_id):
         blocks = json.loads(s.sets_data or '[]')
     except ValueError:
         blocks = []
+
+    # Older sets stored before rest_type existed don't have it -- fall back to
+    # the same heuristic used for freshly-parsed AI blocks: a repeat set
+    # (reps > 1) is almost always written as a send-off/interval, a single
+    # rep is more likely genuine rest before the next block.
+    for b in blocks:
+        if b.get('rest_type') not in ('interval', 'rest'):
+            b['rest_type'] = 'interval' if int(b.get('reps') or 0) > 1 else 'rest'
 
     # Group blocks into workout sections in canonical order. Older sets
     # without a section field all land in "Main set".
@@ -604,6 +653,7 @@ def sets_view(set_id):
     )
 
 
+
 @main.route('/sets/create', methods=['POST'])
 @login_required
 def sets_create():
@@ -615,6 +665,8 @@ def sets_create():
     session_type = request.form.get('session_type', 'Training')
     sets_data = request.form.get('sets_data', '[]')
     category = request.form.get('category', 'Fitness')
+    difficulty = request.form.get('difficulty') if request.form.get('difficulty') in DIFFICULTIES else 'Medium'
+    distance_focus = request.form.get('distance_focus') if request.form.get('distance_focus') in DISTANCE_FOCUS else 'All'
     description = (request.form.get('description') or '').strip()
 
     if not name:
@@ -626,6 +678,8 @@ def sets_create():
         session_type=session_type,
         sets_data=sets_data,
         category=category,
+        difficulty=difficulty,
+        distance_focus=distance_focus,
         description=description,
         created_by=current_user.id
     )
@@ -872,6 +926,14 @@ def personal_bests():
             })
     prediction_rows.sort(key=lambda r: r['event'])
 
+    from models import AthleteProfile
+    progress_profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+    analysis_wait_hours = None
+    if progress_profile and progress_profile.progress_insight_at:
+        elapsed = datetime.utcnow() - progress_profile.progress_insight_at
+        if elapsed < timedelta(hours=24):
+            analysis_wait_hours = round((timedelta(hours=24) - elapsed).total_seconds() / 3600, 1)
+
     return render_template(
         'personal_bests.html',
         pb_rows=pb_rows,
@@ -881,7 +943,169 @@ def personal_bests():
         tag_filter=tag_filter,
         trend_rows=trend_rows,
         prediction_rows=prediction_rows,
+        progress_profile=progress_profile,
+        analysis_wait_hours=analysis_wait_hours,
     )
+
+
+def _build_progression_digest(user_id):
+    """Deterministic per-swimmer progression profile: rolling-window time
+    trends, PB recency, training load, squad attendance and check-in
+    correlation. Returns (has_data, digest_text) -- digest_text is plain
+    text meant to be handed to ai_utils.generate_progress_insight, not
+    rendered directly. All numbers here are plain math, no AI."""
+    from app import db
+    from models import Swim, Session, CheckIn, AttendanceRecord
+    import statistics
+
+    now = datetime.utcnow()
+    cutoff_recent = now - timedelta(weeks=8)
+    cutoff_prior = now - timedelta(weeks=16)
+
+    def _fmt_secs(secs):
+        if secs >= 60:
+            return f'{int(secs // 60)}:{secs % 60:05.2f}'
+        return f'{secs:.2f}'
+
+    swims = db.session.query(Swim).filter_by(user_id=user_id).order_by(Swim.logged_at.asc()).all()
+
+    by_event = {}
+    for s in swims:
+        secs = s.time_in_seconds()
+        if secs is not None:
+            by_event.setdefault(s.event, []).append((s.logged_at, secs))
+
+    trend_lines = []
+    for event, entries in by_event.items():
+        recent = [secs for dt, secs in entries if dt >= cutoff_recent]
+        prior = [secs for dt, secs in entries if cutoff_prior <= dt < cutoff_recent]
+        window_note = ""
+        if len(recent) < 2 or len(prior) < 2:
+            # Not enough calendar spread yet (new accounts, or history under 16
+            # weeks) -- fall back to a plain count-based split, same approach as
+            # the on-page Training trends table, so newer swimmers still get a
+            # read rather than "not enough data" for months.
+            times_only = [secs for _, secs in entries]
+            if len(times_only) < 4:
+                continue
+            half = len(times_only) // 2
+            prior, recent = times_only[:half], times_only[half:]
+            window_note = ", count-based split (not enough calendar spread yet for the 8-week window)"
+        recent_avg = sum(recent) / len(recent)
+        prior_avg = sum(prior) / len(prior)
+        change_pct = (recent_avg - prior_avg) / prior_avg * 100
+        direction = 'improving' if change_pct < -0.4 else 'slipping' if change_pct > 0.4 else 'steady'
+        consistency = statistics.pstdev(recent) if len(recent) > 1 else 0.0
+        trend_lines.append(
+            f"{event}: {direction} ({abs(round(change_pct, 1))}% vs prior period{window_note}), "
+            f"recent avg {_fmt_secs(recent_avg)} (n={len(recent)}), consistency ±{consistency:.2f}s"
+        )
+
+    best_by_event = {}
+    for s in swims:
+        secs = s.time_in_seconds()
+        if secs is None:
+            continue
+        cur = best_by_event.get(s.event)
+        if cur is None or secs < cur[1]:
+            best_by_event[s.event] = (s.logged_at, secs)
+    pb_lines = [
+        f"{event}: PB {_fmt_secs(secs)} set {(now - dt).days}d ago"
+        for event, (dt, secs) in best_by_event.items()
+    ]
+
+    sessions = db.session.query(Session).filter_by(user_id=user_id).all()
+    recent_sessions = [s for s in sessions if s.logged_at >= cutoff_recent]
+    prior_sessions = [s for s in sessions if cutoff_prior <= s.logged_at < cutoff_recent]
+    load_line = (
+        f"Training load: {len(recent_sessions)} sessions / {sum(s.total_distance() for s in recent_sessions)}m "
+        f"in the last 8 weeks vs {len(prior_sessions)} sessions / {sum(s.total_distance() for s in prior_sessions)}m "
+        f"the 8 weeks before that."
+    )
+
+    attendance_recent = (
+        db.session.query(AttendanceRecord)
+        .filter(AttendanceRecord.swimmer_id == user_id, AttendanceRecord.session_date >= cutoff_recent.date())
+        .all()
+    )
+    attendance_line = None
+    if attendance_recent:
+        present = sum(1 for a in attendance_recent if a.status in ('present', 'late'))
+        attendance_line = f"Squad attendance: {present}/{len(attendance_recent)} marked sessions in last 8 weeks."
+
+    checkins = (
+        db.session.query(CheckIn)
+        .filter(CheckIn.user_id == user_id, CheckIn.checkin_date >= cutoff_recent.date())
+        .all()
+    )
+    checkin_line = None
+    if checkins:
+        feelings = [c.feeling_rating for c in checkins if c.feeling_rating]
+        fatigues = [c.fatigue_rating for c in checkins if c.fatigue_rating]
+        sleeps = [c.sleep_quality for c in checkins if c.sleep_quality]
+        parts = []
+        if feelings:
+            parts.append(f"avg feeling {sum(feelings) / len(feelings):.1f}/5")
+        if fatigues:
+            parts.append(f"avg fatigue {sum(fatigues) / len(fatigues):.1f}/5")
+        if sleeps:
+            parts.append(f"avg sleep {sum(sleeps) / len(sleeps):.1f}/5")
+        if parts:
+            checkin_line = f"Check-ins (last 8 weeks, n={len(checkins)}): " + ", ".join(parts)
+
+    lines = []
+    if trend_lines:
+        lines.append("Per-event time trends:\n" + "\n".join(f"- {l}" for l in trend_lines))
+    if pb_lines:
+        lines.append("PB recency:\n" + "\n".join(f"- {l}" for l in pb_lines))
+    lines.append(load_line)
+    if attendance_line:
+        lines.append(attendance_line)
+    if checkin_line:
+        lines.append(checkin_line)
+
+    has_data = bool(trend_lines)
+    return has_data, "\n\n".join(lines)
+
+
+@main.route('/personal-bests/analyze', methods=['POST'])
+@login_required
+def personal_bests_analyze():
+    from flask import current_app
+    from app import db
+    from models import AthleteProfile
+    from ai_utils import generate_progress_insight
+
+    if not current_app.config.get('ANTHROPIC_API_KEY'):
+        flash("AI analysis isn't set up yet.", 'error')
+        return redirect(url_for('main.personal_bests'))
+
+    profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+    if profile and profile.progress_insight_at and datetime.utcnow() - profile.progress_insight_at < timedelta(hours=24):
+        flash("You've already got a fresh analysis — check back later for an update.", 'error')
+        return redirect(url_for('main.personal_bests'))
+
+    has_data, digest = _build_progression_digest(current_user.id)
+    if not has_data:
+        flash("Not enough repeated timed swims yet — log a few more of the same event to unlock an AI analysis.", 'error')
+        return redirect(url_for('main.personal_bests'))
+
+    tone = profile.coaching_tone if profile else 'encouraging'
+    result = generate_progress_insight(
+        digest, current_app.config['ANTHROPIC_API_KEY'], current_app.config['ANTHROPIC_MODEL'], tone=tone,
+    )
+    if not result.get('ok'):
+        flash(result.get('error', "Couldn't generate an analysis — try again."), 'error')
+        return redirect(url_for('main.personal_bests'))
+
+    if not profile:
+        profile = AthleteProfile(user_id=current_user.id)
+        db.session.add(profile)
+    profile.progress_insight = json.dumps(result['insight'])
+    profile.progress_insight_at = datetime.utcnow()
+    db.session.commit()
+    flash('Your progression analysis is ready.', 'success')
+    return redirect(url_for('main.personal_bests'))
 
 
 @main.route('/personal-bests/export.csv')
@@ -1087,12 +1311,17 @@ def admin_dashboard():
 
     q = request.args.get('q', '').strip().lower()
     plan_filter = request.args.get('plan', '')
+    role_filter = request.args.get('role', '')
     users_query = db.session.query(User).order_by(User.created_at.desc()).all()
     users = users_query
     if q:
         users = [u for u in users if q in u.username.lower() or q in u.email.lower()]
     if plan_filter:
         users = [u for u in users if u.plan == plan_filter]
+    if role_filter:
+        users = [u for u in users if u.role == role_filter]
+
+    total_coaches = sum(1 for u in users_query if u.role == 'coach')
 
     # --- signups per week, last 8 weeks, for the admin activity chart ---
     now = datetime.utcnow()
@@ -1124,6 +1353,8 @@ def admin_dashboard():
         users=users,
         q=q,
         plan_filter=plan_filter,
+        role_filter=role_filter,
+        total_coaches=total_coaches,
         weekly_signups=weekly_signups,
         max_week_signups=max_week_signups,
         site_announcement=site_announcement,
@@ -1390,6 +1621,8 @@ def admin_sets_create():
     session_type = request.form.get('session_type', 'Training')
     sets_data = request.form.get('sets_data', '[]')
     category = request.form.get('category', 'Fitness')
+    difficulty = request.form.get('difficulty') if request.form.get('difficulty') in DIFFICULTIES else 'Medium'
+    distance_focus = request.form.get('distance_focus') if request.form.get('distance_focus') in DISTANCE_FOCUS else 'All'
     description = request.form.get('description', '').strip()
 
     if not name:
@@ -1402,6 +1635,8 @@ def admin_sets_create():
         session_type=session_type,
         sets_data=sets_data,
         category=category,
+        difficulty=difficulty,
+        distance_focus=distance_focus,
         description=description,
         created_by=current_user.id
     )

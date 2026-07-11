@@ -11,7 +11,7 @@
   padding:0 20px;
   height:56px;
   background:#fff;
-  border-bottom:3px solid #ccccff;
+  border-bottom:1.5px solid #c8d5f6;
   position:sticky;
   top:0;
   z-index:100;
@@ -22,7 +22,7 @@
   font-weight:800;
   text-transform:uppercase;
   letter-spacing:.05em;
-  color:#111;
+  color:#2c2942;
   text-decoration:none;
   display:flex;
   align-items:center;
@@ -34,14 +34,26 @@
   font-size:22px;
   font-weight:700;
   letter-spacing:-0.01em;
-  color:#111;
+  color:#2c2942;
   text-decoration:none;
 }
 
 .wa-wrap{
-  max-width:640px;
+  max-width:1060px;
   margin:0 auto;
   padding:32px 20px 60px;
+}
+
+/* two calculators side by side on desktop, stacked on phone */
+.wa-cols{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:36px;
+  align-items:start;
+}
+.wa-col{ min-width:0; }
+@media(max-width:820px){
+  .wa-cols{ grid-template-columns:1fr; gap:8px; }
 }
 
 .wa-title{
@@ -49,14 +61,14 @@
   font-size:34px;
   font-weight:700;
   letter-spacing:-0.01em;
-  color:#111;
+  color:#2c2942;
   margin-bottom:4px;
 }
 
 .wa-sub{
   font-size:14px;
   font-weight:600;
-  color:#777;
+  color:#8b87a3;
   margin-bottom:24px;
 }
 
@@ -69,7 +81,7 @@
 .wa-toggle-btn{
   flex:1;
   padding:12px 10px;
-  border:2.5px solid #111;
+  border:1px solid #e4e8f4;
   border-radius:10px;
   background:#fff;
   font-family:'Schibsted Grotesk',sans-serif;
@@ -77,30 +89,30 @@
   font-size:13px;
   text-transform:uppercase;
   letter-spacing:.03em;
-  color:#111;
+  color:#2c2942;
   cursor:pointer;
   transition:all .15s;
 }
 
 .wa-toggle-btn.active{
-  background:#ccccff;
-  box-shadow:3px 3px 0 #111;
+  background:#c8d5f6;
+  box-shadow:0 10px 26px rgba(58,66,120,.10);
 }
 
 .wa-card{
   background:#fff;
-  border:3px solid #111;
+  border:1px solid #e4e8f4;
   border-radius:16px;
   padding:22px;
   margin-bottom:16px;
-  box-shadow:5px 5px 0 #ccccff;
+  box-shadow:0 10px 26px rgba(58,66,120,.10);
 }
 
 .wa-field-label{
   font-size:11px;
   text-transform:uppercase;
   letter-spacing:.06em;
-  color:#555;
+  color:#595571;
   font-weight:800;
   margin-bottom:8px;
   display:block;
@@ -110,12 +122,12 @@
   width:100%;
   padding:13px 14px;
   border-radius:10px;
-  border:2px solid #111;
+  border:2px solid #2c2942;
   font-size:15px;
   font-weight:600;
   font-family:'Schibsted Grotesk',sans-serif;
   background:#fff;
-  color:#111;
+  color:#2c2942;
   margin-bottom:16px;
 }
 
@@ -130,12 +142,12 @@
   width:100%;
   padding:13px;
   border-radius:10px;
-  border:2px solid #111;
+  border:2px solid #2c2942;
   font-size:20px;
   text-align:center;
   font-weight:700;
   font-family:'Schibsted Grotesk',sans-serif;
-  color:#111;
+  color:#2c2942;
 }
 
 .wa-time-sep{
@@ -143,26 +155,26 @@
   align-items:center;
   font-size:20px;
   font-weight:800;
-  color:#111;
+  color:#2c2942;
 }
 
 .wa-points-input{
   width:100%;
   padding:16px;
   border-radius:10px;
-  border:2px solid #111;
+  border:2px solid #2c2942;
   font-size:24px;
   text-align:center;
   font-weight:800;
   font-family:'Schibsted Grotesk',sans-serif;
-  color:#111;
+  color:#2c2942;
   margin-bottom:6px;
 }
 
 .wa-result{
-  background:#111;
+  background:#2c2942;
   color:#fff;
-  border:3px solid #111;
+  border:1px solid #e4e8f4;
   border-radius:16px;
   padding:28px 24px;
   text-align:center;
@@ -173,12 +185,12 @@
   font-family:'Schibsted Grotesk',sans-serif;
   font-size:56px;
   line-height:1;
-  color:#ccccff;
+  color:#c8d5f6;
 }
 
 .wa-result-label{
   font-size:12px;
-  color:#ccc;
+  color:#d0cde0;
   margin-top:8px;
   text-transform:uppercase;
   letter-spacing:.08em;
@@ -187,18 +199,18 @@
 
 .wa-result-sub{
   font-size:13px;
-  color:#999;
+  color:#9a96b0;
   margin-top:14px;
 }
 
 /* ---------- WORLD RECORD CARD ---------- */
 .wr-card{
-  background:#f7f7ff;
-  border:3px solid #111;
+  background:#f0f4fd;
+  border:1px solid #e4e8f4;
   border-radius:16px;
   padding:24px;
   margin-bottom:16px;
-  box-shadow:5px 5px 0 #111;
+  box-shadow:0 10px 26px rgba(58,66,120,.10);
 }
 
 .wr-label{
@@ -206,7 +218,7 @@
   font-weight:800;
   letter-spacing:.1em;
   text-transform:uppercase;
-  color:#8f8ff0;
+  color:#6f7fe0;
   margin-bottom:14px;
 }
 
@@ -214,14 +226,14 @@
   font-family:'Schibsted Grotesk',sans-serif;
   font-size:28px;
   font-weight:700;
-  color:#111;
+  color:#2c2942;
   line-height:1.05;
 }
 
 .wr-country{
   font-size:13px;
   font-weight:700;
-  color:#555;
+  color:#595571;
   margin-top:4px;
 }
 
@@ -229,14 +241,14 @@
   font-family:'Schibsted Grotesk',sans-serif;
   font-size:40px;
   font-weight:700;
-  color:#111;
+  color:#2c2942;
   margin-top:14px;
 }
 
 .wr-meta{
   font-size:12.5px;
   font-weight:600;
-  color:#777;
+  color:#8b87a3;
   margin-top:6px;
   line-height:1.6;
 }
@@ -247,9 +259,9 @@
   gap:8px;
   margin-top:18px;
   padding:12px 20px;
-  background:#111;
-  color:#ccccff;
-  border:2.5px solid #111;
+  background:#2c2942;
+  color:#c8d5f6;
+  border:1px solid #e4e8f4;
   border-radius:10px;
   font-size:12px;
   font-weight:800;
@@ -260,20 +272,20 @@
 }
 
 .wr-video-btn:hover{
-  background:#292929;
+  background:#37344c;
 }
 
 .wr-empty{
   font-size:13px;
   font-weight:600;
-  color:#6d6d8a;
+  color:#6a6683;
   text-align:center;
   padding:12px 0;
 }
 
 .wa-note{
   font-size:12px;
-  color:#888;
+  color:#8b87a3;
   font-weight:500;
   margin-top:20px;
   line-height:1.6;
@@ -281,9 +293,15 @@
 
 /* ---------- CRITICAL SWIM SPEED ---------- */
 .css-title{
-  margin-top:48px;
-  padding-top:32px;
-  border-top:3px solid #ccccff;
+  margin-top:0;
+}
+/* when the two calculators stack on phone, restore a divider above CSS */
+@media(max-width:820px){
+  .css-title{
+    margin-top:40px;
+    padding-top:28px;
+    border-top:1.5px solid #c8d5f6;
+  }
 }
 
 .css-zone-list{
@@ -299,7 +317,7 @@
   gap:12px;
   padding:10px 12px;
   background:#fff;
-  border:2px solid #111;
+  border:2px solid #2c2942;
   border-radius:10px;
 }
 
@@ -308,7 +326,7 @@
   font-weight:800;
   text-transform:uppercase;
   letter-spacing:.03em;
-  color:#111;
+  color:#2c2942;
   flex-shrink:0;
   min-width:130px;
 }
@@ -316,7 +334,7 @@
 .css-zone-desc{
   font-size:11px;
   font-weight:600;
-  color:#777;
+  color:#8b87a3;
   flex:1;
 }
 
@@ -324,7 +342,7 @@
   font-family:'Schibsted Grotesk',sans-serif;
   font-size:18px;
   font-weight:700;
-  color:#111;
+  color:#2c2942;
   flex-shrink:0;
 }
 

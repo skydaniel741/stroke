@@ -151,13 +151,24 @@ class AthleteProfile(db.Model):
     fitness_ability = db.Column(db.String(30))  # self-rated: Low/Moderate/Good/High
     primary_stroke = db.Column(db.String(20))
     main_goal = db.Column(db.Text)
+    # Deeper onboarding: how the AI personalizes training/nutrition/dryland together.
+    swimmer_type = db.Column(db.String(30))       # Sprinter/Distance/IM & all-rounder/Technique-focused/Fitness & health
+    coaching_situation = db.Column(db.String(40))  # none/club_want_extra/club_want_structure/self_coached
+    coaching_focus = db.Column(db.Text)             # optional: what they work on with their coach
+    eating_habits = db.Column(db.String(30))        # undereating/balanced/skip_meals/structured
+    limitations = db.Column(db.Text)                 # optional: injuries/physical limitations
     program_json = db.Column(db.Text)  # AI-generated program, see ai_utils.generate_training_program
+    nutrition_json = db.Column(db.Text)  # AI-selected nutrition guidance, see ai_utils.generate_training_program
+    dryland_json = db.Column(db.Text)    # AI-selected dryland guidance, see ai_utils.generate_training_program
     # Solo Pro AI tuning knobs (free solo tier stays on the defaults).
     coaching_tone = db.Column(db.String(20), default='balanced')   # encouraging/balanced/direct
     intensity = db.Column(db.String(20), default='normal')          # easier/normal/harder
     # Rolling weekly cap on AI program rebuilds (see routes_solo.onboarding).
     regen_week_start = db.Column(db.Date, nullable=True)  # Monday of the counted week
     regen_count = db.Column(db.Integer, default=0)
+    # Cached single-swimmer progression insight (see ai_utils.generate_progress_insight).
+    progress_insight = db.Column(db.Text)
+    progress_insight_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -173,6 +184,24 @@ class AthleteProfile(db.Model):
         except (ValueError, TypeError):
             return {}
 
+    def get_nutrition(self):
+        try:
+            return json.loads(self.nutrition_json or '{}')
+        except (ValueError, TypeError):
+            return {}
+
+    def get_dryland(self):
+        try:
+            return json.loads(self.dryland_json or '{}')
+        except (ValueError, TypeError):
+            return {}
+
+    def get_progress_insight(self):
+        try:
+            return json.loads(self.progress_insight or '{}')
+        except (ValueError, TypeError):
+            return {}
+
 
 class CheckIn(db.Model):
     """A swimmer's periodic (typically daily) reflection: how training felt
@@ -183,6 +212,8 @@ class CheckIn(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     checkin_date = db.Column(db.Date, nullable=False)
     feeling_rating = db.Column(db.Integer)  # 1-5
+    fatigue_rating = db.Column(db.Integer)  # 1-5, soreness/fatigue
+    sleep_quality = db.Column(db.Integer)   # 1-5, self-rated proxy for hours
     notes = db.Column(db.Text)
     ai_insight = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -408,6 +439,8 @@ class SavedSet(db.Model):
     session_type = db.Column(db.String(50), default='Training')
     sets_data = db.Column(db.Text)  # JSON string, same shape as sessionSets in log.html
     category = db.Column(db.String(30), default='Fitness')
+    difficulty = db.Column(db.String(20), default='Medium')  # Easy / Medium / Hard / Technical
+    distance_focus = db.Column(db.String(20), default='All')  # Short / Middle / Long / All
     description = db.Column(db.Text)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

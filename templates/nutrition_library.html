@@ -27,7 +27,7 @@
 
   <div class="sets-card-grid">
     {% for p in programs %}
-    <a href="/solo/nutrition/{{ p.id }}" class="set-card" style="--cat-color:#4dd0e1">
+    <a href="/solo/nutrition/{{ p.id }}" class="set-card" style="--cat-color:#7bace8">
       <span class="set-card-cat">{{ p.category }}</span>
       <p class="set-card-name">{{ p.title }}</p>
       <p class="set-card-meta">{{ p.get_blocks()|length }} tip{{ 's' if p.get_blocks()|length != 1 else '' }}</p>
