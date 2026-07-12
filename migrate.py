@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 
 # Columns added to existing tables after their initial release.
 # db.create_all() only creates missing tables, not missing columns on
@@ -57,22 +57,30 @@ NEW_COLUMNS = {
 }
 
 
+def _dialect_col_def(col_def, dialect_name):
+    """NEW_COLUMNS defs are written in SQLite syntax; translate the bits
+    Postgres doesn't accept."""
+    if dialect_name != 'sqlite':
+        col_def = col_def.replace('DATETIME', 'TIMESTAMP')
+        col_def = col_def.replace('DEFAULT 0', 'DEFAULT FALSE').replace('DEFAULT 1', 'DEFAULT TRUE')
+    return col_def
+
+
 def run_migrations(db):
-    """Add any missing columns to already-existing SQLite tables. Safe to
-    call on every startup -- checks PRAGMA table_info before altering."""
+    """Add any missing columns to already-existing tables. Safe to call on
+    every startup -- uses SQLAlchemy's inspector so it works on both
+    SQLite (dev) and Postgres (prod)."""
+    dialect_name = db.engine.dialect.name
+    inspector = inspect(db.engine)
+    existing_tables = set(inspector.get_table_names())
+
     with db.engine.connect() as conn:
-        existing_tables = {
-            row[0] for row in conn.execute(text(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ))
-        }
         for table, columns in NEW_COLUMNS.items():
             if table not in existing_tables:
                 continue  # table will be created fresh by db.create_all(), columns included
-            current_cols = {
-                row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))
-            }
+            current_cols = {col['name'] for col in inspector.get_columns(table)}
             for col_name, col_def in columns:
                 if col_name not in current_cols:
+                    col_def = _dialect_col_def(col_def, dialect_name)
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_def}"))
         conn.commit()
