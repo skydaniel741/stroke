@@ -10,10 +10,13 @@ load_dotenv()
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-        'DATABASE_URL',
-        f"sqlite:///{os.path.join(BASE_DIR, 'stroke.db')}"
-    )
+    db_url = os.getenv('DATABASE_URL') or f"sqlite:///{os.path.join(BASE_DIR, 'stroke.db')}"
+    # Render (and Heroku before it) hands out postgres:// connection strings,
+    # but SQLAlchemy 1.4+ / psycopg2 require the postgresql:// scheme -- fix
+    # it here so the DATABASE_URL can be pasted straight from the dashboard.
+    if db_url.startswith('postgres://'):
+        db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # Hard cap on any request body (photo scans allow up to 20MB images);
     # anything bigger gets a clean 413 instead of tying up the worker.

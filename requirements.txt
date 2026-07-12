@@ -9,3 +9,4 @@ anthropic
 Pillow
 pillow-heif
 gunicorn
+psycopg2-binary

@@ -73,7 +73,12 @@ def signup():
         db.session.add(user)
         db.session.commit()
 
-        send_verification_email(email, username, code)
+        if not send_verification_email(email, username, code):
+            flash(
+                "Your account was created, but we couldn't send the verification email "
+                "right now. Try 'Resend code' on the next screen in a moment, or contact us.",
+                'error',
+            )
         return redirect(url_for('main.verify', email=email))
 
     return render_template('signup.html')
@@ -87,6 +92,7 @@ def verify():
     user = db.session.query(User).filter_by(email=email).first()
 
     if not user:
+        flash("We couldn't find that account. Please sign up again.", 'error')
         return redirect(url_for('main.signup'))
 
     if request.method == 'POST':
@@ -126,8 +132,10 @@ def resend_code():
     if user and not user.is_verified:
         code = user.generate_verify_code()
         db.session.commit()
-        send_verification_email(email, user.username, code)
-        flash('New code sent.', 'success')
+        if send_verification_email(email, user.username, code):
+            flash('New code sent.', 'success')
+        else:
+            flash("Couldn't send the email right now — try again in a moment.", 'error')
 
     return redirect(url_for('main.verify', email=email))
 

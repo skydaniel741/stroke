@@ -1,7 +1,10 @@
+import logging
 import resend
 import os
 from flask import current_app
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def _log_email(params):
@@ -68,4 +71,13 @@ def send_verification_email(to_email, username, code):
     }
 
     _log_email(params)
-    resend.Emails.send(params)
+    try:
+        resend.Emails.send(params)
+        return True
+    except Exception:
+        # Resend's shared sandbox domain (onboarding@resend.dev) only delivers
+        # to the email the Resend account itself was created with -- any other
+        # recipient (i.e. any real tester) raises here until a real domain is
+        # verified with Resend. Never let that crash the signup/login flow.
+        logger.exception('send_verification_email failed for %s', to_email)
+        return False
