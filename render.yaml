@@ -1,0 +1,35 @@
+# Render Blueprint — lets you deploy this whole app from the Render dashboard
+# via "New +" -> "Blueprint" -> pick this repo, instead of clicking through
+# every setting by hand. Secrets are left blank (sync: false) on purpose --
+# fill them in from the Render dashboard after the first deploy, never commit
+# real keys here.
+services:
+  - type: web
+    name: stroke
+    runtime: python
+    plan: free
+    branch: main
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn wsgi:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-5
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+    # Free tier has no persistent disk -- stroke.db resets on every deploy.
+    # See DEPLOY.md for the tradeoffs and how to add a real persistent disk
+    # later without changing any app code (DATABASE_URL already supports it).

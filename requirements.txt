@@ -8,3 +8,4 @@ resend
 anthropic
 Pillow
 pillow-heif
+gunicorn

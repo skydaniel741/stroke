@@ -56,8 +56,12 @@ def send_verification_email(to_email, username, code):
     </html>
     """
 
+    # Resend's shared sandbox domain until you verify your own with Resend --
+    # then just set EMAIL_FROM (e.g. "STROKE <hello@yourdomain.com>"), no code change needed.
+    from_address = os.getenv('EMAIL_FROM', 'onboarding@resend.dev')
+
     params = {
-        "from": "onboarding@resend.dev",
+        "from": from_address,
         "to": [to_email],
         "subject": f"{code} is your STROKE verification code",
         "html": html_content,

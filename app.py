@@ -111,6 +111,8 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    # host='0.0.0.0' so phones on the same Wi-Fi can reach this dev server --
-    # fine for local testing, don't run debug=True like this outside your own network.
-    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+    # FLASK_DEBUG must be explicitly set to '1'/'true' to enable the debugger --
+    # it exposes a remote code-execution console, never run it against a public host.
+    debug = os.getenv('FLASK_DEBUG', '').lower() in ('1', 'true', 'yes')
+    # host='0.0.0.0' so phones on the same Wi-Fi can reach this dev server.
+    app.run(debug=debug, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
