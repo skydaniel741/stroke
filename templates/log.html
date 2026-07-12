@@ -24,6 +24,11 @@
      SCREEN 0 — CHOOSE PATH
 ════════════════════════════════════ -->
 <div class="screen active" id="screen0">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
   <p class="path-greeting">Log a swim</p>
   <p class="path-sub">What are we logging?</p>
 
@@ -185,13 +190,13 @@
     <div class="wizard-step active" id="wstep0">
       <p class="wizard-q">How many reps?</p>
       <div class="wizard-options" id="wReps"></div>
-      <input class="wizard-custom-input" type="number" id="wRepsCustom" placeholder="Custom number" oninput="wizardCustom('reps', this.value)">
+      <input class="wizard-custom-input" type="number" id="wRepsCustom" placeholder="Custom number" min="1" max="200" step="1" oninput="wizardCustom('reps', this.value)">
     </div>
 
     <div class="wizard-step" id="wstep1">
       <p class="wizard-q">What distance (metres)?</p>
       <div class="wizard-options" id="wDist"></div>
-      <input class="wizard-custom-input" type="number" id="wDistCustom" placeholder="Custom distance" oninput="wizardCustom('dist', this.value)">
+      <input class="wizard-custom-input" type="number" id="wDistCustom" placeholder="Custom distance" min="25" max="3000" step="25" oninput="wizardCustom('dist', this.value)">
     </div>
 
     <div class="wizard-step" id="wstep2">
@@ -585,7 +590,17 @@ function wizardCustom(field, value){
     if(field==='rest' || field==='hr' || field==='note') wizardSet[field] = '';
     return;
   }
-  wizardSet[field] = (field==='rest' || field==='hr' || field==='note') ? value : parseInt(value);
+  if(field==='rest' || field==='hr' || field==='note'){
+    wizardSet[field] = value;
+  } else {
+    // Clamp typed reps/distances to sane bounds (the backend re-validates,
+    // but don't let a stray '999999999' even build a preview).
+    let n = parseInt(value, 10);
+    if(!Number.isFinite(n) || n < 1){ wizardSet[field] = null; document.getElementById('wNextBtn').disabled = true; return; }
+    if(field==='reps') n = Math.min(n, 200);
+    if(field==='dist') n = Math.min(Math.max(n, 25), 3000);
+    wizardSet[field] = n;
+  }
   renderWizardOptions();
   document.getElementById('wNextBtn').disabled = false;
 }

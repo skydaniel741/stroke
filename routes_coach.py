@@ -504,13 +504,11 @@ def coach_pro_update_set(set_id):
         return {'ok': False, 'error': 'The set needs a title.'}, 400
 
     # Blocks come through as the same JSON shape the create form / AI generator
-    # use. Clamp each one so a bad edit can't corrupt the stored set.
-    from ai_utils import _clamp_block
-    try:
-        raw_blocks = json_module.loads(request.form.get('sets_data') or '[]')
-    except ValueError:
-        raw_blocks = []
-    blocks = [b for b in (_clamp_block(r) for r in raw_blocks) if b is not None]
+    # use. Full validation so a bad edit can't corrupt the stored set.
+    from validation import clean_sets_json
+    _sets_json, blocks = clean_sets_json(request.form.get('sets_data') or '[]')
+    if not blocks:
+        return {'ok': False, 'error': 'That set has no valid blocks — check the reps and distances.'}, 400
 
     s.name = name[:100]
     s.category = request.form.get('category') or s.category
@@ -675,6 +673,7 @@ def coach_pro_attendance_save():
     # swimmers who were there -- this is what saves squads from spreadsheets:
     # the swimmer's logbook fills itself in from the coach's roll call.
     auto_logged = 0
+    auto_logged_ids = set()
     events_with_sets = (
         db.session.query(SquadEvent)
         .filter(
@@ -707,8 +706,16 @@ def coach_pro_attendance_save():
                 squad_event_id=event.id,
             ))
             auto_logged += 1
+            auto_logged_ids.add(swimmer_id)
 
     db.session.commit()
+
+    # Auto-logged squad sessions feed each swimmer's athlete model, same as
+    # if they'd logged the session themselves.
+    import athlete_model
+    for sid in auto_logged_ids:
+        athlete_model.update_athlete_state(sid)
+
     return {'ok': True, 'saved': saved, 'autoLogged': auto_logged}
 
 
@@ -810,13 +817,15 @@ def coach_pro_ai_generate_set():
     if not current_app.config.get('AI_SCAN_ENABLED'):
         return {'ok': False, 'error': 'AI features are not configured on this server.'}, 400
 
+    from validation import clean_int
+
     params = {
         'focus': (request.form.get('focus') or '').strip()[:200],
         'style': (request.form.get('style') or '').strip()[:100],
         'season_phase': (request.form.get('season_phase') or '').strip()[:100],
         'level': (request.form.get('level') or '').strip()[:100],
         'pool': request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m',
-        'duration_minutes': request.form.get('duration_minutes', type=int) or 60,
+        'duration_minutes': clean_int(request.form.get('duration_minutes'), key='duration_minutes') or 60,
     }
 
     result = generate_coach_set(
@@ -914,22 +923,22 @@ def coach_pro_test_set_log():
         if m.user_id
     }
 
+    # Strict time parsing: rejects '1e100', 'Infinity', negatives and other
+    # junk a hand-edited payload could carry, not just unparseable strings.
+    from validation import clean_time
+
     def _secs(t):
-        try:
-            if ':' in t:
-                mins, rest = t.split(':')
-                return int(mins) * 60 + float(rest)
-            return float(t)
-        except (ValueError, TypeError):
-            return None
+        _norm, secs = clean_time(t, key='swim_seconds')
+        return secs
 
     logged = 0
+    logged_ids = set()
     for entry in entries:
         try:
             user_id = int(entry.get('userId'))
         except (TypeError, ValueError):
             continue
-        times = [str(t).strip() for t in (entry.get('times') or []) if _secs(str(t).strip()) is not None]
+        times = [str(t).strip() for t in (entry.get('times') or []) if _secs(str(t).strip()) is not None][:30]
         if user_id not in valid_ids or not times:
             continue
         best = min(times, key=_secs)
@@ -943,8 +952,15 @@ def coach_pro_test_set_log():
             notes=all_times_note,
         ))
         logged += 1
+        logged_ids.add(user_id)
 
     db.session.commit()
+
+    # Test swims are prime progression data: refresh each swimmer's model.
+    import athlete_model
+    for sid in logged_ids:
+        athlete_model.update_athlete_state(sid)
+
     return {'ok': True, 'logged': logged}
 
 

@@ -15,6 +15,9 @@ def create_app():
         f"sqlite:///{os.path.join(BASE_DIR, 'stroke.db')}"
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Hard cap on any request body (photo scans allow up to 20MB images);
+    # anything bigger gets a clean 413 instead of tying up the worker.
+    app.config['MAX_CONTENT_LENGTH'] = 25 * 1024 * 1024
     app.config['RESEND_API_KEY'] = os.getenv('RESEND_API_KEY')
     app.config['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY')
     app.config['ANTHROPIC_MODEL'] = os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-5')
@@ -76,6 +79,33 @@ def create_app():
 
         from migrate import run_migrations
         run_migrations(db)
+
+    # ── Graceful error handling: the site never shows a raw crash page.
+    #    Bad input gets rejected upstream by validation.py; anything that
+    #    still slips through lands here, gets logged for debugging, the DB
+    #    session is rolled back so user data stays safe, and the visitor
+    #    sees a friendly page instead of a stack trace. ──
+    from flask import render_template
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template('error.html', code=404,
+                               message="That page doesn't exist."), 404
+
+    @app.errorhandler(413)
+    def too_large(e):
+        return render_template('error.html', code=413,
+                               message="That upload was too large."), 413
+
+    @app.errorhandler(500)
+    def server_error(e):
+        app.logger.exception('Unhandled server error')
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        return render_template('error.html', code=500,
+                               message="Something went wrong on our side. Your data is safe, try that again."), 500
 
     return app
 

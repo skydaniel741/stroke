@@ -102,6 +102,24 @@
   .an-pattern{display:flex;gap:10px;align-items:flex-start;background:#f6f8fe;border:1.5px solid #dde6f7;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:13px;color:#403c58;line-height:1.55;}
   .an-pattern-icon{color:#6f7fe0;font-weight:800;flex-shrink:0;}
   .an-pattern-empty{font-size:13px;color:#8b87a3;line-height:1.55;background:#f8faff;border:1.5px dashed #dde6f7;border-radius:12px;padding:12px 14px;}
+
+  /* weekly review */
+  .an-wr-top{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:4px;}
+  .an-wr-score{flex-shrink:0;width:88px;height:88px;border-radius:50%;background:#e9eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #dde6f7;}
+  .an-wr-score-num{font-family:'Schibsted Grotesk',sans-serif;font-size:28px;font-weight:800;color:#2c2942;line-height:1;}
+  .an-wr-score-lbl{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#6f7fe0;margin-top:3px;}
+  .an-wr-chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .an-wr-chip{font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px;background:#f0f4fd;color:#595571;text-transform:capitalize;}
+  .an-wr-chip.trend-improving{background:#dff5ec;color:#0f8a4d;}
+  .an-wr-chip.trend-regressing,.an-wr-chip.trend-overtraining{background:#fbe4df;color:#d33a52;}
+  .an-wr-chip.trend-plateauing,.an-wr-chip.trend-undertraining{background:#fbf1cf;color:#a6720a;}
+  .an-wr-cols{display:grid;grid-template-columns:1fr;gap:6px 18px;margin-top:10px;}
+  @media(min-width:640px){.an-wr-cols{grid-template-columns:1fr 1fr;}}
+  .an-wr-h{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#6f7fe0;margin:8px 0 4px;}
+  .an-wr-cols ul{margin:0;padding-left:18px;}
+  .an-wr-cols li{font-size:13px;color:#4d4966;line-height:1.6;}
+  .an-wr-vol{font-size:12.5px;color:#8b87a3;margin-top:10px;}
+  .an-wr-vol b{color:#2c2942;}
 </style>
 </head>
 <body>
@@ -124,6 +142,65 @@
   <div class="an-empty">
     Log a few swims (and add 50m splits when you can) to unlock your analytics.<br>
     <a href="/log">Log a swim →</a>
+  </div>
+  {% endif %}
+
+  {% if weekly_report %}
+  <div class="an-section-label">Weekly review</div>
+  <p class="an-section-note">Your automatic 7-day coach review: this week measured against your previous weeks, rebuilt every week.</p>
+  <div class="an-card">
+    <div class="an-wr-top">
+      <div class="an-wr-score">
+        <div class="an-wr-score-num">{{ weekly_report.progress_pct }}</div>
+        <div class="an-wr-score-lbl">Progress</div>
+      </div>
+      <div class="an-wr-chips">
+        <span class="an-wr-chip trend-{{ weekly_report.trend }}">{{ weekly_report.trend }}</span>
+        <span class="an-wr-chip">Consistency {{ weekly_report.consistency_pct }}%</span>
+        <span class="an-wr-chip">Recovery: {{ weekly_report.recovery_status }}</span>
+        <span class="an-wr-chip">Confidence: {{ weekly_report.confidence }}</span>
+      </div>
+    </div>
+
+    {% if weekly_report.ai_review %}
+    <div class="an-insight" style="margin:12px 0 4px">
+      <p><b>{{ weekly_report.ai_review.headline }}</b></p>
+      <p>{{ weekly_report.ai_review.detail }}</p>
+      <p>→ {{ weekly_report.ai_review.next_week }}</p>
+    </div>
+    {% endif %}
+
+    <div class="an-wr-cols">
+      <div>
+        <div class="an-wr-h">Going well</div>
+        <ul>{% for s in weekly_report.strengths %}<li>{{ s }}</li>{% endfor %}</ul>
+      </div>
+      <div>
+        <div class="an-wr-h">Needs attention</div>
+        <ul>{% for w in weekly_report.weaknesses %}<li>{{ w }}</li>{% endfor %}</ul>
+      </div>
+    </div>
+
+    {% if weekly_report.pb_improvements %}
+    <div class="an-wr-h">New personal bests this week</div>
+    <div class="an-split-tags">
+      {% for p in weekly_report.pb_improvements %}
+      <span class="an-split-tag">{{ p.event }}: <b>{{ p.old }} → {{ p.new }}</b></span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="an-wr-vol">
+      This week <b>{{ '{:,}'.format(weekly_report.volume.this_week) }}m</b> across {{ weekly_report.sessions.this_week }} session{{ 's' if weekly_report.sessions.this_week != 1 }}
+      · last week {{ '{:,}'.format(weekly_report.volume.prev_week) }}m across {{ weekly_report.sessions.prev_week }}
+      {% if weekly_report.sessions.planned %} · plan is {{ weekly_report.sessions.planned }}/week{% endif %}
+    </div>
+
+    <div class="an-pattern" style="margin:12px 0 0">
+      <span class="an-pattern-icon">✦</span>
+      <span><b>Next week:</b> {{ weekly_report.suggested_focus }}
+        ({{ weekly_report.next_week.kind }} week, around {{ '{:,}'.format(weekly_report.next_week.volume) }}m)</span>
+    </div>
   </div>
   {% endif %}
 

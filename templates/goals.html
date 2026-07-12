@@ -51,6 +51,12 @@
   <h1 class="g-h1">Goals</h1>
   <p class="g-sub">Set a target time and date. No auto-plan — just a clear marker to swim towards.</p>
 
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
   <form class="g-form" method="POST" action="/goals">
     <input type="text" name="event" placeholder="Event, e.g. 100m Freestyle" required>
     <select name="pool">

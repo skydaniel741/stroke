@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ code }} — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  .err-wrap{max-width:480px;margin:0 auto;padding:80px 24px;text-align:center;}
+  .err-code{font-family:'Schibsted Grotesk',sans-serif;font-size:64px;font-weight:800;color:#c8d5f6;line-height:1;}
+  .err-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:26px;margin:12px 0 8px;color:#2c2942;}
+  .err-msg{font-size:14px;color:#6a6683;line-height:1.6;margin-bottom:26px;}
+  .err-btn{display:inline-block;padding:13px 26px;background:#c8d5f6;border:1px solid #e4e8f4;border-radius:12px;font-weight:800;font-size:14px;color:#2c2942;text-decoration:none;box-shadow:0 10px 26px rgba(58,66,120,.10);}
+</style>
+</head>
+<body>
+<div class="err-wrap">
+  <div class="err-code">{{ code }}</div>
+  <h1 class="err-h1">{{ 'Page not found' if code == 404 else 'Something went sideways' }}</h1>
+  <p class="err-msg">{{ message }}</p>
+  <a class="err-btn" href="/dashboard">Back to your dashboard</a>
+</div>
+</body>
+</html>

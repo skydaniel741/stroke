@@ -467,6 +467,14 @@ PROGRAM_TOOL_SCHEMA = {
                 "type": "string",
                 "description": "ONE short sentence on how to progress next week (e.g. add reps or drop rest). Max ~20 words.",
             },
+            "adaptation_note": {
+                "type": "string",
+                "description": (
+                    "Only when adaptive coaching context is provided: 1-2 plain sentences telling the swimmer "
+                    "what changed in this week's plan vs their recent training and why, grounded in their real "
+                    "data (trend, volume, fatigue). Empty string when no context was given."
+                ),
+            },
             "insights": {
                 "type": "array",
                 "items": {"type": "string"},
@@ -557,7 +565,8 @@ COACHING_SITUATION_LABELS = {
 }
 
 
-def generate_training_program(profile, meal_catalog, dryland_catalog, supplement_catalog, api_key, model):
+def generate_training_program(profile, meal_catalog, dryland_catalog, supplement_catalog, api_key, model,
+                              adaptation=None):
     """Call Claude to turn a swimmer's onboarding answers into a structured
     week-calendar program (7 day boxes with real swim blocks) PLUS matched
     nutrition, supplement and dryland recommendations. `profile` is an
@@ -596,6 +605,15 @@ def generate_training_program(profile, meal_catalog, dryland_catalog, supplement
         f"{_intensity_line(getattr(profile, 'intensity', 'normal'))}\n"
         f"{_tone_line(getattr(profile, 'coaching_tone', 'balanced'))} Apply this tone to the "
         "overview, coach notes, insights and nutrition/dryland notes.\n\n"
+        + (f"{adaptation}\n\n" if adaptation else "")
+        + "CRITICAL INTERVAL RULE: when a block's rest_type is 'interval', the time is a SEND-OFF -- "
+        "the swimmer starts a new rep every X, and their actual rest is the send-off minus their swim "
+        "time. It is NOT a rest duration. So every interval must comfortably exceed what THIS swimmer "
+        "needs to swim the rep: a beginner swims 100m in roughly 2:10-2:30, so '4x100 on 1:30' would be "
+        "physically impossible for them, while '4x100 on 2:45' works. Scale every send-off to the "
+        "swimmer's realistic pace for their level, age and stroke, leaving sensible rest (beginners "
+        "~15-30s per rep, advanced can be as low as 5-10s for threshold work). Use rest_type='rest' "
+        "only for genuine recovery gaps between blocks.\n\n"
         "Call the create_training_program tool with a full 7-day week (Monday-Sunday). "
         "The number of non-rest days MUST exactly equal the days per week they said they can train. "
         "Give each training day a complete written session -- warm up, main set, cool down -- as "
@@ -812,6 +830,68 @@ def generate_progress_insight(digest, api_key, model, tone='encouraging'):
     return {'ok': True, 'insight': _humanize(tool_use.input)}
 
 
+WEEKLY_REVIEW_TOOL_SCHEMA = {
+    "name": "give_weekly_review",
+    "description": "Narrate a swimmer's automatic weekly progress review from the computed report.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "headline": {
+                "type": "string",
+                "description": (
+                    "ONE sentence (max ~18 words) summing up the week, talking straight to the swimmer as 'you'. "
+                    "Lead with the single biggest signal."
+                ),
+            },
+            "detail": {
+                "type": "string",
+                "description": (
+                    "2-3 short sentences (max ~50 words) on what drove the week: cite the real numbers from "
+                    "the report (volume change, PBs, fatigue). No filler, nothing the data doesn't support."
+                ),
+            },
+            "next_week": {
+                "type": "string",
+                "description": "ONE sentence (max ~20 words) on what next week looks like and why, matching the report's plan.",
+            },
+        },
+        "required": ["headline", "detail", "next_week"],
+    },
+}
+
+
+def generate_weekly_review(digest, api_key, model, tone='encouraging'):
+    """Narrate the deterministic weekly report (athlete_model.build_weekly_report)
+    in a human coach voice. Returns {'ok': True, 'review': {...}} or
+    {'ok': False, 'error': ...} -- never raises."""
+    prompt = (
+        "You are a swim coach writing a swimmer's automatic weekly review from their computed report.\n\n"
+        f"{_tone_line(tone)}\n\n"
+        f"This week's computed report:\n{digest}\n\n"
+        "Call the give_weekly_review tool. Be specific, cite the actual numbers, and never invent a trend "
+        "the report doesn't show. If confidence is low, say the picture is still building."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            tools=[WEEKLY_REVIEW_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "give_weekly_review"},
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception:
+        logger.exception('generate_weekly_review: API call failed')
+        return {'ok': False, 'error': "Couldn't write the review right now."}
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input:
+        return {'ok': False, 'error': "Couldn't write the review right now."}
+
+    return {'ok': True, 'review': _humanize(tool_use.input)}
+
+
 # ============================================================
 # COACH-TIER AI: squad performance insights for the coach dashboard
 # ============================================================
@@ -986,6 +1066,9 @@ def generate_coach_set(params, api_key, model):
         "Call the create_coach_set tool with one complete session: warm up, main work, cool down. "
         "Total volume must be realistic for the session length and level (roughly 45-60m/min for "
         "seniors including rest, less for age-groupers). Intervals must be swimmable for the level. "
+        "Remember rest_type='interval' means a SEND-OFF (the swimmer leaves every X; actual rest is "
+        "whatever's left after the swim), so every send-off must exceed the level's realistic swim "
+        "time for the rep with sensible rest to spare. "
         "Use the note field for cues like 'descend 1-4' or 'hold 200 race pace'. Stay true to the "
         "requested methodology -- a USRPT set should look nothing like a Bowman aerobic set."
     )
@@ -1011,6 +1094,21 @@ def generate_coach_set(params, api_key, model):
     blocks = [b for b in (_clamp_block(r) for r in data.get('blocks', [])) if b is not None]
     if not blocks:
         return {'ok': False, 'error': "The generated set came back empty — try again."}
+
+    # Realism pass: even with the prompt rules, models occasionally write a
+    # send-off the squad can't make. Fix intervals deterministically against
+    # the pace model rather than shipping an impossible set.
+    import swim_logic
+    level_text = (params.get('level') or '').lower()
+    if any(w in level_text for w in ('beginner', 'learn', 'novice')):
+        check_level = 'Beginner'
+    elif any(w in level_text for w in ('age', 'junior', 'youth', 'intermediate', 'club')):
+        check_level = 'Intermediate'
+    elif 'advanced' in level_text:
+        check_level = 'Advanced'
+    else:
+        check_level = 'Competitive'
+    blocks, _fixes = swim_logic.validate_day_blocks(blocks, level=check_level)
 
     return {'ok': True, 'set': {
         'name': (data.get('name') or 'AI generated set').strip()[:100],

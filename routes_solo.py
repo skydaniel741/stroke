@@ -87,23 +87,28 @@ def onboarding():
             )
             return redirect(url_for('solo.program'))
 
-        try:
-            age = int(request.form.get('age') or 0) or None
-        except ValueError:
-            age = None
-        try:
-            training_days = int(request.form.get('training_days_per_week') or 0) or None
-        except ValueError:
-            training_days = None
+        from validation import clean_int, clean_text
+
+        age_raw = (request.form.get('age') or '').strip()
+        age = clean_int(age_raw, key='age')
+        if age_raw and age is None:
+            flash('Age needs to be a whole number between 5 and 99.', 'error')
+            return redirect(url_for('solo.onboarding'))
+
+        days_raw = (request.form.get('training_days_per_week') or '').strip()
+        training_days = clean_int(days_raw, key='training_days', hi=7)
+        if days_raw and training_days is None:
+            flash('Training days per week needs to be a whole number from 1 to 7.', 'error')
+            return redirect(url_for('solo.onboarding'))
 
         profile = existing or AthleteProfile(user_id=current_user.id)
-        profile.level = request.form.get('level', '').strip()
+        profile.level = clean_text(request.form.get('level'), 30)
         profile.age = age
         profile.training_days_per_week = training_days
-        profile.fitness_ability = request.form.get('fitness_ability', '').strip()
-        profile.primary_stroke = request.form.get('primary_stroke', '').strip()
-        profile.main_goal = request.form.get('main_goal', '').strip()
-        profile.swimmer_type = request.form.get('swimmer_type', '').strip()
+        profile.fitness_ability = clean_text(request.form.get('fitness_ability'), 30)
+        profile.primary_stroke = clean_text(request.form.get('primary_stroke'), 20)
+        profile.main_goal = clean_text(request.form.get('main_goal'), 1000)
+        profile.swimmer_type = clean_text(request.form.get('swimmer_type'), 30)
         coaching_situation = request.form.get('coaching_situation', 'none')
         profile.coaching_situation = coaching_situation if coaching_situation in (
             'none', 'club_want_extra', 'club_want_structure', 'self_coached'
@@ -140,15 +145,32 @@ def onboarding():
         )
         dryland_catalog = [{'id': p.id, 'title': p.title, 'category': p.category} for p in dryland_rows]
 
+        # Adaptive coaching: rebuilds get the swimmer's real history (trend,
+        # load, fatigue, next-week target from the progression engine) so the
+        # program evolves instead of resetting to a generic week each time.
+        import athlete_model
+        adaptation_text, _target = athlete_model.adaptation_context(current_user.id, profile)
+
         from ai_utils import generate_training_program
         result = generate_training_program(
             profile, meal_catalog, dryland_catalog, supplement_catalog,
             current_app.config['ANTHROPIC_API_KEY'],
             current_app.config['ANTHROPIC_MODEL'],
+            adaptation=adaptation_text,
         )
         if not result.get('ok'):
             flash(result.get('error', "Couldn't generate a program — try again."), 'error')
             return redirect(url_for('solo.onboarding'))
+
+        # Realism pass: every block is checked against what this swimmer can
+        # actually swim (send-off vs swim time vs rest). Impossible intervals
+        # get fixed deterministically; oversized days get trimmed.
+        import swim_logic
+        fixes = swim_logic.validate_program(
+            result['program'], level=profile.level, age=profile.age, fitness=profile.fitness_ability,
+        )
+        if fixes:
+            result['program']['realism_fixes'] = fixes[:8]
 
         import json
         profile.program_json = json.dumps(result['program'])
@@ -326,6 +348,12 @@ def checkin():
         if not existing_today:
             db.session.add(entry)
         db.session.commit()
+
+        # Every check-in feeds the persisted athlete model (fatigue/recovery
+        # signals shape the next adaptive program and weekly review).
+        import athlete_model
+        athlete_model.update_athlete_state(current_user.id)
+
         flash('Check-in saved.', 'success')
         return redirect(url_for('solo.checkin'))
 
@@ -342,11 +370,15 @@ def checkin():
         .all()
     )
 
+    import athlete_model
+    nudge = athlete_model.checkin_nudge(current_user.id)
+
     return render_template(
         'solo_checkin.html',
         profile=profile,
         todays_checkin=todays_checkin,
         history=history,
+        coach_question=nudge['question'],
     )
 
 
@@ -698,7 +730,19 @@ def analytics():
     data = _build_analytics(current_user.id)
     profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
     insight = profile.get_progress_insight() if profile else {}
-    return render_template('solo_analytics.html', profile=profile, insight=insight, **data)
+
+    # The automatic 7-day review: generated lazily once a week has passed
+    # since the last one, deterministic math with an optional AI narrative.
+    import athlete_model
+    weekly_report = athlete_model.ensure_weekly_report(
+        current_user.id,
+        api_key=current_app.config.get('ANTHROPIC_API_KEY'),
+        model=current_app.config.get('ANTHROPIC_MODEL'),
+        tone=(profile.coaching_tone if profile else 'encouraging'),
+    )
+
+    return render_template('solo_analytics.html', profile=profile, insight=insight,
+                           weekly_report=weekly_report, **data)
 
 
 @solo.route('/dryland')

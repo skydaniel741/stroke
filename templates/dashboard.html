@@ -53,6 +53,13 @@
     </a>
     {% endif %}
 
+    {% if checkin_prompt %}
+    <a href="/solo/checkin" class="ai-onboard-banner">
+      <span>💬 Quick check-in from your coach: {{ checkin_prompt.question }}</span>
+      <span class="ai-onboard-banner-arrow">→</span>
+    </a>
+    {% endif %}
+
     <!-- STATS BLOCKS -->
     <div class="stats-row">
       <div class="stat stat--blue">

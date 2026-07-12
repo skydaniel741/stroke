@@ -96,6 +96,12 @@
     </div>
     <p class="ci-sub">You've already checked in today — come back tomorrow, or update it below.</p>
   {% else %}
+    {% if coach_question %}
+    <div class="ci-insight" style="margin-bottom:18px">
+      <div class="ci-insight-label">Your coach asks</div>
+      {{ coach_question }}
+    </div>
+    {% endif %}
     <p class="ci-sub">Rate how it felt and jot down what could've gone better — the AI will respond with something specific to you.</p>
   {% endif %}
 

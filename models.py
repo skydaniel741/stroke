@@ -203,6 +203,49 @@ class AthleteProfile(db.Model):
             return {}
 
 
+class AthleteState(db.Model):
+    """The persisted 'digital athlete model': one evolving row per swimmer,
+    recomputed from their full log every time they add a workout or check-in
+    (see athlete_model.update_athlete_state). This is what lets the AI coach
+    compare current week vs previous weeks instead of treating every workout
+    independently."""
+    __tablename__ = 'athlete_state'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    state_json = db.Column(db.Text)  # see athlete_model.recompute_state for the shape
+    # Counts completed training weeks so the progression engine can schedule a
+    # recovery week every 4th week (swim_logic.next_week_target).
+    week_index = db.Column(db.Integer, default=0)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def get_state(self):
+        try:
+            return json.loads(self.state_json or '{}')
+        except (ValueError, TypeError):
+            return {}
+
+
+class WeeklyReport(db.Model):
+    """The AI coach's automatic 7-day review of one swimmer: progress score,
+    PB improvements, strengths/weaknesses, consistency, recovery status and a
+    suggested focus for next week. Generated lazily when a week has passed
+    since the last one (athlete_model.ensure_weekly_report)."""
+    __tablename__ = 'weekly_report'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    week_start = db.Column(db.Date, nullable=False)  # Monday of the reviewed week
+    report_json = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def get_report(self):
+        try:
+            return json.loads(self.report_json or '{}')
+        except (ValueError, TypeError):
+            return {}
+
+
 class CheckIn(db.Model):
     """A swimmer's periodic (typically daily) reflection: how training felt
     and what could improve, plus an AI-generated insight in response."""

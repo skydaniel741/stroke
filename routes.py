@@ -263,9 +263,16 @@ def dashboard():
 
     needs_ai_onboarding = False
     todays_program = None
+    checkin_prompt = None
     if current_user.is_solo:
         solo_profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
         needs_ai_onboarding = solo_profile is None
+        # Gentle AI coach check-in: due every 3-4 days, never daily nagging.
+        if solo_profile:
+            import athlete_model
+            nudge = athlete_model.checkin_nudge(current_user.id)
+            if nudge['due']:
+                checkin_prompt = nudge
         # Today's session from the AI program, matched to the weekday.
         if solo_profile and solo_profile.program_json:
             program = solo_profile.get_program()
@@ -453,6 +460,7 @@ def dashboard():
         pool_split_25=pool_split_25,
         pool_split_50=pool_split_50,
         needs_ai_onboarding=needs_ai_onboarding,
+        checkin_prompt=checkin_prompt,
         todays_program=todays_program,
         todays_program_weekday=datetime.utcnow().strftime('%A'),
         todays_squad_sessions=todays_squad_sessions,
@@ -469,47 +477,66 @@ def log():
     from models import Swim, Session, SavedSet
 
     if request.method == 'POST':
+        from validation import clean_time, clean_text, clean_splits, clean_sets_json
+        import athlete_model
+
         log_type = request.form.get('log_type')
-        notes = request.form.get('notes', '')
+        notes = clean_text(request.form.get('notes'), 2000)
+        pool = request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m'
 
         if log_type == 'pb':
-            # Save a PB / race time
+            # Save a PB / race time. The time must actually parse as a swim
+            # time -- '1e100', 'Infinity' or a 40-digit number never reach the DB.
+            event = clean_text(request.form.get('event'), 50)
+            time_norm, _secs = clean_time(request.form.get('time'), key='swim_seconds')
+            if not event:
+                flash('Pick an event first.', 'error')
+                return redirect(url_for('main.log'))
+            if time_norm is None:
+                flash("That time doesn't look right — enter it like 1:02.50 or 58.90.", 'error')
+                return redirect(url_for('main.log'))
+
             splits_raw = request.form.get('splits', '[]')
             try:
                 splits_list = json.loads(splits_raw)
-                if not isinstance(splits_list, list):
-                    splits_list = []
             except ValueError:
                 splits_list = []
+            splits_list = clean_splits(splits_list)
 
             swim = Swim(
                 user_id=current_user.id,
-                event=request.form.get('event'),
-                pool=request.form.get('pool'),
-                stroke=request.form.get('stroke'),
-                time=request.form.get('time'),
+                event=event,
+                pool=pool,
+                stroke=clean_text(request.form.get('stroke'), 10),
+                time=time_norm,
                 notes=notes,
-                tag=request.form.get('tag', 'practice'),
+                tag=request.form.get('tag') if request.form.get('tag') in ('practice', 'meet') else 'practice',
                 splits=json.dumps(splits_list) if splits_list else None,
                 logged_at=datetime.utcnow()
             )
             db.session.add(swim)
             db.session.commit()
+            athlete_model.update_athlete_state(current_user.id)
             flash('PB logged!', 'success')
 
         elif log_type == 'session':
-            # Save a full training session
-            session_data = request.form.get('session_data', '[]')
+            # Save a full training session. Blocks are validated server-side:
+            # bad reps/distances/rests are cleaned or dropped, never stored.
+            sets_json, blocks = clean_sets_json(request.form.get('session_data', '[]'))
+            if not blocks:
+                flash('That session had no valid sets — check the reps and distances.', 'error')
+                return redirect(url_for('main.log'))
             session = Session(
                 user_id=current_user.id,
-                session_type=request.form.get('event'),
-                pool=request.form.get('pool'),
-                sets_data=session_data,
+                session_type=clean_text(request.form.get('event'), 50),
+                pool=pool,
+                sets_data=sets_json,
                 notes=notes,
                 logged_at=datetime.utcnow()
             )
             db.session.add(session)
             db.session.commit()
+            athlete_model.update_athlete_state(current_user.id)
             flash('Session logged!', 'success')
 
         return redirect(url_for('main.dashboard'))
@@ -660,17 +687,21 @@ def sets_create():
     from app import db
     from models import SavedSet
 
-    name = (request.form.get('name') or '').strip()
-    pool = request.form.get('pool', '25m')
-    session_type = request.form.get('session_type', 'Training')
-    sets_data = request.form.get('sets_data', '[]')
+    from validation import clean_sets_json, clean_text
+
+    name = clean_text(request.form.get('name'), 100)
+    pool = request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m'
+    session_type = clean_text(request.form.get('session_type'), 50) or 'Training'
+    sets_data, blocks = clean_sets_json(request.form.get('sets_data', '[]'))
     category = request.form.get('category', 'Fitness')
     difficulty = request.form.get('difficulty') if request.form.get('difficulty') in DIFFICULTIES else 'Medium'
     distance_focus = request.form.get('distance_focus') if request.form.get('distance_focus') in DISTANCE_FOCUS else 'All'
-    description = (request.form.get('description') or '').strip()
+    description = clean_text(request.form.get('description'), 2000)
 
     if not name:
         return {'ok': False, 'error': 'Set needs a name.'}, 400
+    if not blocks:
+        return {'ok': False, 'error': 'That set has no valid blocks — check the reps and distances.'}, 400
 
     new_set = SavedSet(
         name=name,
@@ -1157,26 +1188,34 @@ def personal_bests_import():
         text = file.stream.read().decode('utf-8-sig')
         reader = csv.DictReader(io.StringIO(text))
         count = 0
+        from validation import clean_time, clean_text, clean_splits
+        import athlete_model
+
+        MAX_IMPORT_ROWS = 2000
         for row in reader:
-            event = (row.get('event') or '').strip()
-            time = (row.get('time') or '').strip()
-            if not event or not time:
-                continue
+            if count >= MAX_IMPORT_ROWS:
+                break
+            event = clean_text(row.get('event'), 50)
+            time_norm, _secs = clean_time(row.get('time'), key='swim_seconds')
+            if not event or time_norm is None:
+                continue  # skip junk rows rather than poisoning the log
             splits_raw = (row.get('splits') or '').strip()
-            splits_list = [x.strip() for x in splits_raw.split(';') if x.strip()] if splits_raw else []
+            splits_list = clean_splits([x.strip() for x in splits_raw.split(';') if x.strip()]) if splits_raw else []
             swim = Swim(
                 user_id=current_user.id,
                 event=event,
-                pool=(row.get('pool') or '25m').strip(),
-                stroke=(row.get('stroke') or '').strip(),
-                time=time,
-                tag=(row.get('tag') or 'practice').strip(),
+                pool=(row.get('pool') or '').strip() if (row.get('pool') or '').strip() in ('25m', '50m') else '25m',
+                stroke=clean_text(row.get('stroke'), 10),
+                time=time_norm,
+                tag=(row.get('tag') or '').strip() if (row.get('tag') or '').strip() in ('practice', 'meet') else 'practice',
                 splits=json.dumps(splits_list) if splits_list else None,
-                notes=(row.get('notes') or '').strip(),
+                notes=clean_text(row.get('notes'), 2000),
             )
             db.session.add(swim)
             count += 1
         db.session.commit()
+        if count:
+            athlete_model.update_athlete_state(current_user.id)
         flash(f'Imported {count} swim(s).', 'success')
     except Exception:
         flash('Could not read that CSV — check it matches the exported format and try again.', 'error')
@@ -1204,14 +1243,21 @@ def goals():
     from models import Goal, Swim
 
     if request.method == 'POST':
-        event = request.form.get('event', '').strip()
-        target_time = request.form.get('target_time', '').strip()
-        pool = request.form.get('pool', '25m')
-        target_date_raw = request.form.get('target_date') or ''
-        notes = request.form.get('notes', '').strip()
+        from validation import clean_time, clean_text
 
-        if not event or not target_time:
+        event = clean_text(request.form.get('event'), 50)
+        target_time_raw = (request.form.get('target_time') or '').strip()
+        pool = request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m'
+        target_date_raw = request.form.get('target_date') or ''
+        notes = clean_text(request.form.get('notes'), 2000)
+
+        if not event or not target_time_raw:
             flash('Pick an event and a target time.', 'error')
+            return redirect(url_for('main.goals'))
+
+        target_time, _secs = clean_time(target_time_raw, key='goal_seconds')
+        if target_time is None:
+            flash("That target time doesn't look right — enter it like 1:02.50 or 58.90.", 'error')
             return redirect(url_for('main.goals'))
 
         target_date_val = None
@@ -1504,20 +1550,27 @@ def admin_standards_create():
     from app import db
     from models import Standard
 
-    name = request.form.get('name', '').strip()
-    event = request.form.get('event', '').strip()
-    cutoff_time = request.form.get('cutoff_time', '').strip()
+    from validation import clean_time, clean_text
 
-    if not name or not event or not cutoff_time:
+    name = clean_text(request.form.get('name'), 100)
+    event = clean_text(request.form.get('event'), 50)
+    cutoff_raw = (request.form.get('cutoff_time') or '').strip()
+
+    if not name or not event or not cutoff_raw:
         flash('Name, event and cutoff time are required.', 'error')
+        return redirect(url_for('main.admin_standards'))
+
+    cutoff_time, _secs = clean_time(cutoff_raw, key='goal_seconds')
+    if cutoff_time is None:
+        flash("That cutoff time doesn't look right — enter it like 1:02.50 or 58.90.", 'error')
         return redirect(url_for('main.admin_standards'))
 
     standard = Standard(
         name=name,
         event=event,
-        pool=request.form.get('pool', '25m'),
-        gender=request.form.get('gender', 'open'),
-        age_group=request.form.get('age_group', '').strip(),
+        pool=request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m',
+        gender=request.form.get('gender') if request.form.get('gender') in ('men', 'women', 'open') else 'open',
+        age_group=clean_text(request.form.get('age_group'), 30),
         cutoff_time=cutoff_time,
     )
     db.session.add(standard)
@@ -1616,17 +1669,22 @@ def admin_sets_create():
     from app import db
     from models import SavedSet
 
-    name = request.form.get('name', '').strip()
-    pool = request.form.get('pool', '25m')
-    session_type = request.form.get('session_type', 'Training')
-    sets_data = request.form.get('sets_data', '[]')
+    from validation import clean_sets_json, clean_text
+
+    name = clean_text(request.form.get('name'), 100)
+    pool = request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m'
+    session_type = clean_text(request.form.get('session_type'), 50) or 'Training'
+    sets_data, blocks = clean_sets_json(request.form.get('sets_data', '[]'))
     category = request.form.get('category', 'Fitness')
     difficulty = request.form.get('difficulty') if request.form.get('difficulty') in DIFFICULTIES else 'Medium'
     distance_focus = request.form.get('distance_focus') if request.form.get('distance_focus') in DISTANCE_FOCUS else 'All'
-    description = request.form.get('description', '').strip()
+    description = clean_text(request.form.get('description'), 2000)
 
     if not name:
         flash('Set needs a name.', 'error')
+        return redirect(url_for('main.admin_sets'))
+    if not blocks:
+        flash('That set has no valid blocks — check the reps and distances.', 'error')
         return redirect(url_for('main.admin_sets'))
 
     new_set = SavedSet(
