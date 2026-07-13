@@ -1376,14 +1376,19 @@ def generate_coach_chat_reply(topic, message, profile, pool_state, injury_summar
                 f", ACWR {dryland_load.get('acwr') or 'not enough history yet'} (from {dryland_load['entries_count']} logged sessions)"
             )
         else:
-            data_lines.append("- No dryland sessions logged yet -- not enough history for a dryland load trend, fall back to the simple ramp-rate rule and ask about recent training if it matters to the answer.")
-        data_lines.append(f"- Current injury status on file: {injury_summary or 'NONE RECORDED -- you must ask the injury-status questions before prescribing any dryland session, see INJURY-STATUS RULES.'}")
+            data_lines.append("- No dryland sessions logged yet -- not enough history for a dryland load trend, default to the simple ramp-rate rule, don't block on this.")
+        data_lines.append(
+            f"- Current injury status on file: {injury_summary}" if injury_summary else
+            "- No injury status on file yet. There is a SEPARATE quick injury-status form already shown on this "
+            "page above the chat -- do NOT ask the injury-status questions yourself or make the swimmer answer "
+            "them in the chat. Just give safe, conservative general-population dryland guidance (moderate volume, "
+            "pain-free range, nothing maximal-effort) and add one short line pointing them at that form if "
+            "anything's bothering them, then move on."
+        )
 
     data_block = "\n".join(l for l in data_lines if l)
 
     history_block = "\n".join(f"{h['role'].upper()}: {h['content']}" for h in recent_history) or "(this is the first message in this conversation)"
-
-    first_turn = len(recent_history) == 0
 
     prompt = (
         f"You are the swimmer's {topic} coach inside STROKE (a swim training app). You are NOT their pool "
@@ -1394,20 +1399,21 @@ def generate_coach_chat_reply(topic, message, profile, pool_state, injury_summar
         f"Conversation so far:\n{history_block}\n\n"
         f"Swimmer's new message: \"{message}\"\n\n"
         + (
-            "This is the start of a new conversation on this topic -- if it's relevant, briefly ask a clarifying "
-            "question before prescribing anything (e.g. what equipment they have for dryland, or what today's "
-            "session looked like for nutrition timing), rather than guessing. State the general disclaimer "
-            "(not medical/dietetic advice, see a professional if X) once, briefly, if it's genuinely relevant here "
-            "-- don't repeat it if you already asked something more useful to open with.\n\n" if first_turn else ""
-        )
-        + (
             "RED FLAG CHECK: if the swimmer's message describes sharp/sudden pain, numbness or tingling down a "
             "limb, a joint locking/catching/giving way, pain waking them at night, visible swelling/deformity, or "
             "pain worsening session over session, STOP -- tell them plainly to stop dryland training, mention it "
             "to their swim coach, and see a physiotherapist/clinician. Do not prescribe anything around it.\n\n"
             if topic == 'dryland' else ""
         )
-        + "Answer their actual question directly and specifically -- real sets/reps/durations or real meal/timing "
+        + "GIVE A REAL, COMPLETE ANSWER RIGHT NOW -- this is the single most important rule. Never open with a "
+        "list of questions before you'll help; that's exactly the kind of friction that makes people give up on "
+        "an AI coach and close the tab. If something genuinely unstated would sharpen the answer (equipment for "
+        "dryland, meal timing gap for nutrition), make the single most sensible default -- for dryland, assume "
+        "bodyweight + resistance bands, the most common home setup; for nutrition, assume a normal moderate-effort "
+        "day unless the data above says otherwise -- and say what you assumed in ONE short line, then give the "
+        "full session/meal guidance anyway. Don't wait for confirmation. At most one optional follow-up question "
+        "is allowed, and only at the very end, after they already have something real to use today.\n\n"
+        "Answer their actual question directly and specifically -- real sets/reps/durations or real meal/timing "
         "examples, not vague filler like 'a few rounds of core work' or 'eat a balanced diet'. Ground it in the "
         "data above (today's/this week's pool load, injury status, training phase) rather than generic advice. "
         "If their goals conflict (e.g. wanting max plyo progression on 15 min twice a week, or cutting calories "

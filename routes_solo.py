@@ -209,39 +209,18 @@ def onboarding():
 @solo_required
 def program():
     from app import db
-    from models import AthleteProfile, TrainingProgram
-    from nutrition_data import meal_by_id, product_by_id
-    from demo_library import demos_for_stroke, demos_for_dryland_category
+    from models import AthleteProfile
 
     profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
     if not profile or not profile.program_json:
         return redirect(url_for('solo.onboarding'))
 
+    # Nutrition/dryland here are short AI-written focus notes only -- the
+    # static curated meal/supplement/demo cards were dropped (inaccurate,
+    # hardcoded catalog data) in favour of the /solo/coach chat, which
+    # reasons from this swimmer's real data instead of a fixed library.
     nutrition = profile.get_nutrition()
-    nutrition_meals = [
-        m for m in (meal_by_id(mid) for mid in nutrition.get('recommended_meal_ids', [])) if m
-    ]
-    nutrition_supplements = [
-        p for p in (product_by_id(sid) for sid in nutrition.get('recommended_supplement_ids', [])) if p
-    ]
-
     dryland = profile.get_dryland()
-    dryland_ids = dryland.get('recommended_program_ids', [])
-    dryland_rows = (
-        db.session.query(TrainingProgram).filter(TrainingProgram.id.in_(dryland_ids)).all()
-        if dryland_ids else []
-    )
-    dryland_by_id = {p.id: p for p in dryland_rows}
-    dryland_programs = [dryland_by_id[pid] for pid in dryland_ids if pid in dryland_by_id]
-
-    stroke_demos = demos_for_stroke(profile.primary_stroke)
-    dryland_demo_slugs_seen = set()
-    dryland_demos = []
-    for p in dryland_programs:
-        for d in demos_for_dryland_category(p.category):
-            if d['slug'] not in dryland_demo_slugs_seen:
-                dryland_demo_slugs_seen.add(d['slug'])
-                dryland_demos.append(d)
 
     # Calendar: the AI schema guarantees program.days is exactly 7 entries,
     # Monday-Sunday in order, so it maps 1:1 onto this week's real dates.
@@ -263,10 +242,7 @@ def program():
         'solo_program.html', profile=profile, program=program,
         calendar_days=calendar_days, next_week_dates=next_week_dates, today=today,
         week_range=week_range, next_week_range=next_week_range,
-        nutrition=nutrition, nutrition_meals=nutrition_meals,
-        nutrition_supplements=nutrition_supplements,
-        dryland=dryland, dryland_programs=dryland_programs,
-        stroke_demos=stroke_demos, dryland_demos=dryland_demos,
+        nutrition=nutrition, dryland=dryland,
         regens_left=profile.regens_left(WEEKLY_REGEN_LIMIT), regen_limit=WEEKLY_REGEN_LIMIT,
     )
 

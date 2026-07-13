@@ -290,44 +290,6 @@
     <p><b>{{ nutrition.focus_note }}</b></p>
     {% if nutrition.tip %}<p>{{ nutrition.tip }}</p>{% endif %}
   </div>
-  {% if nutrition_meals %}
-  <div class="pr-meal-grid">
-    {% for m in nutrition_meals %}
-    <a class="pr-meal-card" href="/solo/nutrition">
-      <div class="pr-meal-photo" style="background-image:url('{{ url_for('static', filename=m.photo) }}')"></div>
-      <div class="pr-meal-body">
-        <div class="pr-meal-name">{{ m.name }}</div>
-        <div class="pr-meal-stats">{{ m.calories }} kcal · {{ m.protein_g }}g protein</div>
-      </div>
-    </a>
-    {% endfor %}
-  </div>
-  {% endif %}
-  {% if nutrition_supplements %}
-  <div class="pr-supp-grid">
-    {% for p in nutrition_supplements %}
-    <a class="pr-supp-card" href="/solo/nutrition">
-      <div class="pr-supp-head">
-        <span class="pr-supp-name">{{ p.name }}</span>
-        {% if p.evidence %}<span class="pr-supp-ev pr-supp-ev--{{ p.evidence }}">{{ {'strong':'Strong','moderate':'Some','emerging':'Emerging'}[p.evidence] }} evidence</span>{% endif %}
-      </div>
-      {% if p.brands %}<p class="pr-supp-brands">{{ p.brands[0] }}</p>{% endif %}
-      <span class="pr-supp-cta">See brands →</span>
-    </a>
-    {% endfor %}
-  </div>
-  {% endif %}
-  {% if stroke_demos %}
-  <div class="pr-demo-grid">
-    {% for d in stroke_demos %}
-    <div class="pr-demo-card">
-      {{ d.svg | safe }}
-      <div class="pr-demo-title">{{ d.title }}</div>
-      <ol class="pr-demo-steps">{% for s in d.steps %}<li>{{ s }}</li>{% endfor %}</ol>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
   {% endif %}
 
   <div class="pr-section-label">Dryland for you</div>
@@ -340,27 +302,6 @@
     <p><b>{{ dryland.focus_note }}</b></p>
     {% if dryland.note %}<p>{{ dryland.note }}</p>{% endif %}
   </div>
-  {% if dryland_programs %}
-  <div class="pr-dryland-grid">
-    {% for p in dryland_programs %}
-    <a class="pr-dryland-card" href="/solo/dryland/{{ p.id }}">
-      <span><span class="pr-dryland-cat">{{ p.category }}</span><br><span class="pr-dryland-name">{{ p.title }}</span></span>
-      <span class="pr-dryland-cta">Open →</span>
-    </a>
-    {% endfor %}
-  </div>
-  {% endif %}
-  {% if dryland_demos %}
-  <div class="pr-demo-grid">
-    {% for d in dryland_demos %}
-    <div class="pr-demo-card">
-      {{ d.svg | safe }}
-      <div class="pr-demo-title">{{ d.title }}</div>
-      <ol class="pr-demo-steps">{% for s in d.steps %}<li>{{ s }}</li>{% endfor %}</ol>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
   {% endif %}
 
   <div class="pr-actions">
