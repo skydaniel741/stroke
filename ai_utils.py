@@ -1390,14 +1390,18 @@ def generate_coach_chat_reply(topic, message, profile, pool_state, injury_summar
 
     history_block = "\n".join(f"{h['role'].upper()}: {h['content']}" for h in recent_history) or "(this is the first message in this conversation)"
 
-    prompt = (
+    # The system prompt (role, knowledge, formatting/behaviour rules) is
+    # IDENTICAL across every message for a given topic+tone -- only the
+    # swimmer-specific data/history/question below actually changes per call.
+    # Splitting it out with cache_control lets Anthropic's prompt cache reuse
+    # it (~90% cheaper on cache hits) instead of re-billing the full knowledge
+    # block on every single message, which is where the real per-message cost
+    # was coming from, not the (already-capped-at-12) message history.
+    system_text = (
         f"You are the swimmer's {topic} coach inside STROKE (a swim training app). You are NOT their pool "
         "technique coach -- stay in your lane: nutrition/fueling or land-based conditioning depending on topic. "
         f"{_tone_line(getattr(profile, 'coaching_tone', 'balanced') if profile else 'balanced')}\n\n"
         f"{knowledge}\n\n"
-        f"What you know about this swimmer:\n{data_block}\n\n"
-        f"Conversation so far:\n{history_block}\n\n"
-        f"Swimmer's new message: \"{message}\"\n\n"
         + (
             "RED FLAG CHECK: if the swimmer's message describes sharp/sudden pain, numbness or tingling down a "
             "limb, a joint locking/catching/giving way, pain waking them at night, visible swelling/deformity, or "
@@ -1419,8 +1423,17 @@ def generate_coach_chat_reply(topic, message, profile, pool_state, injury_summar
         "If their goals conflict (e.g. wanting max plyo progression on 15 min twice a week, or cutting calories "
         "during a peak-load block), say so plainly and offer the honest tradeoff rather than quietly complying. "
         "Keep it conversational and tight, like a real coach texting back, not an essay -- a few sentences unless "
-        "they're asking for a full session/meal plan, in which case use short structure (headers/bullets) so it's "
-        "scannable."
+        "they're asking for a full session/meal plan.\n\n"
+        "FORMATTING (a normal person is reading this on their phone, not a document): short plain sentences by "
+        "default. Only reach for structure when giving an actual session or meal plan, and even then keep it "
+        "light -- a `**Section Name**` header line followed by a few `- ` bullet points, nothing nested, no long "
+        "paragraphs under a header. Never use numbered lists, tables, or multiple heading levels."
+    )
+
+    prompt = (
+        f"What you know about this swimmer:\n{data_block}\n\n"
+        f"Conversation so far:\n{history_block}\n\n"
+        f"Swimmer's new message: \"{message}\""
     )
 
     try:
@@ -1428,6 +1441,7 @@ def generate_coach_chat_reply(topic, message, profile, pool_state, injury_summar
         response = client.messages.create(
             model=model,
             max_tokens=1024,
+            system=[{"type": "text", "text": system_text, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": prompt}],
         )
         text = "".join(block.text for block in response.content if getattr(block, 'type', None) == 'text').strip()
@@ -1437,3 +1451,40 @@ def generate_coach_chat_reply(topic, message, profile, pool_state, injury_summar
         logger.exception('generate_coach_chat_reply: API call failed')
 
     return "Couldn't get a reply right now, give it another try in a moment."
+
+
+import html as _html
+
+_COACH_BOLD_RE = _re.compile(r'\*\*(.+?)\*\*')
+
+
+def render_coach_markdown(text):
+    """Turn the coach chat's lightweight markdown (see the FORMATTING rule in
+    generate_coach_chat_reply -- '**Header**' lines and '- ' bullets only)
+    into safe HTML for the chat bubble. Escapes first, so nothing in the raw
+    text (AI output or, via the same filter, a user's own message) can inject
+    markup -- only our own inserted <b>/<ul>/<li>/<p> tags are real HTML."""
+    if not text:
+        return ''
+    escaped = _html.escape(text)
+    escaped = _COACH_BOLD_RE.sub(r'<b>\1</b>', escaped)
+
+    out = []
+    in_list = False
+    for raw_line in escaped.split('\n'):
+        line = raw_line.strip()
+        if line.startswith('- '):
+            if not in_list:
+                out.append('<ul>')
+                in_list = True
+            out.append(f'<li>{line[2:].strip()}</li>')
+            continue
+        if in_list:
+            out.append('</ul>')
+            in_list = False
+        if line:
+            out.append(f'<p>{line}</p>')
+    if in_list:
+        out.append('</ul>')
+
+    return ''.join(out)

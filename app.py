@@ -97,6 +97,9 @@ def create_app():
         from migrate import run_migrations
         run_migrations(db)
 
+    from ai_utils import render_coach_markdown
+    app.jinja_env.filters['coach_markdown'] = render_coach_markdown
+
     # ── Graceful error handling: the site never shows a raw crash page.
     #    Bad input gets rejected upstream by validation.py; anything that
     #    still slips through lands here, gets logged for debugging, the DB

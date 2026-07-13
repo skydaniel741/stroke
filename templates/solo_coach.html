@@ -45,6 +45,14 @@
   .cc-msg.assistant{align-self:flex-start;background:var(--raised);color:var(--ink);border-bottom-left-radius:4px;}
   .cc-msg-label{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin-bottom:3px;}
   .cc-msg.user .cc-msg-label{color:var(--sig-ink);opacity:.7;}
+  .cc-msg-body{white-space:normal;}
+  .cc-msg-body p{margin:0 0 8px;}
+  .cc-msg-body p:last-child{margin-bottom:0;}
+  .cc-msg-body p b{color:var(--sig);}
+  .cc-msg-body ul{margin:0 0 8px;padding-left:18px;}
+  .cc-msg-body ul:last-child{margin-bottom:0;}
+  .cc-msg-body li{margin-bottom:3px;}
+  .cc-msg-body li:last-child{margin-bottom:0;}
   .cc-empty{font-size:13px;color:var(--faint);padding:16px 0;text-align:center;}
 
   .cc-composer{position:relative;}
@@ -159,7 +167,8 @@
       {% endif %}
       {% for m in messages %}
       <div class="cc-msg {{ m.role }}">
-        <span class="cc-msg-label">{{ 'You' if m.role == 'user' else 'Coach' }}</span>{{ m.content }}
+        <span class="cc-msg-label">{{ 'You' if m.role == 'user' else 'Coach' }}</span>
+        {% if m.role == 'assistant' %}<div class="cc-msg-body">{{ m.content | coach_markdown | safe }}</div>{% else %}{{ m.content }}{% endif %}
       </div>
       {% endfor %}
     </div>
@@ -188,6 +197,30 @@
     chat.scrollTop = chat.scrollHeight;
   }
 
+  // Mirrors ai_utils.render_coach_markdown -- only '**bold**' and '- ' bullets,
+  // nothing else. Escapes first so the coach's own output (or a user's message,
+  // if ever run through this) can't inject markup, only our own tags are real HTML.
+  function renderCoachMarkdown(text){
+    const esc = document.createElement('div');
+    esc.textContent = text;
+    let escaped = esc.innerHTML.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+
+    const lines = escaped.split('\n');
+    let html = '', inList = false;
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (line.startsWith('- ')) {
+        if (!inList) { html += '<ul>'; inList = true; }
+        html += '<li>' + line.slice(2).trim() + '</li>';
+        continue;
+      }
+      if (inList) { html += '</ul>'; inList = false; }
+      if (line) html += '<p>' + line + '</p>';
+    }
+    if (inList) html += '</ul>';
+    return html;
+  }
+
   function ccAppendMsg(role, text){
     const chat = document.getElementById('ccChat');
     const empty = chat.querySelector('.cc-empty');
@@ -198,7 +231,14 @@
     label.className = 'cc-msg-label';
     label.textContent = role === 'user' ? 'You' : 'Coach';
     div.appendChild(label);
-    div.appendChild(document.createTextNode(text));
+    if (role === 'assistant') {
+      const body = document.createElement('div');
+      body.className = 'cc-msg-body';
+      body.innerHTML = renderCoachMarkdown(text);
+      div.appendChild(body);
+    } else {
+      div.appendChild(document.createTextNode(text));
+    }
     chat.appendChild(div);
     ccScrollToBottom();
     return div;
