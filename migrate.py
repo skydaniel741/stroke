@@ -65,7 +65,8 @@ def _dialect_col_def(col_def, dialect_name):
     Postgres doesn't accept."""
     if dialect_name != 'sqlite':
         col_def = col_def.replace('DATETIME', 'TIMESTAMP')
-        col_def = col_def.replace('DEFAULT 0', 'DEFAULT FALSE').replace('DEFAULT 1', 'DEFAULT TRUE')
+        if col_def.startswith('BOOLEAN'):
+            col_def = col_def.replace('DEFAULT 0', 'DEFAULT FALSE').replace('DEFAULT 1', 'DEFAULT TRUE')
     return col_def
 
 
