@@ -49,12 +49,25 @@ def signup():
     from email_utils import send_verification_email
 
     if request.method == 'POST':
-        username = request.form.get('username').strip()
-        email = request.form.get('email').strip().lower()
-        password = request.form.get('password')
+        # Never assume the fields are present -- a crafted POST can omit any of
+        # them, and .strip() on None would 500. Default to '' and validate.
+        username = (request.form.get('username') or '').strip()
+        email = (request.form.get('email') or '').strip().lower()
+        password = request.form.get('password') or ''
 
-        if len(password) < 8:
-            flash('Password must be at least 8 characters.', 'error')
+        if not (3 <= len(username) <= 30):
+            flash('Username must be between 3 and 30 characters.', 'error')
+            return redirect(url_for('main.signup'))
+        if not re.match(r'^[A-Za-z0-9 ._-]+$', username):
+            flash('Username can only use letters, numbers, spaces, and . _ -', 'error')
+            return redirect(url_for('main.signup'))
+
+        if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email) or len(email) > 150:
+            flash('Please enter a valid email address.', 'error')
+            return redirect(url_for('main.signup'))
+
+        if not (8 <= len(password) <= 200):
+            flash('Password must be between 8 and 200 characters.', 'error')
             return redirect(url_for('main.signup'))
 
         # FIXED: Changed from User.query to db.session.query(User)
@@ -107,14 +120,21 @@ def verify():
             flash('Code expired. Request a new one.', 'error')
             return render_template('verify.html', email=email)
 
+        if (user.verify_attempts or 0) >= 5:
+            flash('Too many incorrect attempts. Request a new code to try again.', 'error')
+            return render_template('verify.html', email=email)
+
         if code == user.verify_code:
             user.is_verified = True
             user.verify_code = None
+            user.verify_attempts = 0
             db.session.commit()
             login_user(user)
             flash('Email verified. Welcome to STROKE!', 'success')
             return redirect(url_for('main.dashboard'))
         else:
+            user.verify_attempts = (user.verify_attempts or 0) + 1
+            db.session.commit()
             flash('Incorrect code. Try again.', 'error')
             return render_template('verify.html', email=email)
 
@@ -145,15 +165,23 @@ def login():
     from models import User
 
     if request.method == 'POST':
-        email = request.form.get('email').strip().lower()
-        password = request.form.get('password')
+        email = (request.form.get('email') or '').strip().lower()
+        password = request.form.get('password') or ''
         user = db.session.query(User).filter_by(email=email).first()
-        
+
         if not user:
-            flash('No account found with that email.', 'error')
+            flash('Incorrect email or password.', 'error')
+            return redirect(url_for('main.login'))
+
+        if user.login_locked_until and datetime.utcnow() < user.login_locked_until:
+            flash('Too many failed attempts. Try again in a few minutes.', 'error')
             return redirect(url_for('main.login'))
 
         if user.check_password(password):
+            user.failed_login_attempts = 0
+            user.login_locked_until = None
+            db.session.commit()
+
             if not user.is_verified:
                 flash('Please verify your email first.', 'error')
                 return redirect(url_for('main.verify', email=email))
@@ -164,6 +192,10 @@ def login():
                 return redirect(url_for('coach.coach_dashboard'))
             return redirect(url_for('main.dashboard'))
         else:
+            user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+            if user.failed_login_attempts >= 5:
+                user.login_locked_until = datetime.utcnow() + timedelta(minutes=15)
+            db.session.commit()
             flash('Incorrect email or password.', 'error')
             return redirect(url_for('main.login'))
 
@@ -1431,9 +1463,15 @@ def admin_user_update(user_id):
     new_role = request.form.get('role')
     changes = []
     if new_plan and new_plan != u.plan:
+        if new_plan not in ('free', 'solo', 'solo_pro', 'coach'):
+            flash('Invalid plan value.', 'error')
+            return redirect(url_for('main.admin_dashboard'))
         changes.append(f"plan {u.plan} -> {new_plan}")
         u.plan = new_plan
     if new_role and new_role != u.role:
+        if new_role not in ('swimmer', 'coach'):
+            flash('Invalid role value.', 'error')
+            return redirect(url_for('main.admin_dashboard'))
         changes.append(f"role {u.role} -> {new_role}")
         u.role = new_role
 
@@ -1442,6 +1480,59 @@ def admin_user_update(user_id):
         _log_admin_action('update_user', 'User', u.id, ', '.join(changes))
         flash(f'Updated {u.username}: {", ".join(changes)}', 'success')
 
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@main.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_user_delete(user_id):
+    from app import db
+    from models import User
+
+    u = db.session.query(User).get(user_id)
+    if not u:
+        abort(404)
+    if u.id == current_user.id:
+        flash("You can't delete your own account.", 'error')
+        return redirect(url_for('main.admin_dashboard'))
+
+    username, email = u.username, u.email
+    try:
+        db.session.delete(u)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        flash(f"Couldn't delete {username} — they still have linked data (swims, sets, etc).", 'error')
+        return redirect(url_for('main.admin_dashboard'))
+
+    _log_admin_action('delete_user', 'User', user_id, f'{username} <{email}>')
+    flash(f'Deleted {username}.', 'success')
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@main.route('/admin/users/<int:user_id>/resend-verification', methods=['POST'])
+@login_required
+@admin_required
+def admin_user_resend_verification(user_id):
+    from app import db
+    from models import User
+    from email_utils import send_verification_email
+
+    u = db.session.query(User).get(user_id)
+    if not u:
+        abort(404)
+    if u.is_verified:
+        flash(f'{u.username} is already verified.', 'error')
+        return redirect(url_for('main.admin_dashboard'))
+
+    code = u.generate_verify_code()
+    db.session.commit()
+    if send_verification_email(u.email, u.username, code):
+        _log_admin_action('resend_verification', 'User', u.id, u.email)
+        flash(f'Verification email resent to {u.email}.', 'success')
+    else:
+        flash("Couldn't send the email right now — try again in a moment.", 'error')
     return redirect(url_for('main.admin_dashboard'))
 
 

@@ -18,6 +18,9 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False)
     verify_code = db.Column(db.String(6), nullable=True)
     verify_code_sent_at = db.Column(db.DateTime, nullable=True)
+    verify_attempts = db.Column(db.Integer, default=0)
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    login_locked_until = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.String(20), default='swimmer')  # 'swimmer' or 'coach'
     share_leaderboard = db.Column(db.Boolean, default=False)
 
@@ -30,6 +33,7 @@ class User(db.Model, UserMixin):
     def generate_verify_code(self):
         self.verify_code = str(random.randint(100000, 999999))
         self.verify_code_sent_at = datetime.utcnow()
+        self.verify_attempts = 0
         return self.verify_code
 
     @property

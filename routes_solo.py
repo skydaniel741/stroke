@@ -114,13 +114,13 @@ def onboarding():
             'none', 'club_want_extra', 'club_want_structure', 'self_coached'
         ) else 'none'
         profile.coaching_focus = (
-            request.form.get('coaching_focus', '').strip() if profile.coaching_situation != 'none' else None
+            (clean_text(request.form.get('coaching_focus'), 500) or None) if profile.coaching_situation != 'none' else None
         )
         eating_habits = request.form.get('eating_habits', 'balanced')
         profile.eating_habits = eating_habits if eating_habits in (
             'undereating', 'balanced', 'skip_meals', 'structured'
         ) else 'balanced'
-        profile.limitations = request.form.get('limitations', '').strip() or None
+        profile.limitations = clean_text(request.form.get('limitations'), 500) or None
 
         # AI tuning is available to every solo swimmer (Solo Pro was removed).
         tone = request.form.get('coaching_tone', 'balanced')
@@ -234,8 +234,26 @@ def program():
                 dryland_demo_slugs_seen.add(d['slug'])
                 dryland_demos.append(d)
 
+    # Calendar: the AI schema guarantees program.days is exactly 7 entries,
+    # Monday-Sunday in order, so it maps 1:1 onto this week's real dates.
+    # "Next week" only shows the date strip (no content) -- the AI builds
+    # one week at a time, filled in by the next rebuild.
+    def _fmt(d):
+        return f"{d.day} {d.strftime('%b')}"  # avoid %-d/%#d: not portable across platforms
+
+    program = profile.get_program()
+    today = datetime.utcnow().date()
+    week_start = today - timedelta(days=today.weekday())
+    week_dates = [week_start + timedelta(days=i) for i in range(7)]
+    next_week_dates = [week_start + timedelta(days=7 + i) for i in range(7)]
+    calendar_days = list(zip(program.get('days') or [], week_dates)) if program.get('days') else []
+    week_range = f"{_fmt(week_dates[0])} – {_fmt(week_dates[-1])}"
+    next_week_range = f"{_fmt(next_week_dates[0])} – {_fmt(next_week_dates[-1])}"
+
     return render_template(
-        'solo_program.html', profile=profile, program=profile.get_program(),
+        'solo_program.html', profile=profile, program=program,
+        calendar_days=calendar_days, next_week_dates=next_week_dates, today=today,
+        week_range=week_range, next_week_range=next_week_range,
         nutrition=nutrition, nutrition_meals=nutrition_meals,
         nutrition_supplements=nutrition_supplements,
         dryland=dryland, dryland_programs=dryland_programs,
@@ -292,11 +310,11 @@ def checkin():
             flash('Set up your training program first.', 'error')
             return redirect(url_for('solo.onboarding'))
 
-        try:
-            feeling = int(request.form.get('feeling_rating') or 0)
-        except ValueError:
-            feeling = 0
-        notes = request.form.get('notes', '').strip()
+        from validation import clean_int, clean_text
+        feeling = clean_int(request.form.get('feeling_rating'), key='rating') or 0
+        # Free text: cap length and mask profanity before it ever hits the DB
+        # or the AI prompt (a pasted file / a slur can't get through).
+        notes = clean_text(request.form.get('notes'), 2000)
         if feeling < 1 or feeling > 5:
             flash('Rate how you felt from 1 to 5.', 'error')
             return redirect(url_for('solo.checkin'))

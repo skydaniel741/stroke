@@ -8,6 +8,9 @@ NEW_COLUMNS = {
     'user': [
         ("role", "VARCHAR(20) DEFAULT 'swimmer'"),
         ("share_leaderboard", "BOOLEAN DEFAULT 0"),
+        ("verify_attempts", "INTEGER DEFAULT 0"),
+        ("failed_login_attempts", "INTEGER DEFAULT 0"),
+        ("login_locked_until", "DATETIME"),
     ],
     'swim': [
         ("tag", "VARCHAR(10) DEFAULT 'practice'"),

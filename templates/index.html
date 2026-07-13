@@ -1,180 +1,205 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="chlorine" class="lx">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stroke — a simpler way to log swimming</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_landing.css') }}">
 </head>
 <body>
+<div class="lx-wrap">
 
-<nav class="land-nav">
-  <span class="nav-logo">STROKE</span>
-  <div class="land-nav-links">
+<nav class="lx-nav">
+  <span class="lx-logo">STROKE</span>
+  <div class="lx-nav-links">
     <a href="#log">How it works</a>
     <a href="#library">Set library</a>
     <a href="#pricing">Pricing</a>
     <a href="#coaches">Coaches</a>
     <a href="/login">Log in</a>
+    <a href="/signup" class="lx-nav-cta">Get started free</a>
   </div>
-  <a href="/signup" class="land-nav-cta">Get started free</a>
-  <button class="land-nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+  <button class="lx-nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
 </nav>
-<div class="land-mobile-menu" id="mobileMenu">
+<div class="lx-mobile-menu" id="mobileMenu">
   <a href="#log">How it works</a>
   <a href="#library">Set library</a>
   <a href="#pricing">Pricing</a>
   <a href="#coaches">Coaches</a>
   <a href="/login">Log in</a>
+  <a href="/signup">Get started free</a>
 </div>
 
 <!-- HERO -->
-<section class="hero-wrap" id="top">
-  <div class="hero-glow hero-glow--1"></div>
-  <div class="hero-glow hero-glow--2"></div>
-  <div class="hero-grid">
-    <div class="hero-content">
-      <div class="hero-pill lreveal"><span class="dot"></span>Built poolside, not in a boardroom</div>
-      <h1 class="lreveal">A logbook that keeps up<br>with <span class="acc">your training.</span></h1>
-      <p class="hero-sub lreveal">Stroke started as a way to stop losing sets to a wet notebook. Scan the whiteboard, say the set out loud, or type it once and reuse it — then watch every best time, split and points score add up over a season.</p>
-      <div class="hero-actions lreveal">
+<section class="lx-hero" id="top">
+  <div class="lx-hero-glow lx-hero-glow--1"></div>
+  <div class="lx-hero-glow lx-hero-glow--2"></div>
+  <div class="lx-hero-grid">
+    <div class="lx-hero-content">
+      <div class="lx-hero-pill lreveal"><span class="dot"></span>Built poolside, not in a boardroom</div>
+      <h1 class="lreveal">A logbook that keeps up with <span class="script">your</span> <span class="acc">training.</span></h1>
+      <p class="lx-hero-sub lreveal">Stroke started as a way to stop losing sets to a wet notebook. Scan the whiteboard, say the set out loud, or type it once and reuse it, then watch every best time, split and points score add up over a season.</p>
+      <div class="lx-hero-actions lreveal">
         <a href="/signup" class="btn-solid">Get started free</a>
         <a href="#log" class="btn-ghost">See how it works</a>
       </div>
     </div>
 
-    <!-- Floating app mockups (real app screens, rebuilt in CSS) -->
-    <div class="hero-mocks lreveal" aria-hidden="true">
+    <div class="lx-hero-mocks lreveal" aria-hidden="true">
       <div class="mock-chip">
-        <span class="mock-chip-num">863</span>
+        <span class="mock-chip-num num">863</span>
         <span class="mock-chip-lbl">World Aquatics points</span>
       </div>
-
       <div class="mock-phone">
         <div class="mock-phone-notch"></div>
         <p class="mock-phone-title">Enter time</p>
         <p class="mock-phone-chip">100m Freestyle · 25m</p>
-        <p class="mock-phone-time">0:52.34</p>
+        <p class="mock-phone-time num">0:52.34</p>
         <div class="mock-numpad">
           <span>1</span><span>2</span><span>3</span>
           <span>4</span><span>5</span><span>6</span>
           <span>7</span><span>8</span><span>9</span>
-          <span></span><span>0</span><span>⌫</span>
+          <span></span><span>0</span><span>&#9003;</span>
         </div>
         <div class="mock-phone-btn">Save swim</div>
       </div>
-
       <div class="mock-card mock-card--pb">
         <p class="mock-card-label">Personal best</p>
         <p class="mock-card-title">100m Freestyle</p>
-        <p class="mock-card-big">52.34</p>
+        <p class="mock-card-big num">52.34</p>
         <p class="mock-card-sub">25m pool · logged in 5 seconds</p>
       </div>
-
       <div class="mock-card mock-card--set">
         <p class="mock-card-label">From the set library</p>
         <p class="mock-card-title">CSS Threshold 100s</p>
-        <p class="mock-card-line">12 × 100m Freestyle @ 0:20</p>
+        <p class="mock-card-line num">12 × 100m Freestyle @ 0:20</p>
         <p class="mock-card-sub">at CSS pace — same time every 100</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- MARQUEE TICKER -->
-<div class="marquee-wrap">
-  <div class="marquee-track">
-    <span>Log in seconds</span><span class="marquee-dot">●</span>
-    <span>Track every PB</span><span class="marquee-dot">●</span>
-    <span>World Aquatics points built in</span><span class="marquee-dot">●</span>
-    <span>Ready-made set library</span><span class="marquee-dot">●</span>
-    <span>No watch needed</span><span class="marquee-dot">●</span>
-    <span>Log in seconds</span><span class="marquee-dot">●</span>
-    <span>Track every PB</span><span class="marquee-dot">●</span>
-    <span>World Aquatics points built in</span><span class="marquee-dot">●</span>
-    <span>Ready-made set library</span><span class="marquee-dot">●</span>
-    <span>No watch needed</span><span class="marquee-dot">●</span>
+<!-- MARQUEE -->
+<div class="lx-marquee">
+  <div class="lx-marquee-track">
+    <span>Log in seconds</span><span class="lx-marquee-dot">●</span>
+    <span>Track every PB</span><span class="lx-marquee-dot">●</span>
+    <span>World Aquatics points built in</span><span class="lx-marquee-dot">●</span>
+    <span>Ready-made set library</span><span class="lx-marquee-dot">●</span>
+    <span>No watch needed</span><span class="lx-marquee-dot">●</span>
+    <span>Log in seconds</span><span class="lx-marquee-dot">●</span>
+    <span>Track every PB</span><span class="lx-marquee-dot">●</span>
+    <span>World Aquatics points built in</span><span class="lx-marquee-dot">●</span>
+    <span>Ready-made set library</span><span class="lx-marquee-dot">●</span>
+    <span>No watch needed</span><span class="lx-marquee-dot">●</span>
   </div>
 </div>
 
 <!-- THREE WAYS TO LOG -->
-<section class="lsec" id="log">
-  <div class="lsec-inner lsec-inner--center">
-    <p class="lsec-label lreveal">How you log</p>
-    <h2 class="lsec-h lreveal">No watch needed.<br>No typing the same set twice.</h2>
-    <p class="lsec-sub lsec-sub--center lreveal">Most trackers assume you're wearing a $200 watch or want to type out every 100 by hand. Stroke assumes you're standing on deck with wet hands and thirty seconds before the next rep.</p>
-    <div class="log3-grid">
-      <div class="log3-card lreveal ld1">
-        <span class="log3-num">01</span>
-        <div class="log3-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+<section class="lx-sec" id="log">
+  <div class="lx-inner lx-inner--center">
+    <p class="lx-label lreveal">How you log</p>
+    <h2 class="lx-h lreveal">No watch needed.<br>No typing the same set twice.</h2>
+    <p class="lx-sub lreveal">Most trackers assume you're wearing a $200 watch or want to type out every 100 by hand. Stroke assumes you're standing on deck with wet hands and thirty seconds before the next rep.</p>
+    <div class="lx-log3">
+      <div class="lx-log3-card lreveal ld1">
+        <span class="lx-log3-num">01</span>
+        <div class="lx-log3-icon">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
         </div>
-        <p class="log3-title">Photo scan</p>
-        <p class="log3-desc">Point your phone at the whiteboard. We read your coach's handwriting — shorthand, arrows and all — and turn it into a logged set.</p>
-        <span class="log3-badge solo">Solo</span>
+        <p class="lx-log3-title">Photo scan</p>
+        <p class="lx-log3-desc">Point your phone at the whiteboard. We read your coach's handwriting, shorthand, arrows and all, and turn it into a logged set.</p>
+        <span class="lx-badge solo">Solo</span>
       </div>
-      <div class="log3-card lreveal ld2">
-        <span class="log3-num">02</span>
-        <div class="log3-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+      <div class="lx-log3-card lreveal ld2">
+        <span class="lx-log3-num">02</span>
+        <div class="lx-log3-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </div>
-        <p class="log3-title">Voice record</p>
-        <p class="log3-desc">Say it the way your coach says it — "ten by one hundred free on one thirty" — and it lands as a structured session automatically.</p>
-        <span class="log3-badge solo">Solo</span>
+        <p class="lx-log3-title">Voice record</p>
+        <p class="lx-log3-desc">Say it the way your coach says it, "ten by one hundred free on one thirty", and it lands as a structured session automatically.</p>
+        <span class="lx-badge solo">Solo</span>
       </div>
-      <div class="log3-card lreveal ld3">
-        <span class="log3-num">03</span>
-        <div class="log3-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+      <div class="lx-log3-card lreveal ld3">
+        <span class="lx-log3-num">03</span>
+        <div class="lx-log3-icon">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </div>
-        <p class="log3-title">Manual entry</p>
-        <p class="log3-desc">Type it once, save it as a template. Most swimmers never type the same set twice — next time it's one tap.</p>
-        <span class="log3-badge free">Free</span>
+        <p class="lx-log3-title">Manual entry</p>
+        <p class="lx-log3-desc">Type it once, save it as a template. Most swimmers never type the same set twice, next time it's one tap.</p>
+        <span class="lx-badge free">Free</span>
       </div>
     </div>
   </div>
 </section>
 
 <!-- BIG STAT MOMENT -->
-<section class="stat-moment">
-  <div class="stat-inner lreveal">
-    <p class="lsec-label">The whole point</p>
-    <h2 class="stat-moment-h">
-      <span class="stat-moment-big">5</span>
-      <span class="stat-moment-rest"><span class="stat-moment-unit">seconds</span><br>to log a swim.</span>
+<section class="lx-statmoment">
+  <div class="lreveal">
+    <p class="lx-label">The whole point</p>
+    <h2 class="lx-statmoment-h">
+      <span class="lx-statmoment-big num">5</span>
+      <span class="lx-statmoment-rest"><span class="lx-statmoment-unit">seconds</span><br>to log a swim.</span>
     </h2>
-    <p class="stat-moment-sub">Not five minutes hunting for the app you meant to open. Five seconds, wet fingers and all.</p>
+    <p class="lx-statmoment-sub">Not five minutes hunting for the app you meant to open. Five seconds, wet fingers and all.</p>
+  </div>
+</section>
+
+<!-- AI ENGINE -->
+<section class="lx-sec" id="ai">
+  <div class="lx-inner">
+    <div class="lx-ai-head lreveal">
+      <p class="lx-label">The engine underneath</p>
+      <h2 class="lx-h">Not a chatbot.<br>A model that <em>knows your swimming.</em></h2>
+      <p class="lx-sub">Point your camera at the whiteboard or say the set out loud and Stroke turns it into structured training in seconds. Every swim you log feeds a private model of you, so the feedback gets sharper the more you train.</p>
+    </div>
+
+    <div class="lx-ai-statgrid">
+      <div class="lx-ai-stat lreveal ld1"><div class="lx-ai-stat-num num">40<small>+</small></div><div class="lx-ai-stat-lbl">Coaching shorthands read from a whiteboard: arrows, "desc", "@", build, negative split and more.</div></div>
+      <div class="lx-ai-stat lreveal ld1"><div class="lx-ai-stat-num num">17</div><div class="lx-ai-stat-lbl">Pool events scored to World Aquatics points the moment a time lands, long course and short course.</div></div>
+      <div class="lx-ai-stat lreveal ld2"><div class="lx-ai-stat-num num">0</div><div class="lx-ai-stat-lbl">Watches, straps or wearables needed. The intelligence lives in the log, not on your wrist.</div></div>
+      <div class="lx-ai-stat lreveal ld2"><div class="lx-ai-stat-num num">1</div><div class="lx-ai-stat-lbl">Model per swimmer, learning your paces and thresholds session by session instead of a generic table.</div></div>
+    </div>
+
+    <div class="lx-ai-pipe">
+      <div class="lx-ai-step lreveal ld1"><span class="lx-ai-step-k">1</span><p class="lx-ai-step-t">Read</p><p class="lx-ai-step-d">Camera or voice in. The model parses handwriting and swim shorthand into a clean set: reps, distance, stroke, interval and rest.</p></div>
+      <div class="lx-ai-step lreveal ld2"><span class="lx-ai-step-k">2</span><p class="lx-ai-step-t">Understand</p><p class="lx-ai-step-d">Every rep is read against your own history, so a 100 free today is measured on your paces, not a one-size table of averages.</p></div>
+      <div class="lx-ai-step lreveal ld3"><span class="lx-ai-step-k">3</span><p class="lx-ai-step-t">Coach back</p><p class="lx-ai-step-d">You get a plain language read on where the session sat and what moved since your last block. No dashboard of charts to decode.</p></div>
+    </div>
+
+    <p class="lx-ai-note lreveal">Insights are guidance built from your own logged data, not medical or performance advice. Points and course conversions are estimates based on record-pace ratios.</p>
   </div>
 </section>
 
 <!-- SET LIBRARY -->
-<section class="lsec lsec--alt" id="library">
-  <div class="lsec-inner">
-    <div class="split">
-      <div class="split-copy lreveal-l">
-        <p class="lsec-label">Set library</p>
-        <h2 class="lsec-h">Never train on<br>a blank page.</h2>
-        <p class="lsec-sub">A built-in library of complete workouts — warm up to cool down, with coaching notes — written the way coaches write them. Pick what today needs, log it in one tap, or print a deck sheet for the pool.</p>
+<section class="lx-sec lx-sec--alt" id="library">
+  <div class="lx-inner">
+    <div class="lx-split">
+      <div class="lreveal-l">
+        <p class="lx-label">Set library</p>
+        <h2 class="lx-h">Never train on<br>a blank page.</h2>
+        <p class="lx-sub">A built-in library of complete workouts, warm up to cool down, with coaching notes, written the way coaches write them. Pick what today needs, log it in one tap, or print a deck sheet for the pool.</p>
       </div>
-      <div class="lib-chip-wrap lreveal-r">
-        <span class="lib-chip" style="--chip:#ef7d6a">Fast sets</span>
-        <span class="lib-chip" style="--chip:#7bace8">Easy sets</span>
-        <span class="lib-chip" style="--chip:#ef7d6a">Heart rate</span>
-        <span class="lib-chip" style="--chip:#f0b24d">Drills</span>
-        <span class="lib-chip" style="--chip:#e79a6d">Lactate</span>
-        <span class="lib-chip" style="--chip:#6f7fe0">Fitness</span>
-        <span class="lib-chip" style="--chip:#219ebc">Open water</span>
-        <span class="lib-chip" style="--chip:#2ec4b6">Triathlon</span>
-        <div class="lib-mini-card">
-          <p class="lib-mini-label">From the library</p>
-          <p class="lib-mini-name">CSS Threshold 100s</p>
-          <p class="lib-mini-line">12 × 100m Freestyle @ 0:20 rest</p>
-          <p class="lib-mini-note">at CSS pace — same time every 100</p>
+      <div class="lx-chips lreveal-r">
+        <span class="lx-chip">Fast sets</span>
+        <span class="lx-chip">Easy sets</span>
+        <span class="lx-chip">Heart rate</span>
+        <span class="lx-chip">Drills</span>
+        <span class="lx-chip">Lactate</span>
+        <span class="lx-chip">Fitness</span>
+        <span class="lx-chip">Open water</span>
+        <span class="lx-chip">Triathlon</span>
+        <div class="lx-mini-card">
+          <p class="lx-mini-label">From the library</p>
+          <p class="lx-mini-name">CSS Threshold 100s</p>
+          <p class="lx-mini-line num">12 × 100m Freestyle @ 0:20 rest</p>
+          <p class="lx-mini-note">at CSS pace — same time every 100</p>
         </div>
       </div>
     </div>
@@ -182,157 +207,129 @@
 </section>
 
 <!-- WORLD AQUATICS POINTS -->
-<section class="lsec">
-  <div class="lsec-inner">
-    <div class="pts-panel lreveal">
-      <div class="split split--tight">
-        <div class="pts-card" id="ptsCard">
-          <div class="pts-num" id="ptsCounter">0</div>
-          <div class="pts-lbl">World Aquatics points</div>
-
-          <div class="pts-mini-calc">
-            <div class="pts-mini-row">
-              <select class="pts-mini-select" id="miniPool" onchange="miniPopulate(); miniCalc()">
-                <option value="LCM">Long course (50m)</option>
-                <option value="SCM">Short course (25m)</option>
-              </select>
-              <select class="pts-mini-select" id="miniGender" onchange="miniPopulate(); miniCalc()">
-                <option value="men">Men</option>
-                <option value="women">Women</option>
-              </select>
-            </div>
-            <select class="pts-mini-select pts-mini-full" id="miniEvent" onchange="miniCalc()"></select>
-            <div class="pts-mini-row">
-              <input type="number" class="pts-mini-input" id="miniMin" placeholder="Min" min="0" max="59" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
-              <span class="pts-mini-sep">:</span>
-              <input type="number" class="pts-mini-input" id="miniSec" placeholder="Sec" min="0" max="59" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
-              <span class="pts-mini-sep">.</span>
-              <input type="number" class="pts-mini-input" id="miniMs" placeholder="00" min="0" max="99" oninput="miniClamp(this,99); miniCalc()" onblur="miniPad(this)">
-            </div>
+<section class="lx-sec">
+  <div class="lx-inner">
+    <div class="lx-split lx-split--tight lreveal">
+      <div class="lx-calc-card" id="ptsCard">
+        <div class="lx-calc-num num" id="ptsCounter">0</div>
+        <div class="lx-calc-lbl">World Aquatics points</div>
+        <div class="lx-calc-body">
+          <div class="lx-calc-row">
+            <select class="lx-calc-select" id="miniPool" onchange="miniPopulate(); miniCalc()">
+              <option value="LCM">Long course (50m)</option>
+              <option value="SCM">Short course (25m)</option>
+            </select>
+            <select class="lx-calc-select" id="miniGender" onchange="miniPopulate(); miniCalc()">
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+            </select>
+          </div>
+          <select class="lx-calc-select lx-calc-full" id="miniEvent" onchange="miniCalc()"></select>
+          <div class="lx-calc-row">
+            <input type="number" class="lx-calc-input" id="miniMin" placeholder="Min" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
+            <span class="lx-calc-sep">:</span>
+            <input type="number" class="lx-calc-input" id="miniSec" placeholder="Sec" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
+            <span class="lx-calc-sep">.</span>
+            <input type="number" class="lx-calc-input" id="miniMs" placeholder="00" min="0" max="99" maxlength="2" inputmode="numeric" oninput="miniClamp(this,99); miniCalc()" onblur="miniPad(this)">
           </div>
         </div>
-        <div class="split-copy">
-          <p class="lsec-label lsec-label--ondark">World Aquatics points</p>
-          <h2 class="pts-copy-h">See exactly<br>where you <em>stand</em><br>globally.</h2>
-          <p class="pts-copy-p">Enter any time for any event and Stroke calculates your World Aquatics points on the spot, then tracks how they move over a season of training. Try it — no account needed.</p>
-          <a href="/signup" class="btn-solid btn-solid--lav">Track this over time</a>
-        </div>
+      </div>
+      <div>
+        <p class="lx-label">World Aquatics points</p>
+        <h2 class="lx-h">See exactly<br>where you <em>stand</em><br>globally.</h2>
+        <p class="lx-sub">Enter any time for any event and Stroke calculates your World Aquatics points on the spot, then tracks how they move over a season of training. Try it, no account needed.</p>
+        <a href="/signup" class="btn-solid btn-solid--alt" style="margin-top:22px">Track this over time</a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- TIME CONVERTER -->
-<section class="lsec lsec--alt" id="converter">
-  <div class="lsec-inner">
-    <div class="split">
-      <div class="split-copy lreveal-l">
-        <p class="lsec-label">Time converter</p>
-        <h2 class="lsec-h">Short course.<br>Long course.<br><em class="conv-em">Same swimmer.</em></h2>
-        <p class="lsec-sub">Trained all winter in a 25m pool and racing long course this summer? Get a rough long course equivalent for any short course time — or the other way around — based on the same pace ratios used in the points calculator.</p>
+<section class="lx-sec lx-sec--alt" id="converter">
+  <div class="lx-inner">
+    <div class="lx-split">
+      <div class="lreveal-l">
+        <p class="lx-label">Time converter</p>
+        <h2 class="lx-h">Short course.<br>Long course.<br><em>Same swimmer.</em></h2>
+        <p class="lx-sub">Trained all winter in a 25m pool and racing long course this summer? Get a rough long course equivalent for any short course time, or the other way around, based on the same pace ratios used in the points calculator.</p>
       </div>
-      <div class="conv-card lreveal-r" id="convCard">
-        <div class="conv-result">
-          <div class="conv-result-val" id="convResult">—</div>
-          <div class="conv-result-lbl" id="convResultLbl">Enter a time to convert</div>
+      <div class="lx-calc-card lreveal-r" id="convCard">
+        <div class="lx-calc-res">
+          <div class="lx-calc-res-val num" id="convResult">—</div>
+          <div class="lx-calc-res-lbl" id="convResultLbl">Enter a time to convert</div>
         </div>
-
-        <div class="pts-mini-calc">
-          <div class="pts-mini-row">
-            <select class="pts-mini-select" id="convFrom" onchange="convPopulate(); convCalc()">
+        <div class="lx-calc-body">
+          <div class="lx-calc-row">
+            <select class="lx-calc-select" id="convFrom" onchange="convPopulate(); convCalc()">
               <option value="SCM">From: Short course (25m)</option>
               <option value="LCM">From: Long course (50m)</option>
             </select>
-            <select class="pts-mini-select" id="convGender" onchange="convPopulate(); convCalc()">
+            <select class="lx-calc-select" id="convGender" onchange="convPopulate(); convCalc()">
               <option value="men">Men</option>
               <option value="women">Women</option>
             </select>
           </div>
-          <select class="pts-mini-select pts-mini-full" id="convEvent" onchange="convCalc()"></select>
-          <div class="pts-mini-row">
-            <input type="number" class="pts-mini-input" id="convMin" placeholder="Min" min="0" max="59" oninput="miniClamp(this,59); convCalc()" onblur="miniPad(this)">
-            <span class="pts-mini-sep">:</span>
-            <input type="number" class="pts-mini-input" id="convSec" placeholder="Sec" min="0" max="59" oninput="miniClamp(this,59); convCalc()" onblur="miniPad(this)">
-            <span class="pts-mini-sep">.</span>
-            <input type="number" class="pts-mini-input" id="convMs" placeholder="00" min="0" max="99" oninput="miniClamp(this,99); convCalc()" onblur="miniPad(this)">
+          <select class="lx-calc-select lx-calc-full" id="convEvent" onchange="convCalc()"></select>
+          <div class="lx-calc-row">
+            <input type="number" class="lx-calc-input" id="convMin" placeholder="Min" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); convCalc()" onblur="miniPad(this)">
+            <span class="lx-calc-sep">:</span>
+            <input type="number" class="lx-calc-input" id="convSec" placeholder="Sec" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); convCalc()" onblur="miniPad(this)">
+            <span class="lx-calc-sep">.</span>
+            <input type="number" class="lx-calc-input" id="convMs" placeholder="00" min="0" max="99" maxlength="2" inputmode="numeric" oninput="miniClamp(this,99); convCalc()" onblur="miniPad(this)">
           </div>
         </div>
-        <p class="conv-note">Estimate only — based on record-pace ratios between courses, not an official conversion.</p>
+        <p class="lx-calc-note">Estimate only, based on record-pace ratios between courses, not an official conversion.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- AND THAT'S NOT ALL -->
-<section class="lsec">
-  <div class="lsec-inner lsec-inner--center">
-    <p class="lsec-label lreveal">And that's not all</p>
-    <h2 class="lsec-h lreveal">Everything a swimmer<br>actually reaches for.</h2>
-    <div class="more-grid">
-      <div class="more-card more-card--wide lreveal ld1">
-        <span class="more-num">01</span>
-        <p class="feat-title">Personal bests</p>
-        <p class="feat-desc">Every best time tracked automatically.</p>
-      </div>
-      <div class="more-card lreveal ld1">
-        <span class="more-num">02</span>
-        <p class="feat-title">AI training insights</p>
-        <p class="feat-desc">Plain language, not a dashboard of charts.</p>
-      </div>
-      <div class="more-card lreveal ld2">
-        <span class="more-num">03</span>
-        <p class="feat-title">CSS calculator</p>
-        <p class="feat-desc">Find your threshold pace & zones.</p>
-      </div>
-      <div class="more-card lreveal ld2">
-        <span class="more-num">04</span>
-        <p class="feat-title">Goals & training plans</p>
-        <p class="feat-desc">Set a time, get the blocks to reach it.</p>
-      </div>
-      <div class="more-card lreveal ld3">
-        <span class="more-num">05</span>
-        <p class="feat-title">Split analysis</p>
-        <p class="feat-desc">See exactly where time is going missing.</p>
-      </div>
-      <div class="more-card lreveal ld3">
-        <span class="more-num">06</span>
-        <p class="feat-title">Printable deck sheets</p>
-        <p class="feat-desc">Any library set, print-ready for the pool.</p>
-      </div>
+<!-- MORE -->
+<section class="lx-sec">
+  <div class="lx-inner lx-inner--center">
+    <p class="lx-label lreveal">And that's not all</p>
+    <h2 class="lx-h lreveal">Everything a swimmer<br>actually reaches for.</h2>
+    <div class="lx-more">
+      <div class="lx-more-card lx-more-card--wide lreveal ld1"><span class="lx-more-num">01</span><p class="lx-feat-title">Personal bests</p><p class="lx-feat-desc">Every best time tracked automatically.</p></div>
+      <div class="lx-more-card lreveal ld1"><span class="lx-more-num">02</span><p class="lx-feat-title">AI training insights</p><p class="lx-feat-desc">Plain language, not a dashboard of charts.</p></div>
+      <div class="lx-more-card lreveal ld2"><span class="lx-more-num">03</span><p class="lx-feat-title">CSS calculator</p><p class="lx-feat-desc">Find your threshold pace & zones.</p></div>
+      <div class="lx-more-card lreveal ld2"><span class="lx-more-num">04</span><p class="lx-feat-title">Goals & training plans</p><p class="lx-feat-desc">Set a time, get the blocks to reach it.</p></div>
+      <div class="lx-more-card lreveal ld3"><span class="lx-more-num">05</span><p class="lx-feat-title">Split analysis</p><p class="lx-feat-desc">See exactly where time is going missing.</p></div>
+      <div class="lx-more-card lreveal ld3"><span class="lx-more-num">06</span><p class="lx-feat-title">Printable deck sheets</p><p class="lx-feat-desc">Any library set, print-ready for the pool.</p></div>
     </div>
   </div>
 </section>
 
 <!-- PRICING -->
-<section class="lsec lsec--alt" id="pricing">
-  <div class="lsec-inner lsec-inner--center">
-    <p class="lsec-label lreveal">Pricing</p>
-    <h2 class="lsec-h lreveal">Simple pricing.<br>No surprises.</h2>
-    <p class="lsec-sub lsec-sub--center lreveal">Start free. Upgrade only if you want the smarter logging and analysis.</p>
-    <div class="price-grid">
-      <div class="price-card lreveal ld1">
-        <p class="price-tier">Free</p>
-        <p class="price-val">$0</p>
-        <p class="price-per">forever</p>
-        <p class="price-desc">Everything you need to log and track your swimming properly.</p>
-        <hr class="price-divider">
-        <ul class="price-feats">
+<section class="lx-sec lx-sec--alt" id="pricing">
+  <div class="lx-inner lx-inner--center">
+    <p class="lx-label lreveal">Pricing</p>
+    <h2 class="lx-h lreveal">Simple pricing.<br>No surprises.</h2>
+    <p class="lx-sub lreveal">Start free. Upgrade only if you want the smarter logging and analysis.</p>
+    <div class="lx-price">
+      <div class="lx-price-card lreveal ld1">
+        <p class="lx-price-tier">Free</p>
+        <p class="lx-price-val num">$0</p>
+        <p class="lx-price-per">forever</p>
+        <p class="lx-price-desc">Everything you need to log and track your swimming properly.</p>
+        <hr class="lx-price-divider">
+        <ul class="lx-price-feats">
           <li>Manual swim logging</li>
           <li>Saved templates & copy last session</li>
           <li>Personal bests across every event</li>
           <li>World Aquatics points & CSS calculators</li>
           <li>Full set library — printable coach sheets</li>
         </ul>
-        <a href="/signup" class="price-btn">Get started free</a>
+        <a href="/signup" class="lx-price-btn">Get started free</a>
       </div>
-      <div class="price-card hot lreveal ld2">
-        <div class="price-badge">Most popular</div>
-        <p class="price-tier">Solo</p>
-        <p class="price-val">$12</p>
-        <p class="price-per">per month</p>
-        <p class="price-desc">Smart logging and analysis for swimmers serious about improving.</p>
-        <hr class="price-divider">
-        <ul class="price-feats">
+      <div class="lx-price-card hot lreveal ld2">
+        <div class="lx-price-badge">Most popular</div>
+        <p class="lx-price-tier">Solo</p>
+        <p class="lx-price-val num">$12</p>
+        <p class="lx-price-per">per month</p>
+        <p class="lx-price-desc">Smart logging and analysis for swimmers serious about improving.</p>
+        <hr class="lx-price-divider">
+        <ul class="lx-price-feats">
           <li>Everything in Free</li>
           <li>Photo set scanner</li>
           <li>Voice set logging</li>
@@ -340,44 +337,42 @@
           <li>Goals & auto training plans</li>
           <li>Split time analysis</li>
         </ul>
-        <a href="/signup" class="price-btn">Start Solo</a>
+        <a href="/signup" class="lx-price-btn">Start Solo</a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- COACH WAITLIST -->
-<section class="lsec" id="coaches">
-  <div class="lsec-inner">
-    <div class="coach-panel lreveal">
-      <p class="lsec-label">For coaches</p>
-      <h2 class="lsec-h">The coach side is<br>coming next.</h2>
-      <p class="lsec-sub coach-sub">A view of the whole squad's sets, times and points — built with feedback from actual coaches, not a guess at what they'd want.</p>
-      <form class="coach-form">
-        <input type="email" class="coach-input" placeholder="you@example.com" required>
-        <button type="submit" class="coach-submit">Join waitlist</button>
+<section class="lx-sec" id="coaches">
+  <div class="lx-inner">
+    <div class="lx-coach-panel lreveal">
+      <p class="lx-label">For coaches</p>
+      <h2 class="lx-h">The coach side is<br>coming next.</h2>
+      <p class="lx-sub" style="margin:0 auto">A view of the whole squad's sets, times and points, built with feedback from actual coaches, not a guess at what they'd want.</p>
+      <form class="lx-coach-form">
+        <input type="email" class="lx-coach-input" placeholder="you@example.com" required>
+        <button type="submit" class="lx-coach-submit">Join waitlist</button>
       </form>
-      <p class="coach-note">No spam. One email, when it's ready.</p>
+      <p class="lx-coach-note">No spam. One email, when it's ready.</p>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="cta-sec">
-  <div class="cta-glow"></div>
-  <h2 class="cta-h lreveal">Start logging<br>your swimming today.</h2>
-  <p class="cta-sub lreveal">No credit card. No watch. Set up while you're still on deck.</p>
-  <div class="cta-btns lreveal">
-    <a href="/signup" class="btn-solid">Get started free</a>
-  </div>
+<section class="lx-cta">
+  <div class="lx-cta-glow"></div>
+  <h2 class="lx-cta-h lreveal">Start logging<br>your swimming today.</h2>
+  <p class="lx-cta-sub lreveal">No credit card. No watch. Set up while you're still on deck.</p>
+  <div class="lreveal"><a href="/signup" class="btn-solid">Get started free</a></div>
 </section>
 
-<footer class="lfooter">
+<footer class="lx-footer">
   <div>
-    <p class="lfooter-logo">Stroke</p>
-    <p class="lfooter-sub">Built in New Zealand. For swimmers everywhere.</p>
+    <p class="lx-footer-logo">Stroke</p>
+    <p class="lx-footer-sub">Built in New Zealand. For swimmers everywhere.</p>
   </div>
-  <div class="lfooter-links">
+  <div class="lx-footer-links">
     <a href="#log">How it works</a>
     <a href="#library">Set library</a>
     <a href="#pricing">Pricing</a>
@@ -386,6 +381,8 @@
     <a href="/privacy">Privacy</a>
   </div>
 </footer>
+
+</div>
 
 <script>
 const miniBaseTimes = {
@@ -403,20 +400,9 @@ function miniClamp(el, max){
   let v = el.value.replace(/[^0-9]/g, '');
   if(v.length > 2) v = v.slice(0,2);
   let num = parseInt(v);
-  if(!isNaN(num)){
-    if(num > max) num = max;
-    el.value = num;
-  } else {
-    el.value = '';
-  }
+  if(!isNaN(num)){ if(num > max) num = max; el.value = num; } else { el.value = ''; }
 }
-
-function miniPad(el){
-  if(el.value === '') return;
-  const num = parseInt(el.value);
-  el.value = num.toString().padStart(2, '0');
-}
-
+function miniPad(el){ if(el.value === '') return; const num = parseInt(el.value); el.value = num.toString().padStart(2, '0'); }
 function miniPopulate(){
   const pool = document.getElementById('miniPool').value;
   const gender = document.getElementById('miniGender').value;
@@ -426,30 +412,23 @@ function miniPopulate(){
   sel.innerHTML = events.map(e => `<option value="${e}">${e}</option>`).join('');
   if(events.includes(prev)) sel.value = prev;
 }
-
 function miniCalc(){
   const pool = document.getElementById('miniPool').value;
   const gender = document.getElementById('miniGender').value;
   const event = document.getElementById('miniEvent').value;
   const B = miniBaseTimes[pool][gender][event];
   if(!B) return;
-
   const min = Math.min(parseInt(document.getElementById('miniMin').value) || 0, 59);
   const sec = Math.min(parseInt(document.getElementById('miniSec').value) || 0, 59);
   const ms = Math.min(parseInt(document.getElementById('miniMs').value) || 0, 99);
   const T = min*60 + sec + ms/100;
-
   const counter = document.getElementById('ptsCounter');
-  if(T <= 0){
-    counter.textContent = '0';
-    return;
-  }
+  if(T <= 0){ counter.textContent = '0'; return; }
   let points = Math.trunc(1000 * Math.pow(B/T, 3));
   if(points > 1100) points = 1100;
   if(points < 0) points = 0;
   counter.textContent = points;
 }
-
 function convPopulate(){
   const from = document.getElementById('convFrom').value;
   const gender = document.getElementById('convGender').value;
@@ -459,7 +438,6 @@ function convPopulate(){
   sel.innerHTML = events.map(e => `<option value="${e}">${e}</option>`).join('');
   if(events.includes(prev)) sel.value = prev;
 }
-
 function convCalc(){
   const from = document.getElementById('convFrom').value;
   const to = from === 'SCM' ? 'LCM' : 'SCM';
@@ -470,18 +448,11 @@ function convCalc(){
   const result = document.getElementById('convResult');
   const label = document.getElementById('convResultLbl');
   if(!baseFrom || !baseTo) return;
-
   const min = Math.min(parseInt(document.getElementById('convMin').value) || 0, 59);
   const sec = Math.min(parseInt(document.getElementById('convSec').value) || 0, 59);
   const ms = Math.min(parseInt(document.getElementById('convMs').value) || 0, 99);
   const T = min*60 + sec + ms/100;
-
-  if(T <= 0){
-    result.textContent = '—';
-    label.textContent = 'Enter a time to convert';
-    return;
-  }
-
+  if(T <= 0){ result.textContent = '—'; label.textContent = 'Enter a time to convert'; return; }
   const converted = T * (baseTo / baseFrom);
   const outMin = Math.floor(converted / 60);
   const outSec = (converted - outMin*60).toFixed(2).padStart(5,'0');
@@ -509,34 +480,30 @@ const io=new IntersectionObserver(entries=>{
 document.querySelectorAll('.lreveal,.lreveal-l,.lreveal-r').forEach(el=>io.observe(el));
 
 const ptsIo=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      miniPopulate();
-      document.getElementById('miniMin').value = 0;
-      document.getElementById('miniSec').value = 52;
-      document.getElementById('miniMs').value = 34;
-      miniCalc();
-    }
-  });
+  entries.forEach(e=>{ if(e.isIntersecting){
+    miniPopulate();
+    document.getElementById('miniMin').value = 0;
+    document.getElementById('miniSec').value = 52;
+    document.getElementById('miniMs').value = 34;
+    miniCalc();
+  }});
 },{threshold:.3});
 const pc=document.getElementById('ptsCard');if(pc)ptsIo.observe(pc);
 
 const convIo=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      convPopulate();
-      document.getElementById('convMin').value = 1;
-      document.getElementById('convSec').value = 0;
-      document.getElementById('convMs').value = 0;
-      convCalc();
-    }
-  });
+  entries.forEach(e=>{ if(e.isIntersecting){
+    convPopulate();
+    document.getElementById('convMin').value = 1;
+    document.getElementById('convSec').value = 0;
+    document.getElementById('convMs').value = 0;
+    convCalc();
+  }});
 },{threshold:.3});
 const cc=document.getElementById('convCard');if(cc)convIo.observe(cc);
 
-document.querySelector('.coach-form').addEventListener('submit',function(e){
+document.querySelector('.lx-coach-form').addEventListener('submit',function(e){
   e.preventDefault();
-  this.innerHTML='<p style="font-weight:800;color:#2c2942;font-size:14px">You\'re on the list.</p>';
+  this.innerHTML='<p class="lx-coach-done">You\'re on the list.</p>';
 });
 })();
 </script>

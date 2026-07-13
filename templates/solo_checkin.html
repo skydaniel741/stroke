@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="chlorine">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,6 +52,7 @@
   .ci-history-rating{font-size:11px;font-weight:800;background:#e9eefc;color:#5474d4;padding:3px 8px;border-radius:20px;flex-shrink:0;}
   .ci-history-notes{flex:1;font-size:12px;color:#6a6683;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_pages.css') }}">
 </head>
 <body>
 
@@ -137,7 +138,7 @@
     </div>
 
     <div class="ci-field">
-      <textarea name="notes" id="notesField" placeholder="What could have gone better? How did it feel?">{{ todays_checkin.notes if todays_checkin else '' }}</textarea>
+      <textarea name="notes" id="notesField" maxlength="2000" placeholder="What could have gone better? How did it feel?">{{ todays_checkin.notes if todays_checkin else '' }}</textarea>
       <button type="button" class="voice-btn" data-voice-target="notesField" title="Dictate with your voice" aria-label="Voice input">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2c2942" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
       </button>

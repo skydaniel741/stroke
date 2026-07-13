@@ -1,22 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="chlorine">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify email — STROKE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
 </head>
 <body>
-    <nav>
-        <a href="/" class="nav-logo">STROKE</a>
-    </nav>
-    <div class="auth-wrap">
-        <div class="auth-card">
+<div class="cx-auth">
+
+    <aside class="cx-auth-brand">
+        <div class="cx-auth-brand-top">
+            <a href="/" class="cx-brand" aria-label="STROKE home">
+                <svg viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/></svg>
+            </a>
+            <span class="cx-auth-wordmark">STROKE</span>
+        </div>
+        <div class="cx-auth-statement">
+            <div class="cx-auth-tag"><span class="rule"></span>One quick step</div>
+            <h2 style="margin-top:14px">Confirm it's <em>you</em>, then dive in.</h2>
+            <p>We sent a six digit code to your inbox. Pop it in and your account is ready to go.</p>
+        </div>
+        <div class="cx-auth-tag" style="color:var(--faint)">Codes expire in 15 minutes</div>
+    </aside>
+
+    <main class="cx-auth-formside">
+        <div class="cx-auth-card">
             <h1>Check your email</h1>
-            <p class="auth-sub">We sent a 6 digit code to {{ email }}. Enter it below to verify your account.</p>
+            <p class="cx-auth-sub">We sent a 6 digit code to {{ email }}. Enter it below to verify your account.</p>
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }}">{{ message }}</div>
@@ -24,15 +37,16 @@
             {% endwith %}
             <form method="POST" action="/verify">
                 <input type="hidden" name="email" value="{{ email }}">
-                <div class="form-group">
+                <div class="cx-field">
                     <label>Verification code</label>
-                    <input type="text" name="code" placeholder="000000" maxlength="6" required autocomplete="one-time-code" class="code-input">
+                    <input type="text" name="code" class="cx-input cx-code-input" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" required autocomplete="one-time-code">
                 </div>
-                <button type="submit" class="btn-primary">Verify email</button>
+                <button type="submit" class="cx-btn-primary">Verify email</button>
             </form>
-            <p class="auth-switch">Wrong email? <a href="/signup">Start over</a></p>
-            <p class="auth-switch auth-switch--compact"><a href="/resend-code?email={{ email }}">Resend code</a></p>
+            <p class="cx-auth-switch">Wrong email? <a href="/signup">Start over</a></p>
+            <p class="cx-auth-switch" style="margin-top:8px"><a href="/resend-code?email={{ email }}">Resend code</a></p>
         </div>
-    </div>
+    </main>
+</div>
 </body>
 </html>

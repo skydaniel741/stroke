@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="chlorine">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/log.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_pages.css') }}">
 </head>
 <body>
 
@@ -190,13 +191,14 @@
     <div class="wizard-step active" id="wstep0">
       <p class="wizard-q">How many reps?</p>
       <div class="wizard-options" id="wReps"></div>
-      <input class="wizard-custom-input" type="number" id="wRepsCustom" placeholder="Custom number" min="1" max="200" step="1" oninput="wizardCustom('reps', this.value)">
+      <input class="wizard-custom-input" type="number" id="wRepsCustom" placeholder="Custom number" min="1" max="200" step="1" maxlength="3" inputmode="numeric" oninput="wizardCustom('reps', this.value)">
     </div>
 
     <div class="wizard-step" id="wstep1">
       <p class="wizard-q">What distance (metres)?</p>
       <div class="wizard-options" id="wDist"></div>
-      <input class="wizard-custom-input" type="number" id="wDistCustom" placeholder="Custom distance" min="25" max="3000" step="25" oninput="wizardCustom('dist', this.value)">
+      <input class="wizard-custom-input" type="number" id="wDistCustom" placeholder="Custom distance" min="25" max="2000" step="25" maxlength="4" inputmode="numeric" oninput="wizardCustom('dist', this.value)">
+      <p class="wizard-vol-warn" id="wVolWarn" style="display:none;color:#d1255c;font-size:13px;font-weight:700;margin-top:8px"></p>
     </div>
 
     <div class="wizard-step" id="wstep2">
@@ -211,11 +213,11 @@
       <div class="wizard-options wizard-options-sm" id="wRestType"></div>
       <p class="wizard-q wizard-q-sub">"On" = send-off/interval — you leave again every X. "Rest" = an actual break before the next set.</p>
       <div class="wizard-options" id="wRest"></div>
-      <input class="wizard-custom-input" type="text" id="wRestCustom" placeholder="e.g. 1:15" oninput="wizardCustom('rest', this.value)">
+      <input class="wizard-custom-input" type="text" id="wRestCustom" placeholder="e.g. 1:15" maxlength="8" oninput="wizardCustom('rest', this.value)">
       <div class="wizard-advanced-toggle" onclick="toggleAdvanced()">+ Add a note or heart rate target (optional)</div>
       <div class="wizard-advanced-panel" id="advancedPanel">
-        <input class="wizard-custom-input" type="text" id="wNote" placeholder="e.g. descend 1-4, build each 50" oninput="wizardCustom('note', this.value)">
-        <input class="wizard-custom-input" type="text" id="wHR" placeholder="e.g. 150bpm" oninput="wizardCustom('hr', this.value)">
+        <input class="wizard-custom-input" type="text" id="wNote" placeholder="e.g. descend 1-4, build each 50" maxlength="200" oninput="wizardCustom('note', this.value)">
+        <input class="wizard-custom-input" type="text" id="wHR" placeholder="e.g. 150bpm" maxlength="12" oninput="wizardCustom('hr', this.value)">
       </div>
     </div>
 
@@ -233,7 +235,7 @@
 <div class="wizard-overlay" id="saveTemplateOverlay">
   <div class="wizard-card">
     <p class="wizard-q">Name this set</p>
-    <input class="wizard-custom-input" type="text" id="templateNameInput" placeholder="e.g. Sprint Pyramid" onkeydown="if(event.key==='Enter')confirmSaveTemplate()">
+    <input class="wizard-custom-input" type="text" id="templateNameInput" placeholder="e.g. Sprint Pyramid" maxlength="100" onkeydown="if(event.key==='Enter')confirmSaveTemplate()">
     <div class="wizard-nav">
       <button class="wizard-back" onclick="closeSaveTemplateModal()">Cancel</button>
       <button class="wizard-next" onclick="confirmSaveTemplate()">Save set</button>
@@ -267,13 +269,13 @@
   <div class="splits-toggle" id="splitsToggleWrap">
     <div class="wizard-advanced-toggle" onclick="toggleSplits()">+ Add 50m splits (optional)</div>
     <div class="wizard-advanced-panel" id="splitsPanel">
-      <input class="wizard-custom-input" type="text" id="splitsInput" placeholder="e.g. 26.10, 27.80, 28.40, 29.04" oninput="renderSplitsPreview()">
+      <input class="wizard-custom-input" type="text" id="splitsInput" placeholder="e.g. 26.10, 27.80, 28.40, 29.04" maxlength="300" oninput="renderSplitsPreview()">
       <p class="splits-hint" id="splitsPreview"></p>
     </div>
   </div>
 
   <div style="position:relative">
-    <textarea class="save-notes" id="sessionNotes" rows="2" placeholder="How did it feel? (optional)" style="padding-right:44px"></textarea>
+    <textarea class="save-notes" id="sessionNotes" rows="2" maxlength="2000" placeholder="How did it feel? (optional)" style="padding-right:44px"></textarea>
     <button type="button" class="voice-btn" data-voice-target="sessionNotes" title="Dictate with your voice" aria-label="Voice input"
       style="position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;border:2px solid #2c2942;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
       <svg viewBox="0 0 24 24" fill="none" stroke="#2c2942" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
@@ -580,7 +582,7 @@ function renderWizardOptions(){
 function pickWizard(field, value){
   wizardSet[field] = value;
   renderWizardOptions();
-  if(field!=='modifier') document.getElementById('wNextBtn').disabled = false;
+  if(field!=='modifier') document.getElementById('wNextBtn').disabled = !blockVolumeOk();
   if(field==='reps') document.getElementById('wRepsCustom').value='';
   if(field==='dist') document.getElementById('wDistCustom').value='';
 }
@@ -598,11 +600,29 @@ function wizardCustom(field, value){
     let n = parseInt(value, 10);
     if(!Number.isFinite(n) || n < 1){ wizardSet[field] = null; document.getElementById('wNextBtn').disabled = true; return; }
     if(field==='reps') n = Math.min(n, 200);
-    if(field==='dist') n = Math.min(Math.max(n, 25), 3000);
+    if(field==='dist') n = Math.min(Math.max(n, 25), 2000);
     wizardSet[field] = n;
   }
   renderWizardOptions();
-  document.getElementById('wNextBtn').disabled = false;
+  document.getElementById('wNextBtn').disabled = !blockVolumeOk();
+}
+
+// A single set can't be an impossible distance. 100x100 = 10km is a real
+// monster set; 200x3000 = 600km is not. Mirror of validation.MAX_BLOCK_VOLUME.
+const MAX_BLOCK_VOLUME = 15000;
+function blockVolumeOk(){
+  const r = parseInt(wizardSet.reps, 10) || 0;
+  const d = parseInt(wizardSet.dist, 10) || 0;
+  const warn = document.getElementById('wVolWarn');
+  if(r > 0 && d > 0 && r * d > MAX_BLOCK_VOLUME){
+    if(warn){
+      warn.textContent = `That's ${(r*d).toLocaleString()}m in one set — check the reps and distance (max 15,000m).`;
+      warn.style.display = 'block';
+    }
+    return false;
+  }
+  if(warn) warn.style.display = 'none';
+  return true;
 }
 
 function toggleAdvanced(){
@@ -622,7 +642,7 @@ function showWizardStep(n){
     true
   ];
   const nextBtn = document.getElementById('wNextBtn');
-  nextBtn.disabled = !stepValid[n];
+  nextBtn.disabled = !stepValid[n] || !blockVolumeOk();
   nextBtn.textContent = n===3 ? (editingSetId ? 'Save set ✓' : 'Add set ✓') : 'Next →';
 }
 
@@ -631,6 +651,7 @@ function wizardNext(){
     wizardStep++;
     showWizardStep(wizardStep);
   } else {
+    if(!blockVolumeOk()){ return; }  // never add an impossible-distance set
     if(editingSetId){
       const idx = sessionSets.findIndex(s=>s.id===editingSetId);
       if(idx>-1) sessionSets[idx] = {...wizardSet, id: editingSetId};
@@ -714,6 +735,7 @@ function updateTotals(){
 }
 
 // ─── SESSION CONFIRM ───
+const MAX_SESSION_VOLUME = 30000;  // mirror of validation.MAX_SESSION_VOLUME
 function prepSessionConfirm(){
   confirmType = 'session';
   if(sessionSets.length===0){alert('Add at least one set first');return;}
@@ -722,6 +744,10 @@ function prepSessionConfirm(){
   const type = document.getElementById('sessionType').value;
   let totalDist=0, totalReps=0;
   sessionSets.forEach(s=>{totalDist+=(parseInt(s.reps)||0)*(parseInt(s.dist)||0);totalReps+=(parseInt(s.reps)||0);});
+  if(totalDist > MAX_SESSION_VOLUME){
+    alert(`That session totals ${totalDist.toLocaleString()}m, which is past the ${MAX_SESSION_VOLUME.toLocaleString()}m limit for one log. Split it into separate sessions or trim a set.`);
+    return;
+  }
   const distStr = totalDist>=1000?(totalDist/1000).toFixed(1)+'km':totalDist+'m';
   document.getElementById('confirmMode').textContent = 'Training session';
   document.getElementById('cType').textContent = type;
@@ -774,6 +800,7 @@ loadVoiceBlocks();
   .voice-btn.voice-recording svg{stroke:#fff !important;}
   @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.5);}50%{box-shadow:0 0 0 6px rgba(255,77,94,0);}}
 </style>
+<script src="{{ url_for('static', filename='js/stroke-validate.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voicelog.js') }}"></script>
 </body>
 </html>

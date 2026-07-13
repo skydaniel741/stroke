@@ -7,6 +7,8 @@ Design rules:
 - Scientific notation ('1e100'), 'Infinity', 'NaN', negatives, blanks,
   emoji, and 40-digit numbers are all rejected the same way: None.
 - Every limit lives in LIMITS so the bounds are visible in one place.
+- Free text is length-capped AND profanity-scrubbed in one call (clean_text),
+  so no user-facing field can store an essay or a slur.
 """
 
 import json
@@ -19,8 +21,8 @@ from swim_logic import parse_time, fmt_time
 LIMITS = {
     'age': (5, 99),
     'training_days': (1, 14),
-    'reps': (1, 200),
-    'dist': (25, 3000),           # metres per rep
+    'reps': (1, 200),             # 200 x 25 (underwaters) is legit; the volume
+    'dist': (25, 2000),           # cap below is what stops 200 x 3000 = 600km
     'rest_seconds': (1, 3600),
     'swim_seconds': (8, 2 * 60 * 60),    # a timed swim: 8s (fast 25) to 2 hours
     'split_seconds': (8, 20 * 60),
@@ -34,10 +36,48 @@ LIMITS = {
     'page': (1, 100000),
 }
 
+# A single set block can't exceed this (reps x dist). 100x100 = 10km is a real
+# monster set; 200x3000 = 600km is nonsense. This is what actually kills the
+# "impossible distance" bug -- individual reps/dist can each be in range while
+# their product is absurd.
+MAX_BLOCK_VOLUME = 15_000      # metres, one block
+MAX_SESSION_VOLUME = 30_000    # metres, whole logged session (was 100k -- too high)
+
 # Reject anything that isn't a plain decimal integer before int() ever runs --
-# this is what kills '1e100', 'Infinity', 'NaN', '0x10', '  ', '½' etc.
+# this is what kills '1e100', 'Infinity', 'NaN', '0x10', '  ', 'half' etc.
 _INT_RE = re.compile(r'^-?\d{1,10}$')
 _FLOAT_RE = re.compile(r'^-?\d{1,10}(\.\d{1,4})?$')
+
+# Default hard cap on any free-text field, so a pasted file can never reach the DB.
+MAX_TEXT = 2000
+
+# ── Profanity ────────────────────────────────────────────────────────────
+# Curated, word-boundary matched so normal words ("assess", "Scunthorpe",
+# "class") are never touched. Masked (not rejected) so a swimmer's note still
+# saves -- we just never store or show the slur itself.
+_PROFANITY_WORDS = [
+    'fuck', 'fucker', 'fucking', 'motherfucker', 'shit', 'bullshit', 'shitty',
+    'bitch', 'bastard', 'asshole', 'arsehole', 'dickhead', 'prick', 'cunt',
+    'wanker', 'slut', 'whore', 'faggot', 'nigger', 'nigga', 'retard',
+    'cock', 'pussy', 'twat', 'bollocks',
+]
+_PROFANITY_RE = re.compile(
+    r'\b(' + '|'.join(re.escape(w) for w in _PROFANITY_WORDS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+def contains_profanity(raw):
+    """True if the text contains a blocked word (word-boundary matched)."""
+    return bool(_PROFANITY_RE.search(str(raw or '')))
+
+
+def scrub_profanity(raw):
+    """Mask blocked words, keeping the first letter: 'shit' -> 's***'."""
+    def _mask(m):
+        w = m.group(0)
+        return w[0] + '*' * (len(w) - 1)
+    return _PROFANITY_RE.sub(_mask, str(raw or ''))
 
 
 def clean_int(raw, key=None, lo=None, hi=None):
@@ -74,6 +114,11 @@ def clean_float(raw, key=None, lo=None, hi=None):
     return x
 
 
+def clean_rating(raw):
+    """A 1-5 self-rating (feeling/fatigue/sleep). None when blank or out of range."""
+    return clean_int(raw, key='rating')
+
+
 def clean_time(raw, key='swim_seconds'):
     """Parse a swim-time string ('58.9', '1:02.5', '17:45.30'). Returns
     (normalized_string, seconds) or (None, None). Bounds come from LIMITS."""
@@ -91,9 +136,14 @@ def clean_time(raw, key='swim_seconds'):
     return norm, secs
 
 
-def clean_text(raw, max_len=2000):
-    """Trim and cap free text. Never None -- empty string when blank."""
-    return str(raw or '').strip()[:max_len]
+def clean_text(raw, max_len=MAX_TEXT, scrub=True):
+    """Trim, cap length, and (by default) mask profanity for any free-text
+    field. Never None -- empty string when blank. Length is capped BEFORE
+    scrubbing so a giant payload is truncated first."""
+    out = str(raw or '').strip()[:max_len]
+    if scrub and out:
+        out = scrub_profanity(out)
+    return out
 
 
 def clean_splits(raw_list, max_splits=60):
@@ -119,12 +169,17 @@ MAX_SETS_JSON = 100_000  # bytes; a real session is a few KB
 
 
 def clean_block(raw):
-    """Validate one set block. Returns the cleaned block dict or None."""
+    """Validate one set block. Returns the cleaned block dict or None.
+    Rejects blocks whose reps*dist exceeds a realistic single-set volume."""
     if not isinstance(raw, dict):
         return None
     reps = clean_int(raw.get('reps'), key='reps')
     dist = clean_int(raw.get('dist'), key='dist')
     if reps is None or dist is None:
+        return None
+    # The product check -- this is what makes 200 x 3000 impossible even though
+    # 200 and 3000 are each individually inside their own bounds.
+    if reps * dist > MAX_BLOCK_VOLUME:
         return None
 
     rest_raw = raw.get('rest')
@@ -153,7 +208,7 @@ def clean_sets_json(raw_json):
     """Parse and validate a sets_data JSON string from a form. Returns
     (json_string, blocks) with only valid blocks kept -- ('[]', []) for
     anything hopeless. Total volume is capped so a crafted payload can't
-    create a 10-million-metre session."""
+    create an impossible session."""
     if not raw_json or len(raw_json) > MAX_SETS_JSON:
         return '[]', []
     try:
@@ -163,9 +218,9 @@ def clean_sets_json(raw_json):
     if not isinstance(parsed, list):
         return '[]', []
     blocks = [b for b in (clean_block(r) for r in parsed[:MAX_BLOCKS]) if b is not None]
-    # Belt and braces on total volume: 100km in one logged session is garbage.
+    # Belt and braces on total volume: a whole session over 30km is garbage.
     total = sum(b['reps'] * b['dist'] for b in blocks)
-    while blocks and total > 100_000:
+    while blocks and total > MAX_SESSION_VOLUME:
         dropped = blocks.pop()
         total -= dropped['reps'] * dropped['dist']
     return json.dumps(blocks), blocks

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="chlorine">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,6 +36,7 @@
   .g-goal-badge.pending{background:#e9eefc;color:#5474d4;}
   .g-goal-del{background:none;border:none;color:#b3402c;font-weight:700;font-size:12px;cursor:pointer;}
 </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_pages.css') }}">
 </head>
 <body>
 
@@ -58,14 +59,14 @@
   {% endwith %}
 
   <form class="g-form" method="POST" action="/goals">
-    <input type="text" name="event" placeholder="Event, e.g. 100m Freestyle" required>
+    <input type="text" name="event" placeholder="Event, e.g. 100m Freestyle" required maxlength="50">
     <select name="pool">
       <option value="25m">25m</option>
       <option value="50m">50m</option>
     </select>
-    <input type="text" name="target_time" placeholder="Target time, e.g. 0:58.50" required>
+    <input type="text" name="target_time" placeholder="Target time, e.g. 0:58.50" required maxlength="10" inputmode="numeric">
     <input type="date" name="target_date">
-    <input class="g-full" type="text" name="notes" placeholder="Notes (optional)">
+    <input class="g-full" type="text" name="notes" placeholder="Notes (optional)" maxlength="500">
     <button type="submit">Set goal</button>
   </form>
 

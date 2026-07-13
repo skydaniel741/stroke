@@ -12,3 +12,4 @@ venv/
 .vscode/
 stroke.db
 sent_emails.log
+_private/

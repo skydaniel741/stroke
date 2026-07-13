@@ -6,51 +6,51 @@
    ============================================================ */
 
 :root {
-  /* ---- ink / text ---- */
-  --ink:        #2c2942;   /* soft near-black plum-navy, cozier than pure black */
-  --ink-soft:   #595571;   /* body-secondary */
-  --ink-faint:  #8b87a3;   /* captions, meta */
+  /* ---- ink / text (Hungry Tiger chocolate) ---- */
+  --ink:        #402011;   /* deep chocolate brown — primary ink */
+  --ink-soft:   #6b5240;   /* body-secondary */
+  --ink-faint:  #9a836f;   /* captions, meta */
 
-  /* ---- surfaces ---- */
-  --paper:      #f4f6fd;   /* page background, faint light-blue wash */
-  --paper-warm: #fbf6f2;   /* warm alt background for cozy sections */
+  /* ---- surfaces (warm cream) ---- */
+  --paper:      #fff7ec;   /* page background, warm cream */
+  --paper-warm: #fbecd8;   /* warm alt background */
   --surface:    #ffffff;   /* cards */
-  --surface-2:  #eef2fc;   /* soft blue fill / muted */
-  --surface-3:  #e7ecfa;
+  --surface-2:  #fbecd8;   /* warm fill / muted */
+  --surface-3:  #f6ddc2;
 
-  /* ---- accents (a gentle mix) ---- */
-  --blue:       #7bace8;   /* light sky blue — the lead accent */
-  --blue-600:   #4f8bd4;
-  --blue-tint:  #e4eefb;
-  --lav:        #b7c1f1;   /* periwinkle lavender */
-  --lav-600:    #6f7fe0;
-  --lav-tint:   #ebeefb;
-  --peach:      #f6c6a8;   /* warm peach */
-  --peach-600:  #e79a6d;
-  --peach-tint: #fde7d8;
+  /* ---- accents (warm mix: gold + rust) ---- */
+  --blue:       #faae33;   /* amber gold — the lead accent */
+  --blue-600:   #e8912a;
+  --blue-tint:  #ffedcf;
+  --lav:        #f2b968;   /* soft amber */
+  --lav-600:    #d98a2a;
+  --lav-tint:   #fbe6c9;
+  --peach:      #f0b48a;   /* warm rust-peach */
+  --peach-600:  #c56a2f;
+  --peach-tint: #f8ddc4;
   --mint:       #a6e2c8;
   --mint-600:   #4cbd90;
   --mint-tint:  #e2f6ee;
-  --butter:     #f7e2a6;
-  --butter-tint:#fbf1cf;
+  --butter:     #ffd591;
+  --butter-tint:#fbeecc;
 
   /* ---- brand / interactive ---- */
-  --accent:      #6f8fe6;  /* periwinkle-blue: links, emphasis, focus */
-  --accent-600:  #5474d4;
-  --accent-soft: #c8d5f6;  /* borders, chips */
-  --accent-tint: #e9eefc;  /* subtle backgrounds */
+  --accent:      #c56a2f;  /* rust-orange: links, emphasis, focus */
+  --accent-600:  #9d4d1c;  /* darker rust for readable link text */
+  --accent-soft: #f6d9b8;  /* borders, chips */
+  --accent-tint: #fdf0e0;  /* subtle backgrounds */
 
   /* ---- semantic ---- */
   --good:       #4fc196;
   --good-tint:  #dff5ec;
-  --warn:       #f0b24d;
-  --warn-tint:  #fbeecf;
-  --bad:        #ef7d6a;
-  --bad-tint:   #fbe4df;
+  --warn:       #e8912a;
+  --warn-tint:  #ffedcf;
+  --bad:        #d1255c;   /* Hungry Tiger magenta */
+  --bad-tint:   #fbe0e8;
 
   /* ---- borders ---- */
-  --line:       #e4e8f4;   /* hairline */
-  --line-soft:  #eef1f9;
+  --line:       #efe0cf;   /* warm hairline */
+  --line-soft:  #f5ebde;
 
   /* ---- radii ---- */
   --r-sm: 12px;
@@ -59,12 +59,12 @@
   --r-xl: 32px;
   --r-pill: 999px;
 
-  /* ---- soft layered shadows ---- */
-  --sh-xs: 0 1px 3px rgba(58,66,120,.05);
-  --sh-sm: 0 3px 10px rgba(58,66,120,.06);
-  --sh-md: 0 10px 26px rgba(58,66,120,.08);
-  --sh-lg: 0 20px 50px rgba(58,66,120,.12);
-  --sh-pop: 0 12px 30px rgba(111,143,230,.22);   /* accent glow */
+  /* ---- soft layered shadows (warm brown-tinted) ---- */
+  --sh-xs: 0 1px 3px rgba(64,32,17,.06);
+  --sh-sm: 0 3px 10px rgba(64,32,17,.07);
+  --sh-md: 0 10px 26px rgba(64,32,17,.09);
+  --sh-lg: 0 20px 50px rgba(64,32,17,.14);
+  --sh-pop: 0 12px 30px rgba(197,106,47,.26);   /* accent glow */
 
   /* ---- spacing scale (4pt) ---- */
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;

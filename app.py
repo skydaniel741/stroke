@@ -9,7 +9,16 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+    secret_key = os.getenv('SECRET_KEY')
+    is_debug = os.getenv('FLASK_DEBUG', '').lower() in ('1', 'true', 'yes')
+    if not secret_key:
+        if not is_debug:
+            raise RuntimeError(
+                'SECRET_KEY environment variable is not set. Refusing to start '
+                'with a guessable session-signing key outside of local dev.'
+            )
+        secret_key = 'dev-secret-key'
+    app.config['SECRET_KEY'] = secret_key
     db_url = os.getenv('DATABASE_URL') or f"sqlite:///{os.path.join(BASE_DIR, 'stroke.db')}"
     # Render (and Heroku before it) hands out postgres:// connection strings,
     # but SQLAlchemy 1.4+ / psycopg2 require the postgresql:// scheme -- fix

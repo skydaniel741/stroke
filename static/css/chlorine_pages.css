@@ -1,0 +1,563 @@
+/* ============================================================
+   CHLORINE — PAGES COMPAT LAYER
+   Retro-fits every legacy swimmer/solo page (goals, log, history,
+   leaderboard, personal bests, solo program/analytics/onboarding/pro,
+   nutrition, sets, check-in, WA points) onto the dark "timing console"
+   identity used by the new dashboard + landing.
+
+   Everything is scoped under [data-skin="chlorine"], so coach/admin
+   pages — which share main.css / dashboard.css — stay on the old theme.
+
+   Strategy:
+     1. Re-point the legacy CSS variables (main.css tokens) at the
+        chlorine palette. This re-themes all token-based rules for free.
+     2. Override the hardcoded periwinkle/navy hex used by the page CSS
+        (dashboard/log/wa_points/sets) and the per-page inline <style>
+        blocks, role by role. [data-skin] .class (0,2,0) beats both the
+        page CSS and inline <style> (0,1,0), so no !important needed.
+
+   Colour roles (see chlorine.css):
+     --sig teal   interactive + your data      --pb green  improvement
+     --coach cyan the AI coach                 --warn amber caution
+     --err rose   error/destructive
+   ============================================================ */
+
+/* ---------- 1. PALETTE TOKENS (self-contained) ---------- */
+[data-skin="chlorine"]{
+  /* chlorine base */
+  --base:#0b0f0e; --panel:#121917; --panel-2:#0e1413; --raised:#1a2320;
+  --ink:#e9f5f0; --muted:#93aaa2; --faint:#63756e;
+  --sig:#1fe0ae; --sig-ink:#04120d; --sig-dim:rgba(31,224,174,.14); --sig-line:rgba(31,224,174,.40);
+  --pb:#5cff9e; --pb-dim:rgba(92,255,158,.14);
+  --coach:#4fd6e6; --coach-dim:rgba(79,214,230,.15);
+  --warn:#ffc233; --warn-dim:rgba(255,194,51,.14);
+  --err:#ff556b; --err-dim:rgba(255,85,107,.14);
+
+  /* remap legacy main.css tokens -> chlorine */
+  --paper:#0b0f0e; --paper-warm:#0e1413;
+  --surface:#121917; --surface-2:#1a2320; --surface-3:#1a2320;
+  --ink-soft:#93aaa2; --ink-faint:#63756e;
+  --line:rgba(126,168,156,.15); --line-soft:rgba(126,168,156,.09);
+  --blue:#1fe0ae; --blue-600:#5cff9e; --blue-tint:rgba(31,224,174,.14);
+  --lav:#4fd6e6; --lav-600:#3bbccb; --lav-tint:rgba(79,214,230,.14);
+  --peach:#ffc233; --peach-600:#e0a521; --peach-tint:rgba(255,194,51,.14);
+  --mint:#5cff9e; --mint-600:#3bd07a; --mint-tint:rgba(92,255,158,.14);
+  --butter:#ffc233; --butter-tint:rgba(255,194,51,.14);
+  --accent:#1fe0ae; --accent-600:#5cff9e; --accent-soft:rgba(31,224,174,.40); --accent-tint:rgba(31,224,174,.12);
+  --good:#5cff9e; --good-tint:rgba(92,255,158,.14);
+  --warn-tint:rgba(255,194,51,.14);
+  --bad:#ff556b; --bad-tint:rgba(255,85,107,.14);
+}
+
+/* ---------- canvas ---------- */
+[data-skin="chlorine"] body{ background:var(--base); color:var(--ink); }
+[data-skin="chlorine"] ::selection{ background:var(--sig-dim); color:var(--ink); }
+
+/* ============================================================
+   2a. main.css — the few hardcoded (non-token) spots
+   ============================================================ */
+/* main.css sets overflow-x:hidden on <html>/<body>, which breaks
+   position:sticky for every descendant (log-nav/sets-nav/wa-nav/etc all
+   use position:sticky via the plain "nav" selector). overflow-x:clip
+   gives the same no-horizontal-scroll result without breaking sticky. */
+html[data-skin="chlorine"]{ overflow-x:clip; }
+[data-skin="chlorine"] body{ overflow-x:clip; }
+[data-skin="chlorine"] nav{ background:rgba(11,15,14,.82); border-bottom-color:var(--line); }
+[data-skin="chlorine"] .btn-primary{ color:var(--sig-ink); }
+[data-skin="chlorine"] .rail-arrow{ background:rgba(18,25,23,.92); color:var(--ink); }
+[data-skin="chlorine"] .rail-arrow:hover{ color:var(--sig); }
+[data-skin="chlorine"] .alert-error{ background:var(--err-dim); color:var(--err); border-color:var(--err); }
+[data-skin="chlorine"] .alert-success{ background:var(--pb-dim); color:var(--pb); border-color:var(--pb); }
+
+/* ============================================================
+   2b. dashboard.css (goals / history / leaderboard /
+       personal_bests / solo_program load this)
+   ============================================================ */
+[data-skin="chlorine"] .app-container,
+[data-skin="chlorine"] .main-workspace{ background:var(--base); }
+[data-skin="chlorine"] .panel,
+[data-skin="chlorine"] .today-set-card,
+[data-skin="chlorine"] .stat{ background:var(--panel); border-color:var(--line); box-shadow:none; }
+[data-skin="chlorine"] .panel-label{ color:var(--ink); border-bottom-color:var(--line-soft); }
+[data-skin="chlorine"] .panel-note,
+[data-skin="chlorine"] .stat-sub,
+[data-skin="chlorine"] .points-label{ color:var(--muted); }
+[data-skin="chlorine"] .panel-link,
+[data-skin="chlorine"] .greeting-date,
+[data-skin="chlorine"] .stat-label{ color:var(--sig); }
+[data-skin="chlorine"] .stat-val,
+[data-skin="chlorine"] .greeting h1{ color:var(--ink); }
+[data-skin="chlorine"] .session-row{ color:var(--ink); border-top-color:var(--line-soft); }
+[data-skin="chlorine"] .session-row-main,
+[data-skin="chlorine"] .session-row-time{ color:var(--ink); }
+[data-skin="chlorine"] .session-row-tag{ background:var(--sig-dim); color:var(--sig); }
+[data-skin="chlorine"] .session-row-link:hover{ background:var(--raised); }
+[data-skin="chlorine"] .quick-log-btn,
+[data-skin="chlorine"] .today-set-total{ background:var(--sig); color:var(--sig-ink); }
+
+/* ============================================================
+   2c. log.css  (log page)
+   ============================================================ */
+[data-skin="chlorine"] .log-nav{ background:var(--panel); border-bottom-color:var(--line); }
+[data-skin="chlorine"] .log-nav-logo,
+[data-skin="chlorine"] .log-nav-back,
+[data-skin="chlorine"] .path-greeting,
+[data-skin="chlorine"] .path-title,
+[data-skin="chlorine"] .screen-title,
+[data-skin="chlorine"] .repeat-event,
+[data-skin="chlorine"] .time-display,
+[data-skin="chlorine"] .set-summary-main,
+[data-skin="chlorine"] .confirm-val,
+[data-skin="chlorine"] .total-val,
+[data-skin="chlorine"] .event-btn,
+[data-skin="chlorine"] .num-btn,
+[data-skin="chlorine"] .stroke-tab,
+[data-skin="chlorine"] .set-edit{ color:var(--ink); }
+[data-skin="chlorine"] .path-sub,
+[data-skin="chlorine"] .screen-sub,
+[data-skin="chlorine"] .repeat-meta,
+[data-skin="chlorine"] .quick-label,
+[data-skin="chlorine"] .repeat-label,
+[data-skin="chlorine"] .set-summary-sub,
+[data-skin="chlorine"] .confirm-key,
+[data-skin="chlorine"] .total-label,
+[data-skin="chlorine"] .save-template-status,
+[data-skin="chlorine"] .splits-hint,
+[data-skin="chlorine"] .meta-label,
+[data-skin="chlorine"] .divider-text{ color:var(--muted); }
+[data-skin="chlorine"] .time-hint,
+[data-skin="chlorine"] .set-summary-note{ color:var(--faint); }
+[data-skin="chlorine"] .path-card,
+[data-skin="chlorine"] .event-btn,
+[data-skin="chlorine"] .num-btn,
+[data-skin="chlorine"] .stroke-tab,
+[data-skin="chlorine"] .time-display,
+[data-skin="chlorine"] .set-summary-row,
+[data-skin="chlorine"] .session-total,
+[data-skin="chlorine"] .wizard-card,
+[data-skin="chlorine"] .meta-select,
+[data-skin="chlorine"] .meta-input,
+[data-skin="chlorine"] .save-notes,
+[data-skin="chlorine"] .set-remove-x{ background:var(--panel); border-color:var(--line); color:var(--ink); }
+[data-skin="chlorine"] .path-card.pb,
+[data-skin="chlorine"] .repeat-card,
+[data-skin="chlorine"] .pool-toggle,
+[data-skin="chlorine"] .library-link,
+[data-skin="chlorine"] .confirm-card,
+[data-skin="chlorine"] .sets-empty{ background:var(--raised); border-color:var(--line); color:var(--ink); }
+[data-skin="chlorine"] .divider-line{ background:var(--line); }
+[data-skin="chlorine"] .pool-btn{ color:var(--muted); }
+[data-skin="chlorine"] .pool-btn.active,
+[data-skin="chlorine"] .stroke-tab.active,
+[data-skin="chlorine"] .event-btn.selected,
+[data-skin="chlorine"] .event-chip,
+[data-skin="chlorine"] .save-btn,
+[data-skin="chlorine"] .snav-next,
+[data-skin="chlorine"] .wizard-next,
+[data-skin="chlorine"] .wizard-opt.selected,
+[data-skin="chlorine"] .save-template-btn,
+[data-skin="chlorine"] .repeat-arrow,
+[data-skin="chlorine"] .set-summary-num{ background:var(--sig); color:var(--sig-ink); border-color:var(--sig); }
+[data-skin="chlorine"] .add-set-btn{ background:transparent; border-color:var(--sig-line); color:var(--sig); }
+[data-skin="chlorine"] .snav-back,
+[data-skin="chlorine"] .wizard-back{ background:var(--panel); border-color:var(--line); color:var(--ink); }
+[data-skin="chlorine"] .num-btn:active{ background:var(--sig-dim); }
+[data-skin="chlorine"] .sets-empty{ border-color:var(--sig-line); }
+[data-skin="chlorine"] .wizard-dot{ background:var(--panel); border-color:var(--sig-line); }
+[data-skin="chlorine"] .wizard-dot.active{ background:var(--sig); }
+[data-skin="chlorine"] .wizard-q,
+[data-skin="chlorine"] .wizard-opt,
+[data-skin="chlorine"] .wizard-custom-input{ color:var(--ink); }
+[data-skin="chlorine"] .wizard-opt,
+[data-skin="chlorine"] .wizard-custom-input{ background:var(--panel); border-color:var(--line); }
+[data-skin="chlorine"] .wizard-q-sub{ color:var(--sig); }
+[data-skin="chlorine"] .wizard-advanced-toggle,
+[data-skin="chlorine"] .wizard-cancel{ color:var(--muted); }
+
+/* ============================================================
+   2d. wa_points.css  (WA points calculator)
+   ============================================================ */
+[data-skin="chlorine"] .wa-nav{ background:var(--panel); border-bottom-color:var(--line); }
+[data-skin="chlorine"] .wa-nav-logo,
+[data-skin="chlorine"] .wa-nav-back,
+[data-skin="chlorine"] .wa-title,
+[data-skin="chlorine"] .wr-name,
+[data-skin="chlorine"] .wr-time,
+[data-skin="chlorine"] .css-zone-name,
+[data-skin="chlorine"] .css-zone-pace,
+[data-skin="chlorine"] .wa-toggle-btn,
+[data-skin="chlorine"] .wa-select,
+[data-skin="chlorine"] .wa-time-row input,
+[data-skin="chlorine"] .wa-time-sep,
+[data-skin="chlorine"] .wa-points-input{ color:var(--ink); }
+[data-skin="chlorine"] .wa-sub,
+[data-skin="chlorine"] .wa-field-label,
+[data-skin="chlorine"] .wr-country,
+[data-skin="chlorine"] .wr-meta,
+[data-skin="chlorine"] .wr-empty,
+[data-skin="chlorine"] .wa-note,
+[data-skin="chlorine"] .css-zone-desc{ color:var(--muted); }
+[data-skin="chlorine"] .wa-card,
+[data-skin="chlorine"] .wa-toggle-btn,
+[data-skin="chlorine"] .wa-select,
+[data-skin="chlorine"] .wa-time-row input,
+[data-skin="chlorine"] .wa-points-input,
+[data-skin="chlorine"] .css-zone-row{ background:var(--panel); border-color:var(--line); }
+[data-skin="chlorine"] .wr-card{ background:var(--raised); border-color:var(--line); }
+[data-skin="chlorine"] .wr-label{ color:var(--sig); }
+[data-skin="chlorine"] .wa-toggle-btn.active{ background:var(--sig); color:var(--sig-ink); border-color:var(--sig); }
+[data-skin="chlorine"] .wa-result{ background:var(--raised); border-color:var(--sig-line); color:var(--ink); }
+[data-skin="chlorine"] .wa-result-val{ color:var(--sig); }
+[data-skin="chlorine"] .wa-result-label{ color:var(--muted); }
+[data-skin="chlorine"] .wa-result-sub{ color:var(--faint); }
+[data-skin="chlorine"] .wr-video-btn{ background:var(--sig); color:var(--sig-ink); border-color:var(--sig); }
+[data-skin="chlorine"] .css-title{ border-top-color:var(--line); }
+
+/* ============================================================
+   2e. sets.css  (library home / category / set detail /
+       history_session / nutrition_library / dryland_library /
+       program_view)
+   ============================================================ */
+[data-skin="chlorine"] .sets-nav{ background:var(--panel); border-bottom-color:var(--line); }
+[data-skin="chlorine"] .sets-nav-back,
+[data-skin="chlorine"] .sets-nav-logo,
+[data-skin="chlorine"] .sets-h1,
+[data-skin="chlorine"] .sets-cat-name,
+[data-skin="chlorine"] .set-card-name,
+[data-skin="chlorine"] .set-detail-h1,
+[data-skin="chlorine"] .set-section-name,
+[data-skin="chlorine"] .set-block-main,
+[data-skin="chlorine"] .set-block-rest-val,
+[data-skin="chlorine"] .set-stat-val,
+[data-skin="chlorine"] .sets-filter-chip{ color:var(--ink); }
+[data-skin="chlorine"] .sets-sub,
+[data-skin="chlorine"] .sets-cat-blurb,
+[data-skin="chlorine"] .set-card-desc,
+[data-skin="chlorine"] .set-detail-desc,
+[data-skin="chlorine"] .set-block-note,
+[data-skin="chlorine"] .sets-empty{ color:var(--muted); }
+[data-skin="chlorine"] .sets-eyebrow,
+[data-skin="chlorine"] .set-card-meta,
+[data-skin="chlorine"] .set-card-cta,
+[data-skin="chlorine"] .set-section-dist,
+[data-skin="chlorine"] .set-block-stroke,
+[data-skin="chlorine"] .set-block-stroke-inline,
+[data-skin="chlorine"] .set-block-x,
+[data-skin="chlorine"] .set-stat-label{ color:var(--sig); }
+[data-skin="chlorine"] .sets-filter-label,
+[data-skin="chlorine"] .set-blocks-label,
+[data-skin="chlorine"] .set-block-rest-label{ color:var(--faint); }
+[data-skin="chlorine"] .sets-cat-card,
+[data-skin="chlorine"] .set-card,
+[data-skin="chlorine"] .cat-header-icon,
+[data-skin="chlorine"] .set-block,
+[data-skin="chlorine"] .sets-filter-chip,
+[data-skin="chlorine"] .set-print-btn-secondary{ background:var(--panel); border-color:var(--line); box-shadow:none; }
+[data-skin="chlorine"] .set-stat,
+[data-skin="chlorine"] .sets-cat-icon{ background:var(--raised); border-color:var(--line); color:var(--ink); }
+[data-skin="chlorine"] .sets-print-btn,
+[data-skin="chlorine"] .sets-cat-count,
+[data-skin="chlorine"] .set-card-cat,
+[data-skin="chlorine"] .set-detail-cat,
+[data-skin="chlorine"] .set-block-num,
+[data-skin="chlorine"] .sets-filter-chip.active,
+[data-skin="chlorine"] .set-use-btn{ background:var(--sig); color:var(--sig-ink); border-color:var(--sig); }
+[data-skin="chlorine"] .set-section-head{ border-bottom-color:var(--line); }
+[data-skin="chlorine"] .set-card-badge{ background:var(--raised); color:var(--muted); }
+[data-skin="chlorine"] .set-card-badge.diff-easy{ background:var(--pb-dim); color:var(--pb); }
+[data-skin="chlorine"] .set-card-badge.diff-medium{ background:var(--warn-dim); color:var(--warn); }
+[data-skin="chlorine"] .set-card-badge.diff-hard{ background:var(--err-dim); color:var(--err); }
+[data-skin="chlorine"] .set-card-badge.diff-technical{ background:var(--coach-dim); color:var(--coach); }
+
+/* ============================================================
+   3. PER-PAGE INLINE <style> BLOCKS
+   ============================================================ */
+
+/* --- shared: every page's back-link nav + big heading + sub --- */
+[data-skin="chlorine"] .g-nav-back,[data-skin="chlorine"] .g-nav-logo,
+[data-skin="chlorine"] .lb-nav-back,[data-skin="chlorine"] .lb-nav-logo,
+[data-skin="chlorine"] .hi-nav-back,[data-skin="chlorine"] .hi-nav-logo,
+[data-skin="chlorine"] .pb-nav-back,[data-skin="chlorine"] .pb-nav-logo,
+[data-skin="chlorine"] .pr-nav-back,[data-skin="chlorine"] .pr-nav-logo,
+[data-skin="chlorine"] .an-nav-back,[data-skin="chlorine"] .an-nav-logo,
+[data-skin="chlorine"] .ob-nav-back,[data-skin="chlorine"] .ob-nav-logo,
+[data-skin="chlorine"] .pro-nav-back,[data-skin="chlorine"] .pro-nav-logo,
+[data-skin="chlorine"] .nu-nav-back,[data-skin="chlorine"] .nu-nav-logo,
+[data-skin="chlorine"] .ci-nav-back,[data-skin="chlorine"] .ci-nav-logo{ color:var(--ink); }
+[data-skin="chlorine"] .pr-nav-logout,[data-skin="chlorine"] .an-nav-logout,
+[data-skin="chlorine"] .ob-nav-logout,[data-skin="chlorine"] .pro-nav-logout,
+[data-skin="chlorine"] .nu-nav-logout,[data-skin="chlorine"] .ci-nav-logout{ color:var(--muted); }
+[data-skin="chlorine"] .pr-nav-logout:hover,[data-skin="chlorine"] .an-nav-logout:hover,
+[data-skin="chlorine"] .ob-nav-logout:hover,[data-skin="chlorine"] .pro-nav-logout:hover,
+[data-skin="chlorine"] .nu-nav-logout:hover,[data-skin="chlorine"] .ci-nav-logout:hover{ color:var(--ink); }
+
+[data-skin="chlorine"] .g-sub,[data-skin="chlorine"] .lb-sub,[data-skin="chlorine"] .hi-sub,
+[data-skin="chlorine"] .pb-sub,[data-skin="chlorine"] .pr-overview,[data-skin="chlorine"] .an-sub,
+[data-skin="chlorine"] .ob-sub,[data-skin="chlorine"] .pro-sub,[data-skin="chlorine"] .nu-sub,
+[data-skin="chlorine"] .ci-sub{ color:var(--muted); }
+[data-skin="chlorine"] .g-eyebrow,[data-skin="chlorine"] .pr-eyebrow,[data-skin="chlorine"] .an-eyebrow,
+[data-skin="chlorine"] .ob-eyebrow,[data-skin="chlorine"] .pro-eyebrow,[data-skin="chlorine"] .nu-eyebrow,
+[data-skin="chlorine"] .ci-eyebrow{ color:var(--sig); }
+
+/* generic form fields across every inline page + main.css .form-group */
+[data-skin="chlorine"] .g-form input,[data-skin="chlorine"] .g-form select,
+[data-skin="chlorine"] .pb-filter-bar input,[data-skin="chlorine"] .pb-filter-bar select,
+[data-skin="chlorine"] .lb-event-select,
+[data-skin="chlorine"] .ob-field select,[data-skin="chlorine"] .ob-field input,[data-skin="chlorine"] .ob-field textarea,
+[data-skin="chlorine"] .ci-field textarea{ background:var(--panel); border-color:var(--line); color:var(--ink); }
+[data-skin="chlorine"] .g-form input::placeholder,[data-skin="chlorine"] .ci-field textarea::placeholder,
+[data-skin="chlorine"] .ob-field input::placeholder,[data-skin="chlorine"] .ob-field textarea::placeholder{ color:var(--faint); }
+
+/* --- goals --- */
+[data-skin="chlorine"] .g-goal{ background:var(--panel); border-color:var(--line); }
+[data-skin="chlorine"] .g-goal-sub{ color:var(--muted); }
+[data-skin="chlorine"] .g-form button{ background:var(--sig); border-color:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .g-goal.achieved{ background:var(--pb-dim); border-color:var(--pb); }
+[data-skin="chlorine"] .g-goal-badge{ background:var(--pb-dim); color:var(--pb); }
+[data-skin="chlorine"] .g-goal-badge.pending{ background:var(--sig-dim); color:var(--sig); }
+[data-skin="chlorine"] .g-goal-del{ color:var(--err); }
+
+/* --- leaderboard --- */
+[data-skin="chlorine"] .lb-optin{ background:var(--raised); border-color:var(--line); }
+[data-skin="chlorine"] .lb-optin-btn{ background:var(--sig); color:var(--sig-ink); border-color:var(--sig); }
+[data-skin="chlorine"] .lb-optin-btn.off{ background:var(--panel); color:var(--ink); }
+[data-skin="chlorine"] .lb-event-select{ border-color:var(--sig-line); background:var(--raised); color:var(--ink); }
+[data-skin="chlorine"] .lb-row{ border-bottom-color:var(--line-soft); }
+[data-skin="chlorine"] .lb-rank{ color:var(--sig); }
+[data-skin="chlorine"] .lb-name,[data-skin="chlorine"] .lb-time{ color:var(--ink); }
+
+/* --- history --- */
+[data-skin="chlorine"] .hi-row{ border-bottom-color:var(--line-soft); color:var(--ink); }
+[data-skin="chlorine"] .hi-row-sub{ color:var(--muted); }
+[data-skin="chlorine"] .hi-row-tag{ background:var(--sig-dim); color:var(--sig); }
+[data-skin="chlorine"] .hi-row-date{ color:var(--ink); }
+[data-skin="chlorine"] .hi-row-arrow{ color:var(--faint); }
+[data-skin="chlorine"] .hi-pager a,[data-skin="chlorine"] .hi-pager span{ border-color:var(--line); color:var(--ink); }
+[data-skin="chlorine"] .hi-pager-label{ color:var(--muted); }
+
+/* --- personal bests --- */
+[data-skin="chlorine"] .pb-filter-bar input,[data-skin="chlorine"] .pb-filter-bar select{ border-color:var(--sig-line); background:var(--raised); }
+[data-skin="chlorine"] .pb-filter-bar button{ background:var(--sig); border-color:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .pb-standard-diff.met{ background:var(--pb-dim); color:var(--pb); }
+[data-skin="chlorine"] .pb-standard-diff.off{ background:var(--sig-dim); color:var(--sig); }
+[data-skin="chlorine"] .pb-tag{ background:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .pb-tag.practice{ background:var(--sig-dim); color:var(--sig); }
+[data-skin="chlorine"] .pb-row-actions a{ color:var(--sig); }
+[data-skin="chlorine"] .pb-export-row a,[data-skin="chlorine"] .pb-export-row label{ background:var(--panel); border-color:var(--line); color:var(--ink); }
+
+/* --- solo program --- */
+[data-skin="chlorine"] .pr-tune,[data-skin="chlorine"] .pr-note-card{ background:var(--raised); border-color:var(--line); color:var(--muted); }
+[data-skin="chlorine"] .pr-tune b,[data-skin="chlorine"] .pr-note-card b{ color:var(--ink); }
+[data-skin="chlorine"] .pr-tune a,[data-skin="chlorine"] .pr-dryland-cta,[data-skin="chlorine"] .pr-supp-cta{ color:var(--sig); }
+[data-skin="chlorine"] .pr-tune-badge,[data-skin="chlorine"] .pr-insight-icon,[data-skin="chlorine"] .pr-day-total,
+[data-skin="chlorine"] .pr-cal-total{ background:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .pr-overview,[data-skin="chlorine"] .pr-session-summary,
+[data-skin="chlorine"] .pr-insight-text,[data-skin="chlorine"] .pr-progression{ color:var(--muted); }
+[data-skin="chlorine"] .pr-stat,[data-skin="chlorine"] .pr-cal-day,[data-skin="chlorine"] .pr-day-panel,[data-skin="chlorine"] .pr-session,
+[data-skin="chlorine"] .pr-meal-card,[data-skin="chlorine"] .pr-dryland-card,[data-skin="chlorine"] .pr-supp-card,
+[data-skin="chlorine"] .pr-demo-card{ background:var(--panel); border-color:var(--line); box-shadow:none; }
+[data-skin="chlorine"] .pr-stat-num{ color:var(--ink); }
+[data-skin="chlorine"] .pr-stat-lbl,[data-skin="chlorine"] .pr-supp-brands,[data-skin="chlorine"] .pr-demo-steps,
+[data-skin="chlorine"] .pr-block-note,[data-skin="chlorine"] .pr-day-note,[data-skin="chlorine"] .pr-meal-stats,
+[data-skin="chlorine"] .pr-rest-body,[data-skin="chlorine"] .pr-cal-range,[data-skin="chlorine"] .pr-cal-weekday,
+[data-skin="chlorine"] .pr-cal-focus,[data-skin="chlorine"] .pr-cal-locked-note{ color:var(--muted); }
+[data-skin="chlorine"] .pr-cal-day.rest{ background:var(--panel-2); border-color:var(--line); box-shadow:none; }
+[data-skin="chlorine"] .pr-cal-day.rest .pr-cal-weekday,[data-skin="chlorine"] .pr-cal-day.rest .pr-cal-daynum,
+[data-skin="chlorine"] .pr-cal-day.rest .pr-cal-focus{ color:var(--faint); }
+[data-skin="chlorine"] .pr-cal-day.today{ border-color:var(--sig); }
+[data-skin="chlorine"] .pr-cal-day.today .pr-cal-daynum{ color:var(--sig); }
+[data-skin="chlorine"] .pr-cal-day.active{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); }
+[data-skin="chlorine"] .pr-cal-day.locked{ background:var(--panel-2); border-color:var(--line); opacity:.7; }
+[data-skin="chlorine"] .pr-cal-lock{ color:var(--faint); }
+[data-skin="chlorine"] .pr-cal-locked-note a{ color:var(--sig); }
+[data-skin="chlorine"] .pr-day-focus,[data-skin="chlorine"] .pr-block-rest,[data-skin="chlorine"] .pr-session-focus,
+[data-skin="chlorine"] .pr-dryland-cat,[data-skin="chlorine"] .pr-demo-title{ color:var(--sig); }
+[data-skin="chlorine"] .pr-day-panel-date{ color:var(--ink); }
+[data-skin="chlorine"] .pr-block{ background:var(--raised); }
+[data-skin="chlorine"] .pr-block.main{ background:var(--sig-dim); }
+[data-skin="chlorine"] .pr-block-txt,[data-skin="chlorine"] .pr-dryland-name,[data-skin="chlorine"] .pr-supp-name,
+[data-skin="chlorine"] .pr-meal-name,[data-skin="chlorine"] .pr-cal-daynum,[data-skin="chlorine"] .pr-session-label{ color:var(--ink); }
+[data-skin="chlorine"] .pr-day-note{ border-top-color:var(--line); }
+[data-skin="chlorine"] .pr-progression{ background:var(--raised); border-color:var(--sig-line); }
+[data-skin="chlorine"] .pr-insight{ border-bottom-color:var(--line-soft); }
+[data-skin="chlorine"] .pr-btn{ background:var(--panel); border-color:var(--line); color:var(--ink); }
+[data-skin="chlorine"] .pr-btn-primary{ background:var(--sig); color:var(--sig-ink); border-color:var(--sig); }
+[data-skin="chlorine"] .pr-meal-photo,[data-skin="chlorine"] .pr-demo-card svg{ background-color:var(--raised); color:var(--sig); }
+[data-skin="chlorine"] .pr-legacy-nudge{ background:var(--warn-dim); border-color:var(--warn); color:var(--warn); }
+[data-skin="chlorine"] .pr-supp-ev--strong{ background:var(--pb-dim); color:var(--pb); }
+[data-skin="chlorine"] .pr-supp-ev--moderate{ background:var(--warn-dim); color:var(--warn); }
+[data-skin="chlorine"] .pr-supp-ev--emerging{ background:var(--raised); color:var(--muted); }
+
+/* --- solo analytics --- */
+[data-skin="chlorine"] .an-section-note,[data-skin="chlorine"] .an-chart-foot,[data-skin="chlorine"] .an-vol-total,
+[data-skin="chlorine"] .an-split-val,[data-skin="chlorine"] .an-split-note,[data-skin="chlorine"] .an-target-sub,
+[data-skin="chlorine"] .an-split-tag,[data-skin="chlorine"] .an-cmp-key,[data-skin="chlorine"] .an-wr-vol,
+[data-skin="chlorine"] .an-baseline-sub,[data-skin="chlorine"] .an-pattern,[data-skin="chlorine"] .an-pattern-empty,
+[data-skin="chlorine"] .an-empty,[data-skin="chlorine"] .an-insight p{ color:var(--muted); }
+[data-skin="chlorine"] .an-split-date,[data-skin="chlorine"] .an-split-idx,[data-skin="chlorine"] .an-target-cell .lap{ color:var(--faint); }
+[data-skin="chlorine"] .an-card,[data-skin="chlorine"] .an-baseline{ background:var(--panel); border-color:var(--line); box-shadow:none; }
+[data-skin="chlorine"] .an-chart-event,[data-skin="chlorine"] .an-split-event,[data-skin="chlorine"] .an-target-event,
+[data-skin="chlorine"] .an-baseline-val,[data-skin="chlorine"] .an-wr-score-num,[data-skin="chlorine"] .an-chart-foot b,
+[data-skin="chlorine"] .an-vol-total b,[data-skin="chlorine"] .an-split-tag b,[data-skin="chlorine"] .an-insight b,
+[data-skin="chlorine"] .an-cmp-key b,[data-skin="chlorine"] .an-wr-vol b,[data-skin="chlorine"] .an-target-cell .cum{ color:var(--ink); }
+[data-skin="chlorine"] .an-baseline-lbl,[data-skin="chlorine"] .an-pattern-icon,[data-skin="chlorine"] .an-wr-score-lbl,
+[data-skin="chlorine"] .an-wr-h,[data-skin="chlorine"] .an-insight-link,[data-skin="chlorine"] .an-target-goal{ color:var(--sig); }
+[data-skin="chlorine"] .an-split-tag{ background:var(--raised); }
+[data-skin="chlorine"] .an-target-cell{ background:var(--raised); border-color:var(--line); }
+[data-skin="chlorine"] .an-insight,[data-skin="chlorine"] .an-wr-score,[data-skin="chlorine"] .an-pattern{ background:var(--raised); border-color:var(--sig-line); }
+[data-skin="chlorine"] .an-insight p:last-child,[data-skin="chlorine"] .an-split-note,[data-skin="chlorine"] .an-wr-cols li{ color:var(--muted); }
+[data-skin="chlorine"] .an-empty{ background:var(--panel); border-color:var(--line); }
+[data-skin="chlorine"] .an-empty a,[data-skin="chlorine"] .an-insight-link{ color:var(--sig); }
+[data-skin="chlorine"] .an-wr-chip{ background:var(--raised); color:var(--muted); }
+[data-skin="chlorine"] .an-up,[data-skin="chlorine"] .an-split-pat.negative,[data-skin="chlorine"] .an-wr-chip.trend-improving{ background:var(--pb-dim); color:var(--pb); }
+[data-skin="chlorine"] .an-down,[data-skin="chlorine"] .an-split-pat.positive,
+[data-skin="chlorine"] .an-wr-chip.trend-regressing,[data-skin="chlorine"] .an-wr-chip.trend-overtraining{ background:var(--err-dim); color:var(--err); }
+[data-skin="chlorine"] .an-flat,[data-skin="chlorine"] .an-split-pat.even{ background:var(--sig-dim); color:var(--sig); }
+[data-skin="chlorine"] .an-split-pat.slight-fade,[data-skin="chlorine"] .an-wr-chip.trend-plateauing,
+[data-skin="chlorine"] .an-wr-chip.trend-undertraining{ background:var(--warn-dim); color:var(--warn); }
+
+/* --- solo onboarding --- */
+[data-skin="chlorine"] .ob-field label{ color:var(--muted); }
+[data-skin="chlorine"] .ob-field-hint,[data-skin="chlorine"] .ob-btn-sub,[data-skin="chlorine"] .ob-skip{ color:var(--faint); }
+[data-skin="chlorine"] .ob-step-num{ color:var(--sig); }
+[data-skin="chlorine"] .ob-step-q{ color:var(--ink); }
+[data-skin="chlorine"] .ob-btn{ background:var(--sig); border-color:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .ob-btn-ghost{ background:var(--panel); color:var(--ink); }
+[data-skin="chlorine"] .ob-pro{ background:var(--raised); border-color:var(--line); }
+[data-skin="chlorine"] .ob-pro-badge{ background:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .ob-pro-head span,[data-skin="chlorine"] .ob-upsell p{ color:var(--muted); }
+[data-skin="chlorine"] .ob-upsell{ background:var(--panel-2); border-color:var(--sig-line); }
+[data-skin="chlorine"] .ob-upsell a{ color:var(--sig); }
+[data-skin="chlorine"] .ob-lock{ background:var(--raised); color:var(--muted); }
+[data-skin="chlorine"] .ob-dot{ background:var(--raised); }
+[data-skin="chlorine"] .ob-dot.done{ background:var(--sig-line); }
+[data-skin="chlorine"] .ob-dot.current{ background:var(--sig); }
+
+/* --- solo pro (upgrade) --- */
+[data-skin="chlorine"] .pro-card{ background:var(--raised); border-color:var(--line); box-shadow:none; }
+[data-skin="chlorine"] .pro-price span,[data-skin="chlorine"] .pro-feat{ color:var(--muted); }
+[data-skin="chlorine"] .pro-feat{ border-bottom-color:var(--line-soft); }
+[data-skin="chlorine"] .pro-check{ background:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .pro-btn{ background:var(--sig); border-color:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .pro-note{ color:var(--faint); }
+[data-skin="chlorine"] .pro-active{ background:var(--pb-dim); border-color:var(--pb); }
+[data-skin="chlorine"] .pro-active p{ color:var(--muted); }
+[data-skin="chlorine"] .pro-linkbtn,[data-skin="chlorine"] .pro-nav-logout{ color:var(--muted); }
+[data-skin="chlorine"] .pro-manage-links a{ color:var(--sig); }
+
+/* --- check-in --- */
+[data-skin="chlorine"] .ci-scale-opt,[data-skin="chlorine"] .ci-mini-opt,[data-skin="chlorine"] .ci-today-card{ background:var(--panel); border-color:var(--line); color:var(--ink); }
+[data-skin="chlorine"] .ci-scale-opt.selected,[data-skin="chlorine"] .ci-mini-opt.selected,[data-skin="chlorine"] .ci-btn{ background:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .ci-scale-opt-label,[data-skin="chlorine"] .ci-mini-label,[data-skin="chlorine"] .ci-today-notes,
+[data-skin="chlorine"] .ci-history-notes{ color:var(--muted); }
+[data-skin="chlorine"] .ci-mini-label span{ color:var(--faint); }
+[data-skin="chlorine"] .ci-insight{ background:var(--raised); border-color:var(--sig-line); color:var(--muted); }
+[data-skin="chlorine"] .ci-insight-label{ color:var(--sig); }
+[data-skin="chlorine"] .ci-today-rating{ color:var(--ink); }
+[data-skin="chlorine"] .ci-history-row{ border-bottom-color:var(--line-soft); }
+[data-skin="chlorine"] .ci-history-rating{ background:var(--sig-dim); color:var(--sig); }
+[data-skin="chlorine"] .voice-btn{ background:var(--panel); border-color:var(--sig-line); }
+[data-skin="chlorine"] .voice-hint{ color:var(--faint); }
+
+/* --- nutrition --- */
+[data-skin="chlorine"] .nu-cat-blurb,[data-skin="chlorine"] .nu-card-stats,[data-skin="chlorine"] .nu-product-why,
+[data-skin="chlorine"] .nu-product-use,[data-skin="chlorine"] .nu-why,[data-skin="chlorine"] .nu-tip,
+[data-skin="chlorine"] .nu-product-detail{ color:var(--muted); }
+[data-skin="chlorine"] .nu-card-stats b{ color:var(--ink); }
+[data-skin="chlorine"] .nu-card,[data-skin="chlorine"] .nu-modal,[data-skin="chlorine"] .nu-product-card{ background:var(--panel); border-color:var(--line); box-shadow:none; }
+[data-skin="chlorine"] .nu-card-name,[data-skin="chlorine"] .nu-modal-name,[data-skin="chlorine"] .nu-product-name,
+[data-skin="chlorine"] .nu-stat-num{ color:var(--ink); }
+[data-skin="chlorine"] .nu-card-timing,[data-skin="chlorine"] .nu-product-cat{ background:var(--sig-dim); color:var(--sig); }
+[data-skin="chlorine"] .nu-sec-label,[data-skin="chlorine"] .nu-brands-label{ color:var(--sig); }
+[data-skin="chlorine"] .nu-modal-close{ background:var(--panel); border-color:var(--sig-line); color:var(--ink); }
+[data-skin="chlorine"] .nu-modal-timing{ background:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .nu-why,[data-skin="chlorine"] .nu-brands{ background:var(--raised); border-color:var(--line); }
+[data-skin="chlorine"] .nu-stat{ border-color:var(--sig-line); }
+[data-skin="chlorine"] .nu-stat-lbl{ color:var(--faint); }
+[data-skin="chlorine"] .nu-steps li,[data-skin="chlorine"] .nu-ingredients li,[data-skin="chlorine"] .nu-brands-list li{ color:var(--muted); }
+[data-skin="chlorine"] .nu-ingredients li{ border-bottom-color:var(--line-soft); }
+[data-skin="chlorine"] .nu-ingredients li:before,[data-skin="chlorine"] .nu-brands-list li:before{ color:var(--sig); }
+[data-skin="chlorine"] .nu-steps li:before{ background:var(--sig); color:var(--sig-ink); }
+[data-skin="chlorine"] .nu-products-wrap{ border-top-color:var(--line); }
+[data-skin="chlorine"] .nu-macro.p{ background:var(--err-dim); color:var(--err); }
+[data-skin="chlorine"] .nu-macro.c{ background:var(--coach-dim); color:var(--coach); }
+[data-skin="chlorine"] .nu-macro.f{ background:var(--warn-dim); color:var(--warn); }
+[data-skin="chlorine"] .nu-evidence--strong{ background:var(--pb-dim); color:var(--pb); }
+[data-skin="chlorine"] .nu-evidence--moderate{ background:var(--warn-dim); color:var(--warn); }
+[data-skin="chlorine"] .nu-evidence--emerging{ background:var(--raised); color:var(--muted); }
+[data-skin="chlorine"] .nu-tip,[data-skin="chlorine"] .nu-product-detail{ background:var(--warn-dim); border-color:var(--warn-dim); }
+
+/* ============================================================
+   4. NAV LOGO CENTERING
+   Every sub-page nav has a back-link on the left and "STROKE" as
+   the logo. Some pages balanced the logo with a spacer div (log,
+   sets, wa-points) so it lands center; others just floated it
+   right with margin-left:auto (goals, history, leaderboard,
+   personal_bests), and the solo-* pages sandwich a logout link
+   between the back-link and logo, pushing it further right still.
+   A 3-column grid (1fr auto 1fr) centers the logo regardless of
+   what — if anything — sits on either side, so every nav matches
+   the log/sets look.
+   ============================================================ */
+[data-skin="chlorine"] .log-nav,
+[data-skin="chlorine"] .sets-nav,
+[data-skin="chlorine"] .wa-nav,
+[data-skin="chlorine"] .g-nav,
+[data-skin="chlorine"] .hi-nav,
+[data-skin="chlorine"] .lb-nav,
+[data-skin="chlorine"] .pb-nav,
+[data-skin="chlorine"] .pr-nav,
+[data-skin="chlorine"] .an-nav,
+[data-skin="chlorine"] .ob-nav,
+[data-skin="chlorine"] .pro-nav,
+[data-skin="chlorine"] .nu-nav,
+[data-skin="chlorine"] .ci-nav{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+}
+
+[data-skin="chlorine"] .log-nav-back,
+[data-skin="chlorine"] .sets-nav-back,
+[data-skin="chlorine"] .wa-nav-back,
+[data-skin="chlorine"] .g-nav-back,
+[data-skin="chlorine"] .hi-nav-back,
+[data-skin="chlorine"] .lb-nav-back,
+[data-skin="chlorine"] .pb-nav-back,
+[data-skin="chlorine"] .pr-nav-back,
+[data-skin="chlorine"] .an-nav-back,
+[data-skin="chlorine"] .ob-nav-back,
+[data-skin="chlorine"] .pro-nav-back,
+[data-skin="chlorine"] .nu-nav-back,
+[data-skin="chlorine"] .ci-nav-back{
+  order:1; justify-self:start;
+}
+
+[data-skin="chlorine"] .log-nav-logo,
+[data-skin="chlorine"] .sets-nav-logo,
+[data-skin="chlorine"] .wa-nav-logo,
+[data-skin="chlorine"] .g-nav-logo,
+[data-skin="chlorine"] .hi-nav-logo,
+[data-skin="chlorine"] .lb-nav-logo,
+[data-skin="chlorine"] .pb-nav-logo,
+[data-skin="chlorine"] .pr-nav-logo,
+[data-skin="chlorine"] .an-nav-logo,
+[data-skin="chlorine"] .ob-nav-logo,
+[data-skin="chlorine"] .pro-nav-logo,
+[data-skin="chlorine"] .nu-nav-logo,
+[data-skin="chlorine"] .ci-nav-logo{
+  order:2; justify-self:center; margin-left:0;
+}
+
+[data-skin="chlorine"] .spacer,
+[data-skin="chlorine"] .sets-nav-spacer,
+[data-skin="chlorine"] .sets-print-btn,
+[data-skin="chlorine"] .wa-nav > div,
+[data-skin="chlorine"] .pr-nav-logout,
+[data-skin="chlorine"] .an-nav-logout,
+[data-skin="chlorine"] .ob-nav-logout,
+[data-skin="chlorine"] .pro-nav-logout,
+[data-skin="chlorine"] .nu-nav-logout,
+[data-skin="chlorine"] .ci-nav-logout{
+  order:3; justify-self:end; margin-left:0;
+}

@@ -478,7 +478,7 @@
 
 .set-block-note{
   display:block;
-  font-size:13px;
+  font-size:14px;
   font-weight:500;
   color:#6a6683;
   margin-top:4px;
@@ -617,7 +617,14 @@
   .cat-header-icon{width:52px;height:52px;padding:12px}
 }
 
-/* ---------- PRINT ---------- */
+/* ---------- PRINT ----------
+   Compact on purpose: no notes box, no "printed from" footer -- every bit
+   of vertical space goes to the sets so a normal-length session fits one
+   page. The date/URL/page-number strip some browsers add at the very top
+   and bottom of the page is that browser's own print header/footer (a
+   print-dialog setting, not page content) -- turn it off via "More
+   settings > Headers and footers" in the print dialog if you don't want it. */
+@page{ margin:10mm; }
 @media print{
   .sets-nav, .no-print{display:none !important}
   .print-only{display:block}
@@ -638,19 +645,19 @@
     align-items:baseline;
     gap:10px;
     border-bottom:1.5px solid #1e1b2e;
-    padding-bottom:10px;
-    margin-bottom:20px;
+    padding-bottom:6px;
+    margin-bottom:12px;
   }
 
   .print-brand{
     font-family:'Schibsted Grotesk',sans-serif;
-    font-size:20px;
+    font-size:17px;
     font-weight:700;
     letter-spacing:-0.01em;
   }
 
   .print-brand-sub{
-    font-size:12px;
+    font-size:11px;
     font-weight:600;
     text-transform:uppercase;
     letter-spacing:.1em;
@@ -659,46 +666,46 @@
 
   .print-title{
     font-family:'Schibsted Grotesk',sans-serif;
-    font-size:30px;
+    font-size:24px;
     font-weight:700;
     letter-spacing:-0.01em;
     line-height:1.1;
-    margin-bottom:6px;
+    margin-bottom:4px;
   }
 
   .print-meta{
-    font-size:13px;
+    font-size:12px;
     font-weight:700;
-    margin-bottom:14px;
+    margin-bottom:10px;
   }
 
   .print-desc{
-    font-size:13px;
+    font-size:12px;
     font-weight:400;
-    line-height:1.65;
-    margin-bottom:8px;
+    line-height:1.5;
+    margin-bottom:6px;
     max-width:580px;
     color:#222;
   }
 
   .print-section{
-    margin-top:22px;
+    margin-top:14px;
     break-inside:avoid;
   }
 
   .print-section-head{
     font-family:'Schibsted Grotesk',sans-serif;
-    font-size:17px;
+    font-size:15px;
     font-weight:700;
     letter-spacing:-0.01em;
     border-bottom:2px solid #1e1b2e;
-    padding-bottom:5px;
-    margin-bottom:10px;
+    padding-bottom:4px;
+    margin-bottom:6px;
   }
 
   .print-section-dist{
     font-family:'Schibsted Grotesk',sans-serif;
-    font-size:12px;
+    font-size:11px;
     font-weight:600;
     text-transform:none;
     letter-spacing:0;
@@ -706,14 +713,14 @@
   }
 
   .print-line{
-    padding:5px 0 5px 14px;
+    padding:3px 0 3px 14px;
     break-inside:avoid;
   }
 
   .print-line-main{
-    font-size:16px;
+    font-size:14px;
     font-weight:700;
-    line-height:1.45;
+    line-height:1.35;
   }
 
   .print-line-rest{
@@ -722,37 +729,11 @@
   }
 
   .print-line-note{
-    font-size:13px;
+    font-size:14px;
     font-weight:400;
     font-style:italic;
     color:#4d4966;
-    line-height:1.5;
+    line-height:1.4;
     margin-top:1px;
-  }
-
-  .print-notes-box{
-    margin-top:28px;
-    border:2px solid #1e1b2e;
-    border-radius:6px;
-    min-height:110px;
-    padding:10px 14px;
-    break-inside:avoid;
-  }
-
-  .print-notes-label{
-    font-size:11px;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.08em;
-    color:#4d4966;
-  }
-
-  .print-footer{
-    margin-top:22px;
-    padding-top:10px;
-    border-top:1px solid #1e1b2e;
-    font-size:10px;
-    letter-spacing:.03em;
-    color:#4d4966;
   }
 }

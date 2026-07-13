@@ -76,16 +76,18 @@
 
 .dashboard-drawer {
   position: fixed;
-  right: -320px;
+  right: calc(-1 * min(320px, 88vw));
   top: 0;
-  width: 320px;
+  width: min(320px, 88vw);
   height: 100vh;
+  height: 100dvh;
+  max-height: -webkit-fill-available;
   background: #f4f6fd;
   border-left: 1px solid #e4e8f4;
   box-shadow: -8px 0 30px rgba(58,66,120,.14);
   transition: right 0.3s cubic-bezier(.4,0,.2,1);
   z-index: 1000;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -94,63 +96,95 @@
   right: 0;
 }
 
+/* ---------- HEADER ---------- */
 .drawer-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 20px 20px;
+  align-items: flex-start;
+  padding: 22px 22px 20px;
   background: #2c2942;
   flex-shrink: 0;
 }
 
+.drawer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
 .drawer-logo {
   font-family: 'Schibsted Grotesk', sans-serif;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  color: #c8d5f6;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.drawer-brand-sub {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(200, 213, 246, 0.55);
 }
 
 .drawer-close-btn {
-  background: none;
-  border: 2px solid #c8d5f6;
-  border-radius: 10px;
-  cursor: pointer;
-  padding: 6px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 7px;
+  background: none;
+  border: 1px solid rgba(200, 213, 246, 0.35);
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 7px 12px;
   color: #c8d5f6;
-  transition: background 0.15s, color 0.15s;
+  font-family: 'Schibsted Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .drawer-close-btn:hover {
   background: #c8d5f6;
   color: #2c2942;
+  border-color: #c8d5f6;
 }
 
 .drawer-close-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
 }
 
-/* ---------- USER CARD ---------- */
-.drawer-user {
+/* ---------- SCROLLING MIDDLE SECTION ---------- */
+/* Everything between the header and the pinned footer scrolls
+   independently, so Settings / Log out are ALWAYS reachable. */
+.drawer-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 20px 22px 8px;
+}
+
+/* ---------- IDENTITY STRIP ---------- */
+.drawer-identity {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 18px 16px;
-  padding: 16px;
-  background: #c8d5f6;
-  border: 1px solid #e4e8f4;
-  border-radius: 16px;
-  box-shadow: 0 10px 26px rgba(58,66,120,.10);
-  flex-shrink: 0;
+  gap: 13px;
+  padding-bottom: 22px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #e4e8f4;
 }
 
-.drawer-user-avatar {
-  width: 42px;
-  height: 42px;
+.drawer-id-avatar {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #2c2942;
   color: #c8d5f6;
@@ -161,174 +195,274 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 2px solid #2c2942;
 }
 
-.drawer-user-info {
+.drawer-id-info {
   min-width: 0;
   flex: 1;
 }
 
-.drawer-user-name {
-  font-size: 14px;
-  font-weight: 800;
+.drawer-id-name {
+  font-family: 'Schibsted Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
   color: #2c2942;
   text-transform: capitalize;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin: 0;
 }
 
-.drawer-plan-badge {
+.drawer-id-plan {
   display: inline-block;
-  margin-top: 4px;
-  font-size: 10px;
+  margin-top: 5px;
+  font-size: 9.5px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 3px 10px;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
   border-radius: 20px;
-  background: #ffffff;
-  border: 1px solid #e4e8f4;
-  color: #2c2942;
+  background: #eaeefb;
+  color: #5a6ac2;
 }
 
-.drawer-plan-badge.hot {
+.drawer-id-plan.hot {
   background: #2c2942;
   color: #c8d5f6;
-  border-color: #2c2942;
 }
 
-.drawer-user-streak {
+.drawer-id-streak {
   flex-shrink: 0;
-  text-align: center;
-  padding: 6px 10px;
-  background: #2c2942;
-  border-radius: 10px;
-  line-height: 1.1;
+  text-align: right;
+  line-height: 1;
 }
 
-.drawer-user-streak-val {
+.drawer-id-streak-num {
   display: block;
   font-family: 'Schibsted Grotesk', sans-serif;
-  font-size: 18px;
+  font-size: 26px;
   font-weight: 700;
-  color: #c8d5f6;
+  color: #2c2942;
 }
 
-.drawer-user-streak-lbl {
+.drawer-id-streak-lbl {
   display: block;
-  font-size: 8px;
+  font-size: 8.5px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: #9a96b0;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
-/* ---------- NAV LINKS ---------- */
-.drawer-nav-links {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 6px;
-  flex: 1;
-  padding: 4px 16px 16px;
-}
-
-.drawer-section-divider {
+/* ---------- SECTION LABEL ---------- */
+.drawer-label {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 14px 2px 2px;
-}
-
-.drawer-section-divider::before,
-.drawer-section-divider::after {
-  content: '';
-  flex: 1;
-  height: 2px;
-  background: #dfe6f7;
-}
-
-.drawer-section-divider span {
+  gap: 8px;
+  margin: 20px 0 4px;
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #6f7fe0;
-  white-space: nowrap;
+  letter-spacing: 0.16em;
+  color: #9aa0bd;
 }
 
-.drawer-spacer {
-  flex: 1;
-  min-height: 8px;
+.drawer-label::before {
+  content: '';
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: #cdd5ee;
 }
 
-.drawer-link {
+.drawer-label-tag {
+  margin-left: auto;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: #6f8fe6;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ---------- EDITORIAL NAV ITEMS ---------- */
+.drawer-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 14px;
+  padding: 13px 12px;
   border-radius: 12px;
-  font-size: 12.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: #2c2942;
   text-decoration: none;
-  background: #ffffff;
-  border: 1px solid #e4e8f4;
-  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
+  border-bottom: 1px solid #edf0f9;
+  transition: background 0.16s ease, padding-left 0.16s ease, color 0.16s ease;
 }
 
-.drawer-icon-box {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: #e9eefc;
-  color: #6f7fe0;
+.drawer-menu .drawer-item:last-child {
+  border-bottom: none;
+}
+
+.drawer-item-idx {
+  font-family: 'Schibsted Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b3b8d0;
+  flex-shrink: 0;
+  width: 18px;
+  transition: color 0.16s ease;
+}
+
+.drawer-item-name {
+  flex: 1;
+  font-family: 'Schibsted Grotesk', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.drawer-item-glyph {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #b6bcd6;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.16s ease, transform 0.16s ease;
 }
 
-.drawer-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
+.drawer-item-glyph svg {
+  width: 18px;
+  height: 18px;
 }
 
-.drawer-link:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 26px rgba(58,66,120,.10);
+.drawer-item:hover {
+  background: #eef1fb;
+  padding-left: 16px;
 }
 
-.drawer-link.active {
+.drawer-item:hover .drawer-item-idx { color: #6f8fe6; }
+.drawer-item:hover .drawer-item-glyph { color: #6f8fe6; transform: translateX(2px); }
+
+.drawer-item.active {
   background: #2c2942;
-  color: #c8d5f6;
+  color: #ffffff;
+  border-bottom-color: transparent;
 }
 
-.drawer-link.active .drawer-icon-box {
-  background: rgba(204,204,255,0.16);
-  color: #c8d5f6;
+.drawer-item.active .drawer-item-idx { color: #8f9ee8; }
+.drawer-item.active .drawer-item-glyph { color: #c8d5f6; }
+
+.drawer-item.is-locked {
+  opacity: 0.5;
 }
 
-.drawer-logout {
-  color: #b3402c;
+/* ---------- PINNED FOOTER (always visible, never requires scrolling) ---------- */
+.drawer-footer {
+  flex-shrink: 0;
+  padding: 16px 22px calc(18px + env(safe-area-inset-bottom, 0px));
+  background: #eef1fb;
+  border-top: 1px solid #dfe4f4;
+}
+
+.drawer-footer-help {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.drawer-footer-help-lbl {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9aa0bd;
+}
+
+.drawer-footer-help-link {
+  font-family: 'Schibsted Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2942;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  align-self: flex-start;
+  transition: border-color 0.15s;
+}
+
+.drawer-footer-help-link:hover { border-bottom-color: #2c2942; }
+
+.drawer-footer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.drawer-foot-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e0e5f3;
+  color: #2c2942;
+  text-decoration: none;
+  font-family: 'Schibsted Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
+}
+
+.drawer-foot-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.drawer-foot-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(58,66,120,.12);
+}
+
+.drawer-foot-btn--logout {
+  background: #2c2942;
+  border-color: #2c2942;
+  color: #ffffff;
+}
+
+.drawer-foot-btn--logout:hover {
+  background: #b3402c;
   border-color: #b3402c;
 }
 
-.drawer-logout .drawer-icon-box {
-  background: #fbe4df;
-  color: #b3402c;
+.drawer-soon-tag {
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9aa0bd;
+  background: #eef1fb;
+  padding: 2px 6px;
+  border-radius: 20px;
 }
 
-.drawer-logout:hover {
-  background: #fbe4df;
+.drawer-foot-btn--logout .drawer-soon-tag { display: none; }
+
+/* ---------- WIDER, ROOMIER PANEL ON DESKTOP ---------- */
+@media (min-width: 768px) {
+  .dashboard-drawer {
+    width: 380px;
+    right: -380px;
+  }
+  .drawer-item-name { font-size: 18px; }
 }
 
 .main-workspace {
@@ -985,29 +1119,6 @@
   font-size: 12.5px;
   color: #8b87a3;
   font-weight: 500;
-}
-
-/* ---------- DRAWER "SOON" LINKS ---------- */
-.drawer-link--soon {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.drawer-link--soon:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.drawer-soon-tag {
-  margin-left: auto;
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: #eef2fc;
-  color: #9a96b0;
-  padding: 3px 8px;
-  border-radius: 20px;
 }
 
 /* ---------- MOBILE TAB SWITCHER (Personal bests/Recent sessions, Pool split/Streak) ----------

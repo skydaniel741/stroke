@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="chlorine">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,25 +30,58 @@
 
   .pr-section-label{font-family:'Schibsted Grotesk',sans-serif;font-size:18px;letter-spacing:-0.01em;margin:26px 0 12px;}
 
-  /* Week calendar: one column on phones, fills out on bigger screens */
-  .pr-week{display:grid;grid-template-columns:1fr;gap:12px;}
-  @media(min-width:640px){.pr-week{grid-template-columns:repeat(2,1fr);}}
-  @media(min-width:920px){.pr-week{grid-template-columns:repeat(3,1fr);}}
+  /* Real calendar: compact day cells so 7 fit without crowding on desktop
+     (each just shows date + focus + volume); tap/click a day to load its
+     full session into the panel below. A horizontally-scrolling week-strip
+     on phones, same compact cells, same tap-to-open panel. */
+  .pr-cal-label{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+  .pr-cal-range{font-size:12.5px;font-weight:700;color:#8b87a3;}
 
-  .pr-day{border:1px solid #e4e8f4;border-radius:16px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;box-shadow:0 10px 26px rgba(58,66,120,.10);}
-  .pr-day.rest{border-color:#dfe3f0;box-shadow:none;background:#f4f6fd;}
-  .pr-day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
-  .pr-day-name{font-weight:800;font-size:14px;}
-  .pr-day.rest .pr-day-name{color:#9a96b0;}
-  .pr-day-total{font-size:12px;font-weight:800;color:#2c2942;background:#c8d5f6;padding:3px 10px;border-radius:20px;}
-  .pr-day-focus{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6f7fe0;margin-bottom:10px;}
-  .pr-day.rest .pr-day-focus{color:#a9a5bd;}
+  .pr-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+  @media(max-width:760px){
+    .pr-cal-grid{grid-auto-flow:column;grid-auto-columns:minmax(96px,1fr);grid-template-columns:none;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;}
+    .pr-cal-day{scroll-snap-align:start;}
+  }
+
+  .pr-cal-day{
+    font-family:inherit; cursor:pointer; text-align:left; min-width:0;
+    border:1.5px solid #e4e8f4; border-radius:14px; background:#fff;
+    padding:10px 8px; display:flex; flex-direction:column; gap:4px;
+    transition:border-color .15s,transform .15s;
+  }
+  .pr-cal-day:hover{transform:translateY(-2px);}
+  .pr-cal-day.rest{border-color:#dfe3f0;background:#f4f6fd;}
+  .pr-cal-day.today{border-color:#6f7fe0;}
+  .pr-cal-day.active{border-color:#2c2942;box-shadow:0 0 0 2px #2c2942;}
+  .pr-cal-day-head{display:flex;align-items:baseline;gap:5px;}
+  .pr-cal-weekday{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8b87a3;}
+  .pr-cal-daynum{font-family:'Schibsted Grotesk',sans-serif;font-size:16px;font-weight:800;}
+  .pr-cal-day.today .pr-cal-daynum{color:#5474d4;}
+  .pr-cal-day.rest .pr-cal-weekday,.pr-cal-day.rest .pr-cal-daynum{color:#9a96b0;}
+  .pr-cal-focus{font-size:10.5px;font-weight:700;color:#403c58;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.6em;}
+  .pr-cal-day.rest .pr-cal-focus{color:#a9a5bd;}
+  .pr-cal-total{align-self:flex-start;font-size:10px;font-weight:800;color:#2c2942;background:#c8d5f6;padding:2px 8px;border-radius:20px;}
+
+  /* Selected day's full session — the readable, non-cramped view */
+  .pr-day-detail{margin-top:14px;}
+  .pr-day-panel{display:none;border:1px solid #e4e8f4;border-radius:16px;background:#fff;padding:16px 18px;box-shadow:0 10px 26px rgba(58,66,120,.10);}
+  .pr-day-panel.active{display:block;}
+  .pr-day-panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:2px;}
+  .pr-day-panel-date{font-family:'Schibsted Grotesk',sans-serif;font-size:15px;font-weight:700;}
+  .pr-day-panel .pr-day-focus{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6f7fe0;margin:2px 0 10px;}
+
+  .pr-cal-grid--locked{margin-top:2px;}
+  .pr-cal-day.locked{align-items:center;gap:8px;background:#f8faff;border-style:dashed;box-shadow:none;opacity:.75;}
+  .pr-cal-day.locked .pr-cal-day-head{margin-bottom:2px;}
+  .pr-cal-lock{color:#b3aec7;margin-top:4px;}
+  .pr-cal-locked-note{font-size:12.5px;color:#9a96b0;margin-top:10px;line-height:1.5;}
+  .pr-cal-locked-note a{font-weight:800;color:#5474d4;text-decoration:none;}
 
   .pr-blocks{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
   .pr-block{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:7px 10px;background:#f0f4fd;border-radius:9px;}
   .pr-block.main{background:#eef2fc;}
   .pr-block-txt{font-weight:600;color:#222;}
-  .pr-block-note{display:block;font-weight:500;color:#8b87a3;font-size:11px;margin-top:1px;}
+  .pr-block-note{display:block;font-weight:500;color:#8b87a3;font-size:14px;margin-top:1px;}
   .pr-block-rest{flex-shrink:0;font-size:11px;font-weight:700;color:#6f7fe0;white-space:nowrap;}
 
   .pr-day-note{font-size:12px;color:#6a6683;line-height:1.5;margin-top:auto;padding-top:6px;border-top:1px dashed #e4e8f4;}
@@ -107,6 +140,7 @@
   .pr-demo-title{font-weight:800;font-size:13px;margin-bottom:6px;}
   .pr-demo-steps{margin:0;padding-left:16px;font-size:11.5px;color:#6a6683;line-height:1.5;}
 </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_pages.css') }}">
 </head>
 <body>
 
@@ -151,11 +185,28 @@
       <div class="pr-stat"><div class="pr-stat-num">{{ profile.level or '—' }}</div><div class="pr-stat-lbl">Level</div></div>
     </div>
 
-    <div class="pr-week">
-      {% for d in program.days %}
-      <div class="pr-day {{ 'rest' if d.rest }}">
-        <div class="pr-day-head">
-          <span class="pr-day-name">{{ d.day }}</span>
+    <div class="pr-cal-label">
+      <span class="pr-section-label" style="margin:0">This week</span>
+      <span class="pr-cal-range">{{ week_range }}</span>
+    </div>
+    <div class="pr-cal-grid" id="prCalGrid">
+      {% for d, dt in calendar_days %}
+      <button type="button" class="pr-cal-day {{ 'rest' if d.rest }} {{ 'today' if dt == today }} {{ 'active' if dt == today }}" data-day-idx="{{ loop.index0 }}" onclick="prSelectDay({{ loop.index0 }})">
+        <div class="pr-cal-day-head">
+          <span class="pr-cal-weekday">{{ dt.strftime('%a') }}</span>
+          <span class="pr-cal-daynum">{{ dt.day }}</span>
+        </div>
+        <div class="pr-cal-focus">{{ 'Rest' if d.rest else d.focus }}</div>
+        {% if not d.rest and d.total %}<span class="pr-cal-total">{{ '{:,}'.format(d.total) }}m</span>{% endif %}
+      </button>
+      {% endfor %}
+    </div>
+
+    <div class="pr-day-detail">
+      {% for d, dt in calendar_days %}
+      <div class="pr-day-panel {{ 'active' if dt == today }}" data-day-panel="{{ loop.index0 }}">
+        <div class="pr-day-panel-head">
+          <span class="pr-day-panel-date">{{ dt.strftime('%A') }} {{ dt.day }} {{ dt.strftime('%b') }}</span>
           {% if not d.rest and d.total %}<span class="pr-day-total">{{ '{:,}'.format(d.total) }}m</span>{% endif %}
         </div>
         <div class="pr-day-focus">{{ d.focus }}</div>
@@ -178,6 +229,23 @@
       </div>
       {% endfor %}
     </div>
+
+    <div class="pr-cal-label" style="margin-top:26px">
+      <span class="pr-section-label" style="margin:0">Next week</span>
+      <span class="pr-cal-range">{{ next_week_range }}</span>
+    </div>
+    <div class="pr-cal-grid pr-cal-grid--locked">
+      {% for dt in next_week_dates %}
+      <div class="pr-cal-day locked">
+        <div class="pr-cal-day-head">
+          <span class="pr-cal-weekday">{{ dt.strftime('%a') }}</span>
+          <span class="pr-cal-daynum">{{ dt.day }}</span>
+        </div>
+        <svg class="pr-cal-lock" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="pr-cal-locked-note">Planned once you <a href="/solo/onboarding">rebuild</a> during that week — the AI plans one week at a time using your latest progress.</p>
 
   {% elif program.sessions %}
     {# Programs generated before the calendar update -- offer a rebuild #}
@@ -292,6 +360,17 @@
     {% if regens_left > 0 %}{{ regens_left }} of {{ regen_limit }} rebuilds left this week.{% else %}You've used all {{ regen_limit }} rebuilds this week — resets Monday.{% endif %}
   </p>
 </div>
+
+<script>
+  function prSelectDay(idx){
+    document.querySelectorAll('.pr-cal-day').forEach(function(el){
+      el.classList.toggle('active', el.dataset.dayIdx == idx);
+    });
+    document.querySelectorAll('.pr-day-panel').forEach(function(el){
+      el.classList.toggle('active', el.dataset.dayPanel == idx);
+    });
+  }
+</script>
 
 </body>
 </html>
