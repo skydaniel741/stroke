@@ -85,5 +85,5 @@ def run_migrations(db):
             for col_name, col_def in columns:
                 if col_name not in current_cols:
                     col_def = _dialect_col_def(col_def, dialect_name)
-                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_def}"))
+                    conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{col_name}" {col_def}'))
         conn.commit()
