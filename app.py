@@ -27,6 +27,11 @@ def create_app():
         db_url = db_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Render's managed Postgres drops idle connections; without pre-ping,
+    # SQLAlchemy hands out a dead connection from the pool and every query
+    # on it fails with "SSL SYSCALL error: EOF detected" instead of
+    # transparently reconnecting.
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 280}
     # Hard cap on any request body (photo scans allow up to 20MB images);
     # anything bigger gets a clean 413 instead of tying up the worker.
     app.config['MAX_CONTENT_LENGTH'] = 25 * 1024 * 1024
