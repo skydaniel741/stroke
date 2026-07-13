@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solo — STROKE Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  body{font-family:'Schibsted Grotesk',sans-serif;background:#f0f4fd;margin:0;color:#2c2942;}
+  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#2c2942;color:#fff;}
+  .adm-nav a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;margin-left:20px;}
+  .adm-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;}
+  .adm-wrap{max-width:1000px;margin:0 auto;padding:32px 20px 60px;}
+  .adm-title{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;margin:0 0 20px;}
+  .adm-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px;}
+  .adm-stat{background:#fff;border-radius:12px;padding:18px;border:1px solid #e9edf7;}
+  .adm-stat-num{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;color:#7C89D0;}
+  .adm-stat-lbl{font-size:12px;color:#8b87a3;text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-top:2px;}
+  .adm-panel{background:#fff;border-radius:14px;border:1px solid #e9edf7;overflow:hidden;margin-bottom:24px;}
+  .adm-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;}
+  .alert-success{background:#dff5ec;color:#1f7a5a;border:1px solid #1f7a5a;}
+  .alert-error{background:#fbe4df;color:#b3402c;border:1px solid #b3402c;}
+  .adm-panel-head{padding:16px 20px;border-bottom:1px solid #e9edf7;font-weight:800;font-size:15px;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#8b87a3;padding:12px 20px;border-bottom:1px solid #e9edf7;}
+  td{padding:12px 20px;border-bottom:1px solid #eef2fc;font-size:14px;vertical-align:middle;}
+  .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge.yes{background:#dff5ec;color:#1f7a5a;}
+  .badge.no{background:#fbe4df;color:#b3402c;}
+  .badge.pro{background:#e6ebfb;color:#5474d4;}
+
+  .adm-filter-bar{display:flex;gap:10px;padding:16px 20px;border-bottom:1px solid #e9edf7;flex-wrap:wrap;}
+  .adm-filter-bar input, .adm-filter-bar select{
+    padding:8px 12px;border:2px solid #c8d5f6;background:#f4f6fd;border-radius:8px;font-size:13px;font-family:'Schibsted Grotesk',sans-serif;
+  }
+  .adm-filter-bar button{padding:8px 16px;border:2px solid #2c2942;background:#c8d5f6;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+
+  .row-actions{display:flex;gap:8px;align-items:center;}
+  .btn-mark{border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:12px;}
+  .btn-mark.paid{background:#ef7d6a;color:#fff;}
+  .btn-mark.unpaid{background:#1f7a5a;color:#fff;}
+  .link-view{color:#5474d4;font-weight:700;text-decoration:none;font-size:12.5px;}
+  .empty-state{text-align:center;padding:40px;color:#8b87a3;font-size:14px;}
+</style>
+</head>
+<body>
+
+<nav class="adm-nav">
+  <span class="adm-logo">STROKE Admin</span>
+  <div>
+    <a href="/admin">Overview</a>
+    <a href="/admin/solo">Solo</a>
+    <a href="/admin?role=coach">Coaches</a>
+    <a href="/admin/clubs">Clubs</a>
+    <a href="/dashboard">Back to app</a>
+    <a href="/logout">Log out</a>
+  </div>
+</nav>
+
+<div class="adm-wrap">
+  <p class="adm-title">Solo</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="adm-stats">
+    <div class="adm-stat"><div class="adm-stat-num">{{ total_solo }}</div><div class="adm-stat-lbl">Solo / Solo Pro users</div></div>
+    <div class="adm-stat"><div class="adm-stat-num">{{ paid_count }}</div><div class="adm-stat-lbl">Marked paid</div></div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Solo access — $12/mo, verified manually until checkout is wired up</div>
+    <form class="adm-filter-bar" method="GET" action="/admin/solo">
+      <input type="text" name="q" placeholder="Search username or email…" value="{{ q }}">
+      <select name="paid">
+        <option value="">All</option>
+        <option value="yes" {{ 'selected' if paid_filter=='yes' }}>Paid</option>
+        <option value="no" {{ 'selected' if paid_filter=='no' }}>Unpaid</option>
+      </select>
+      <button type="submit">Filter</button>
+    </form>
+    <div class="adm-table-scroll">
+    {% if users %}
+    <table>
+      <thead>
+        <tr><th>Username</th><th>Email</th><th>Plan</th><th>Paid</th><th>Signed up</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td>{{ u.email }}</td>
+          <td>{% if u.plan == 'solo_pro' %}<span class="badge pro">Solo Pro</span>{% else %}Solo{% endif %}</td>
+          <td>
+            {% if u.solo_paid %}
+              <span class="badge yes">Paid{% if u.solo_paid_at %} · {{ u.solo_paid_at.strftime('%d %b %Y') }}{% endif %}</span>
+            {% else %}
+              <span class="badge no">Unpaid</span>
+            {% endif %}
+          </td>
+          <td>{{ u.created_at.strftime('%d %b %Y') }}</td>
+          <td>
+            <div class="row-actions">
+              <a class="link-view" href="/admin/solo/{{ u.id }}">View →</a>
+              <form method="POST" action="/admin/solo/{{ u.id }}/paid">
+                <input type="hidden" name="next" value="/admin/solo{{ '?q=' + q if q }}{{ ('&' if q else '?') + 'paid=' + paid_filter if paid_filter }}">
+                <button type="submit" class="btn-mark {{ 'paid' if u.solo_paid else 'unpaid' }}">{{ 'Mark unpaid' if u.solo_paid else 'Mark paid' }}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No solo/solo_pro users match this filter.</div>
+    {% endif %}
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

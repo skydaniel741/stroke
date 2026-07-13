@@ -23,6 +23,12 @@ class User(db.Model, UserMixin):
     login_locked_until = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.String(20), default='swimmer')  # 'swimmer' or 'coach'
     share_leaderboard = db.Column(db.Boolean, default=False)
+    # Solo is a paid $12/mo tier (see index.html pricing) -- there's no card
+    # checkout wired up yet, so payment is verified manually and an admin
+    # flips this from the admin Solo panel once it's actually been paid.
+    # plan alone ('solo'/'solo_pro') is NOT enough to unlock solo routes.
+    solo_paid = db.Column(db.Boolean, default=False)
+    solo_paid_at = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -38,12 +44,18 @@ class User(db.Model, UserMixin):
 
     @property
     def is_solo(self):
-        # Both the free solo tier and paid Solo Pro get the solo AI experience.
+        # Plan tier only -- does NOT mean access is unlocked, see has_solo_access.
         return self.plan in ('solo', 'solo_pro')
 
     @property
     def is_solo_pro(self):
         return self.plan == 'solo_pro'
+
+    @property
+    def has_solo_access(self):
+        # The actual gate used by solo_required/dashboard nav: on the solo
+        # tier AND marked paid, or an admin (who always has full access).
+        return self.is_admin or (self.is_solo and self.solo_paid)
 
     swims = db.relationship('Swim', backref='user', lazy=True)
     sessions = db.relationship('Session', backref='user', lazy=True)
@@ -205,6 +217,70 @@ class AthleteProfile(db.Model):
             return json.loads(self.progress_insight or '{}')
         except (ValueError, TypeError):
             return {}
+
+
+class InjuryStatus(db.Model):
+    """Current joint/pain status snapshot for one swimmer -- edited in place,
+    NOT a log. STROKE has no other record of this (AthleteProfile.limitations
+    is a one-off onboarding note, not a living status), so the AI dryland
+    coach reads and updates this before every session prescription. See
+    swim-coach/reference/injury-modifications.md -- re-ask if it's more than
+    ~14 days old."""
+    __tablename__ = 'injury_status'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    shoulder = db.Column(db.Text)   # side, sharp/dull, when it shows up -- or "none"
+    knee = db.Column(db.Text)
+    back = db.Column(db.Text)
+    other = db.Column(db.Text)
+    red_flag = db.Column(db.Boolean, default=False)  # sharp/numbness/locking/night pain -- stop dryland, see a clinician
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def is_stale(self, days=14):
+        if not self.updated_at:
+            return True
+        return (datetime.utcnow() - self.updated_at).days >= days
+
+    def has_anything_flagged(self):
+        return any(
+            v and v.strip().lower() not in ('', 'none', 'no', 'nothing')
+            for v in (self.shoulder, self.knee, self.back, self.other)
+        )
+
+
+class DrylandLogEntry(db.Model):
+    """Append-only log of completed dryland sessions -- STROKE's DB has no
+    other record of land training. Feeds the dryland acute:chronic load
+    signal in swim-coach/reference/load-management.md (session_load = RPE x
+    duration), reconciled against the pool-only ACWR already computed by
+    athlete_model.recompute_state()."""
+    __tablename__ = 'dryland_log_entry'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    logged_at = db.Column(db.DateTime, default=datetime.utcnow)
+    focus = db.Column(db.String(120))       # e.g. "Shoulder + core, light plyo"
+    rpe = db.Column(db.Integer)              # 1-10
+    duration_minutes = db.Column(db.Integer)
+    pain_notes = db.Column(db.Text)
+
+    def session_load(self):
+        return (self.rpe or 0) * (self.duration_minutes or 0)
+
+
+class CoachMessage(db.Model):
+    """One turn of the swim-coach AI chat (nutrition or dryland). Kept
+    per-user, per-topic so the coach has real conversational memory instead
+    of answering each question cold."""
+    __tablename__ = 'coach_message'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    topic = db.Column(db.String(20), nullable=False)  # 'nutrition' or 'dryland'
+    role = db.Column(db.String(10), nullable=False)   # 'user' or 'assistant'
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class AthleteState(db.Model):

@@ -1246,3 +1246,188 @@ def extract_test_results_from_image(image_bytes, roster_names, api_key, model):
         'event': str(data.get('event') or '').strip(),
         'results': results,
     }
+
+
+# ============================================================
+# SOLO-TIER AI COACHING: interactive nutrition + dryland coach chat
+#
+# Grounded in the swim-coach skill (swim-coach/SKILL.md and its reference/
+# files) -- pool + dryland load reasoned together, injury status checked
+# before every dryland answer, nutrition tied to training phase and today's
+# actual session load rather than a static diet sheet. Knowledge below is a
+# condensed version of those reference files; anything marked (unverified)
+# there is a fresh design/general S&C-nutrition consensus, not a cited
+# swim-specific standard -- the model is told to hold that same caveat.
+# ============================================================
+
+NUTRITION_KNOWLEDGE = """
+NUTRITION KNOWLEDGE (swim-specific, not a static diet plan -- key to training phase and today's actual pool load):
+
+Training phase framing:
+- Base (moderate-high volume, aerobic): consistent carbs, this is where eating habits get built, not a time to under-fuel.
+- Build (volume + intensity both up, peak load): highest carb needs of any phase -- under-fueling here shows up fastest as flat performance or illness/injury risk.
+- Taper (volume drops, intensity holds): total intake comes down roughly with volume, but don't cut carbs on quality/race-pace days -- protein/fat can trend down more than carbs.
+
+Carb timing around a pool session (unverified general endurance-nutrition ranges, be conservative for junior/age-group swimmers -- "eat enough" not precise g/kg):
+- Pre-session (2-3h before high-volume/intensity): carb-forward, moderate protein, lower fat/fibre. E.g. oats + banana + honey, or rice + chicken.
+- Close to session (30-60 min before, only if needed): small fast carb -- toast + jam, banana, sports drink. Skip if they train fine fasted.
+- During (only genuinely long sessions, 90+ min continuous): carb drink -- most age-group sessions don't need this.
+- Post-session recovery window (within ~30-60 min out of the pool): carbs + protein together -- the single highest-leverage timing point for a swimmer training multiple times a week. E.g. chocolate milk + banana, protein shake + fruit, or a full meal.
+
+High-volume/double day vs light/rest day:
+- High-volume or double-session day: bias carbs up across the WHOLE day, not just around the session.
+- Light/rest day: carbs can trend down somewhat, protein holds steady (recovery still happening), don't crash-diet a rest day.
+- Two-a-day: the gap between AM and PM sessions is a critical refuel window.
+
+Meal structure: most swimmers training 5-6x/week do well with 3 meals + 1-2 snacks timed around training. Protein at every meal. Hydration: swimmers chronically under-recognize sweat loss because they're already wet and don't feel thirsty -- flag this explicitly, water at every meal plus deliberate hydration around sessions.
+
+What NOT to do: never hand a strict calorie deficit/surplus target (especially to a minor) -- redirect body-composition goals to a sports dietitian and keep this to performance fueling/timing. Don't prescribe supplements beyond the basics (creatine, protein as a convenience tool, vitamin D if flagged low) unless asked, and never to a minor without flagging a parent/guardian + clinician should be involved. If eating_habits is flagged undereating/skip_meals, lead with "are you eating enough, especially around sessions" rather than macro precision.
+
+Conflicting goals: "eat less" + "hit peak training load this block" is a real conflict -- under-fueling during build/peak directly costs performance and raises injury/illness risk, say so plainly and reframe toward fueling the training they're doing.
+
+Disclaimer (state once, near the start of a new conversation, and always for a minor or any disordered-eating flag): this is general sports-nutrition guidance, not an individualized dietetic prescription. A minor, anyone with a disordered-eating flag, or a medical condition should keep to meal structure/timing (not calorie/macro numbers) and see a registered sports dietitian for anything more specific.
+"""
+
+DRYLAND_KNOWLEDGE = """
+DRYLAND KNOWLEDGE (swim-specific dryland only -- three mandatory categories per full session, unless the load guardrail or an injury modification says to drop one):
+
+1. Shoulder/rotator cuff health -- highest-yield category, touch it even on a light day. Prone Y-T-W raises 2-3x10-12 each; band external rotation 3x12-15 (elbow pinned to ribs); band internal rotation 2-3x12-15; Cuban press 2-3x8-10; scaption raises 2-3x10-12 (lower impingement risk than lateral raises); face pulls/band pull-aparts 2-3x15; wall slides/scap push-ups 2x10-12. (unverified exact rep ranges) Endurance/health work favors higher reps (12-15+) light load over heavy low-rep, since the cuff's job is stabilization through thousands of repetitive strokes.
+
+2. Core/rotation -- anti-rotation and controlled-rotation over crunches. Plank front+side 2-3x30-45s; Pallof press 2-3x10-12 each side; dead bug 2-3x8-10 each side; med ball rotational throw 2-3x6-8 each side; Russian twist (controlled) 2-3x12-16; hollow body hold 2-3x20-30s.
+
+3. Explosive/plyometric (starts/turns) -- most sensitive to overload, gated by the load guardrail below. Progression order, don't skip ahead: (1) landing mechanics/box step-offs first for anyone new to plyo, (2) bilateral low-amplitude (squat jumps 3x5-6 full recovery between reps, broad jumps 3x4-5), (3) bilateral higher-amplitude (box jumps 3x5, moderate height), (4) unilateral (single-leg bounds 2-3x4-5 each side), (5) depth drops/reactive -- most advanced, reserve for experienced athletes with clean landing mechanics only, skip for anyone under a certain training age or with lower-limb injury history. (unverified age/training-age cutoffs, volume caps) True plyo work 1-2x/week is a reasonable cap; don't chase max height/reps, chase landing quality.
+
+Equipment -- never prescribe gear they don't have, ask first: bodyweight only still makes a complete session (planks, push-ups, Y-T-W no load, bodyweight squats, pool-deck broad jumps). Bands unlock external/internal rotation, face pulls, Pallof press -- cheapest and most useful cuff kit. Light dumbbells add Cuban press, scaption raises, loaded Y-T-W. Med ball adds rotational throws/slams. Box/platform adds box jumps/step-ups. Full gym adds cable face pulls, loaded squats as a power base.
+
+Conflicting goals: heavy plyo progression on only 15-20 min twice a week isn't realistic -- that's enough for cuff+core maintenance, not a real plyo progression. Say so plainly and offer the honest tradeoff.
+"""
+
+LOAD_GUARDRAIL_KNOWLEDGE = """
+COMBINED LOAD GUARDRAIL (fresh design, not a cited standard -- pool load in meters and dryland load in RPE x duration aren't the same currency, so use two parallel signals reconciled by whichever is more conservative, don't average them):
+
+Pool ACWR is already computed (0.55-1.35 = normal; >=1.35 with high fatigue/low feeling check-ins, or >=1.7 regardless = overtraining flag; <=0.55 with meaningful chronic volume = undertraining).
+Dryland load = RPE(1-10) x duration_minutes per session; acute = sum last 7 days, chronic weekly = sum last 28 days / 4, dryland ACWR = acute/chronic (only meaningful with ~2+ weeks of logged sessions -- with less data, fall back to "don't jump total session_load week-over-week by more than ~20-30%").
+
+Reconciliation table:
+- Pool normal + dryland normal/no data -> full session, all three categories, standard volume.
+- Pool normal + dryland elevated -> back off dryland specifically (it's the thing driving risk): cuff/core only, skip plyo.
+- Pool elevated/overtraining flag (regardless of dryland trend) -> back off regardless: light cuff/core activation only, skip plyo, keep it short.
+- Pool undertraining + dryland normal -> fine to progress dryland if they want.
+- Pool undertraining + dryland also low/no data -> flag the conflict, ask if it's a deliberate recovery block/taper rather than assuming.
+
+Same-day check (separate from the weekly table): always ask/check whether they had a hard pool session today or yesterday before prescribing plyo specifically -- stacking plyo on a same-day hard water session is the most common way to accidentally overload a swimmer even when weekly ACWR looks fine.
+
+Progression when things are going well: cuff/core progresses by adding reps before load; plyo progresses by moving down the bilateral->unilateral->reactive progression order, not by adding volume to the current tier. Never progress dryland load the same week pool ACWR is elevated. Recovery week (cuff/core maintenance only, skip plyo) every 3-4 weeks, or sooner if 2+ of: pool overtraining flag, dryland ACWR spiking, fatigue trending up 3+ days, reported joint pain.
+"""
+
+INJURY_KNOWLEDGE = """
+INJURY-STATUS RULES for dryland:
+
+Red flags -- if ANY of these are present, tell the swimmer to STOP dryland training, mention it to their swim coach, and see a physiotherapist/clinician. Do NOT offer a modification path or continue prescribing around it: sharp/sudden-onset pain, numbness or tingling radiating down an arm or leg, a joint that locks/catches/gives way, pain that wakes them at night, visible swelling/bruising/deformity, or pain that's worsening session over session despite rest.
+
+Common modification paths (unverified specifics, general S&C/rehab-adjacent common sense, not a physio protocol -- nothing here clears an athlete to train through pain):
+- Shoulder impingement/swimmer's shoulder: avoid overhead pressing through end-range, straight lateral raises above shoulder height, anything reproducing a pinch at the top. Modify toward scaption raises instead of lateral raises, external rotation in pain-free range only, reduce overhead volume. Core and lower-body plyo (no overhead loading) are usually still fine -- don't shut the whole session down. Only add range/load back once pain-free through full range for multiple sessions in a row.
+- Breaststroker's knee (medial knee pain): avoid deep loaded squats/lunges with knee valgus, explicit whip-kick-pattern drills. Modify toward strict knee-tracking squat/lunge variants, lower-impact plyo (broad jumps over box jumps). Upper body/core usually unaffected. Flag that in-pool breaststroke kick volume may need to come down too, that's outside this coach's lane.
+- Lower back tightness/pain: avoid loaded spinal flexion/extension under fatigue, aggressive plyo landing volume until resolved. Modify toward anti-extension/anti-rotation core (plank, dead bug, Pallof press) over flexion-based ab work. Reintroduce rotational core before reintroducing plyo landing volume as it resolves.
+
+Always check injury status before prescribing a dryland session -- never assume "no injuries" just because none is on file.
+"""
+
+
+def generate_coach_chat_reply(topic, message, profile, pool_state, injury_summary, dryland_load, recent_history,
+                               api_key, model):
+    """Interactive nutrition/dryland coach chat, grounded in the swim-coach
+    skill's reasoning (see the *_KNOWLEDGE constants above) plus this
+    swimmer's real STROKE data. `topic` is 'nutrition' or 'dryland'.
+    `pool_state` is athlete_model.recompute_state(user_id) (or {} if none
+    yet). `injury_summary` is a plain-text description of current injury
+    status, or None/"" if never recorded. `dryland_load` is {'acute',
+    'chronic_weekly', 'acwr', 'entries_count'} from the swimmer's own
+    DrylandLogEntry history, or None. `recent_history` is a list of
+    {'role': 'user'|'assistant', 'content': str} for this topic, oldest
+    first, excluding the message just sent. Returns a plain string reply, or
+    a friendly fallback on any failure -- never raises."""
+    knowledge = NUTRITION_KNOWLEDGE if topic == 'nutrition' else (DRYLAND_KNOWLEDGE + "\n" + LOAD_GUARDRAIL_KNOWLEDGE + "\n" + INJURY_KNOWLEDGE)
+
+    age = profile.age if profile else None
+    is_minor = age is not None and age < 18
+
+    data_lines = [
+        f"- Level: {profile.level or 'not specified'}" if profile else "- Level: not specified",
+        f"- Age: {age or 'not specified'}{' (MINOR -- keep guidance general, recommend a dietitian/physio+guardian for anything specific)' if is_minor else ''}",
+        f"- Swimmer type: {getattr(profile, 'swimmer_type', None) or 'not specified'}",
+        f"- Eating habits flag: {EATING_HABITS_LABELS.get(getattr(profile, 'eating_habits', None), 'not specified')}" if profile else "",
+        f"- Stated injuries/limitations at onboarding: {profile.limitations}" if profile and profile.limitations else "",
+    ]
+    if pool_state:
+        data_lines.append(
+            f"- Pool acute:chronic load ratio (ACWR): {pool_state.get('acwr', 'not enough data')} "
+            f"-- trend: {pool_state.get('trend', 'unknown')} ({pool_state.get('trend_reason', '')})"
+        )
+        weekly = pool_state.get('weekly') or []
+        if weekly:
+            data_lines.append(f"- This week's pool volume so far: {weekly[-1]['vol']}m across {weekly[-1]['sessions']} session(s)")
+        data_lines.append(f"- Last logged pool activity: {pool_state.get('last_active') or 'never'}")
+
+    if topic == 'dryland':
+        if dryland_load and dryland_load.get('entries_count'):
+            data_lines.append(
+                f"- Dryland load (last 7d acute / 28d-avg chronic): {dryland_load['acute']} / {dryland_load['chronic_weekly']}"
+                f", ACWR {dryland_load.get('acwr') or 'not enough history yet'} (from {dryland_load['entries_count']} logged sessions)"
+            )
+        else:
+            data_lines.append("- No dryland sessions logged yet -- not enough history for a dryland load trend, fall back to the simple ramp-rate rule and ask about recent training if it matters to the answer.")
+        data_lines.append(f"- Current injury status on file: {injury_summary or 'NONE RECORDED -- you must ask the injury-status questions before prescribing any dryland session, see INJURY-STATUS RULES.'}")
+
+    data_block = "\n".join(l for l in data_lines if l)
+
+    history_block = "\n".join(f"{h['role'].upper()}: {h['content']}" for h in recent_history) or "(this is the first message in this conversation)"
+
+    first_turn = len(recent_history) == 0
+
+    prompt = (
+        f"You are the swimmer's {topic} coach inside STROKE (a swim training app). You are NOT their pool "
+        "technique coach -- stay in your lane: nutrition/fueling or land-based conditioning depending on topic. "
+        f"{_tone_line(getattr(profile, 'coaching_tone', 'balanced') if profile else 'balanced')}\n\n"
+        f"{knowledge}\n\n"
+        f"What you know about this swimmer:\n{data_block}\n\n"
+        f"Conversation so far:\n{history_block}\n\n"
+        f"Swimmer's new message: \"{message}\"\n\n"
+        + (
+            "This is the start of a new conversation on this topic -- if it's relevant, briefly ask a clarifying "
+            "question before prescribing anything (e.g. what equipment they have for dryland, or what today's "
+            "session looked like for nutrition timing), rather than guessing. State the general disclaimer "
+            "(not medical/dietetic advice, see a professional if X) once, briefly, if it's genuinely relevant here "
+            "-- don't repeat it if you already asked something more useful to open with.\n\n" if first_turn else ""
+        )
+        + (
+            "RED FLAG CHECK: if the swimmer's message describes sharp/sudden pain, numbness or tingling down a "
+            "limb, a joint locking/catching/giving way, pain waking them at night, visible swelling/deformity, or "
+            "pain worsening session over session, STOP -- tell them plainly to stop dryland training, mention it "
+            "to their swim coach, and see a physiotherapist/clinician. Do not prescribe anything around it.\n\n"
+            if topic == 'dryland' else ""
+        )
+        + "Answer their actual question directly and specifically -- real sets/reps/durations or real meal/timing "
+        "examples, not vague filler like 'a few rounds of core work' or 'eat a balanced diet'. Ground it in the "
+        "data above (today's/this week's pool load, injury status, training phase) rather than generic advice. "
+        "If their goals conflict (e.g. wanting max plyo progression on 15 min twice a week, or cutting calories "
+        "during a peak-load block), say so plainly and offer the honest tradeoff rather than quietly complying. "
+        "Keep it conversational and tight, like a real coach texting back, not an essay -- a few sentences unless "
+        "they're asking for a full session/meal plan, in which case use short structure (headers/bullets) so it's "
+        "scannable."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = "".join(block.text for block in response.content if getattr(block, 'type', None) == 'text').strip()
+        if text:
+            return _humanize(text)
+    except Exception:
+        logger.exception('generate_coach_chat_reply: API call failed')
+
+    return "Couldn't get a reply right now, give it another try in a moment."

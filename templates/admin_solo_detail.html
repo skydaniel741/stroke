@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ u.username }} — Solo — STROKE Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  body{font-family:'Schibsted Grotesk',sans-serif;background:#f0f4fd;margin:0;color:#2c2942;}
+  .adm-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#2c2942;color:#fff;}
+  .adm-nav a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;margin-left:20px;}
+  .adm-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;}
+  .adm-wrap{max-width:820px;margin:0 auto;padding:32px 20px 60px;}
+  .adm-back{display:inline-block;margin-bottom:14px;font-size:13px;font-weight:700;color:#5474d4;text-decoration:none;}
+  .adm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+  .adm-title{font-family:'Schibsted Grotesk',sans-serif;font-size:28px;margin:0 0 4px;}
+  .adm-sub{font-size:13px;color:#8b87a3;}
+  .adm-panel{background:#fff;border-radius:14px;border:1px solid #e9edf7;padding:18px 20px;margin-bottom:18px;}
+  .adm-panel-head{font-weight:800;font-size:14px;margin-bottom:12px;}
+  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;}
+  .alert-success{background:#dff5ec;color:#1f7a5a;border:1px solid #1f7a5a;}
+  .alert-error{background:#fbe4df;color:#b3402c;border:1px solid #b3402c;}
+  .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge.yes{background:#dff5ec;color:#1f7a5a;}
+  .badge.no{background:#fbe4df;color:#b3402c;}
+  .badge.pro{background:#e6ebfb;color:#5474d4;}
+  .btn-mark{border:none;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;font-size:13px;}
+  .btn-mark.paid{background:#ef7d6a;color:#fff;}
+  .btn-mark.unpaid{background:#1f7a5a;color:#fff;}
+
+  .kv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 20px;}
+  .kv{font-size:13px;}
+  .kv-lbl{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#8b87a3;margin-bottom:2px;}
+  .kv-val{color:#2c2942;}
+  .empty-note{color:#9a96b0;font-size:13px;}
+
+  .stat-row{display:flex;gap:20px;flex-wrap:wrap;}
+  .stat-mini{flex:1;min-width:110px;}
+  .stat-mini-num{font-family:'Schibsted Grotesk',sans-serif;font-size:22px;}
+  .stat-mini-lbl{font-size:11px;color:#8b87a3;text-transform:uppercase;letter-spacing:.03em;font-weight:700;}
+
+  .log-row{display:flex;justify-content:space-between;font-size:12.5px;color:#595571;padding:6px 0;border-bottom:1px solid #eef2fc;}
+  .log-row:last-child{border-bottom:none;}
+</style>
+</head>
+<body>
+
+<nav class="adm-nav">
+  <span class="adm-logo">STROKE Admin</span>
+  <div>
+    <a href="/admin">Overview</a>
+    <a href="/admin/solo">Solo</a>
+    <a href="/dashboard">Back to app</a>
+    <a href="/logout">Log out</a>
+  </div>
+</nav>
+
+<div class="adm-wrap">
+  <a class="adm-back" href="/admin/solo">← Solo</a>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="adm-head">
+    <div>
+      <p class="adm-title">{{ u.username }}</p>
+      <p class="adm-sub">{{ u.email }} · signed up {{ u.created_at.strftime('%d %b %Y') }}</p>
+    </div>
+    <form method="POST" action="/admin/solo/{{ u.id }}/paid">
+      <input type="hidden" name="next" value="/admin/solo/{{ u.id }}">
+      <button type="submit" class="btn-mark {{ 'paid' if u.solo_paid else 'unpaid' }}">{{ 'Mark unpaid' if u.solo_paid else 'Mark paid' }}</button>
+    </form>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Plan &amp; payment</div>
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-lbl">Plan</div><div class="kv-val">{% if u.plan == 'solo_pro' %}<span class="badge pro">Solo Pro</span>{% else %}Solo{% endif %}</div></div>
+      <div class="kv"><div class="kv-lbl">Paid</div><div class="kv-val">{% if u.solo_paid %}<span class="badge yes">Paid{% if u.solo_paid_at %} · {{ u.solo_paid_at.strftime('%d %b %Y') }}{% endif %}</span>{% else %}<span class="badge no">Unpaid</span>{% endif %}</div></div>
+    </div>
+  </div>
+
+  {% if profile %}
+  <div class="adm-panel">
+    <div class="adm-panel-head">Onboarding profile</div>
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-lbl">Level</div><div class="kv-val">{{ profile.level or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Age</div><div class="kv-val">{{ profile.age or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Training days/week</div><div class="kv-val">{{ profile.training_days_per_week or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Fitness ability</div><div class="kv-val">{{ profile.fitness_ability or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Primary stroke</div><div class="kv-val">{{ profile.primary_stroke or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Swimmer type</div><div class="kv-val">{{ profile.swimmer_type or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Coaching situation</div><div class="kv-val">{{ profile.coaching_situation or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Eating habits</div><div class="kv-val">{{ profile.eating_habits or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Coaching tone / intensity</div><div class="kv-val">{{ profile.coaching_tone or 'balanced' }} / {{ profile.intensity or 'normal' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Rebuilds used this week</div><div class="kv-val">{{ 3 - profile.regens_left(3) }} of 3</div></div>
+    </div>
+    {% if profile.main_goal %}<p style="margin-top:12px;font-size:13px;"><b>Goal:</b> {{ profile.main_goal }}</p>{% endif %}
+    {% if profile.limitations %}<p style="margin-top:6px;font-size:13px;"><b>Limitations noted at onboarding:</b> {{ profile.limitations }}</p>{% endif %}
+    <p style="margin-top:10px;font-size:11.5px;color:#9a96b0;">Profile last updated {{ profile.updated_at.strftime('%d %b %Y') if profile.updated_at else '—' }}</p>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Current AI plan</div>
+    {% if program.overview %}
+    <p style="font-size:13px;margin-bottom:8px;"><b>This week:</b> {{ program.overview }}</p>
+    {% endif %}
+    {% if nutrition.focus_note %}<p style="font-size:13px;margin-bottom:6px;"><b>Nutrition focus:</b> {{ nutrition.focus_note }}</p>{% endif %}
+    {% if dryland.focus_note %}<p style="font-size:13px;margin-bottom:6px;"><b>Dryland focus:</b> {{ dryland.focus_note }}</p>{% endif %}
+    {% if not program.overview and not nutrition.focus_note and not dryland.focus_note %}
+    <p class="empty-note">No AI program generated yet.</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="adm-panel"><p class="empty-note">Hasn't completed Solo onboarding yet — no AthleteProfile on file.</p></div>
+  {% endif %}
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">AI coach chat activity</div>
+    <div class="stat-row">
+      <div class="stat-mini"><div class="stat-mini-num">{{ nutrition_msg_count }}</div><div class="stat-mini-lbl">Nutrition messages</div></div>
+      <div class="stat-mini"><div class="stat-mini-num">{{ dryland_msg_count }}</div><div class="stat-mini-lbl">Dryland messages</div></div>
+      <div class="stat-mini"><div class="stat-mini-num">{{ dryland_entries|length }}</div><div class="stat-mini-lbl">Dryland sessions logged</div></div>
+    </div>
+    {% if last_coach_message %}
+    <p style="margin-top:12px;font-size:12px;color:#8b87a3;">Last message {{ last_coach_message.created_at.strftime('%d %b %Y, %H:%M') }}</p>
+    {% endif %}
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Injury status on file</div>
+    {% if injury and injury.has_anything_flagged() %}
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-lbl">Shoulder</div><div class="kv-val">{{ injury.shoulder or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Knee</div><div class="kv-val">{{ injury.knee or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Back</div><div class="kv-val">{{ injury.back or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Other</div><div class="kv-val">{{ injury.other or '—' }}</div></div>
+    </div>
+    {% if injury.red_flag %}<p style="margin-top:10px;"><span class="badge no">Red flag noted</span></p>{% endif %}
+    <p style="margin-top:10px;font-size:11.5px;color:#9a96b0;">Updated {{ injury.updated_at.strftime('%d %b %Y') if injury.updated_at else '—' }}</p>
+    {% else %}
+    <p class="empty-note">Nothing on file.</p>
+    {% endif %}
+  </div>
+
+  {% if dryland_entries %}
+  <div class="adm-panel">
+    <div class="adm-panel-head">Recent dryland log</div>
+    {% for e in dryland_entries %}
+    <div class="log-row">
+      <span>{{ e.logged_at.strftime('%d %b') }} · {{ e.focus or 'Dryland session' }}</span>
+      <span>RPE {{ e.rpe }} · {{ e.duration_minutes }}min</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+</body>
+</html>

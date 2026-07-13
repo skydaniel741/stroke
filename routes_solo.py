@@ -11,6 +11,15 @@ MAX_SCAN_BYTES = 20 * 1024 * 1024  # raw phone-camera uploads before we downscal
 WEEKLY_REGEN_LIMIT = 3  # AI program rebuilds allowed per rolling week
 
 
+@solo.route('/locked')
+@login_required
+def locked():
+    # NOT solo_required -- this IS where solo_required sends people, a
+    # redirect loop otherwise. Reachable by anyone signed in: free-plan users
+    # and solo/solo_pro users who haven't been marked paid yet both land here.
+    return render_template('solo_locked.html')
+
+
 @solo.route('/scan-whiteboard', methods=['POST'])
 @login_required
 @solo_required
@@ -817,6 +826,178 @@ def nutrition_view(program_id):
     if not p or p.category != 'Nutrition':
         abort(404)
     return render_template('program_view.html', p=p, back_url='/solo/nutrition', back_label='Nutrition library')
+
+
+def _injury_summary(injury):
+    """Plain-text summary of an InjuryStatus row for the AI prompt, or None
+    if there's nothing on file."""
+    if not injury:
+        return None
+    parts = []
+    for label, val in (('Shoulder', injury.shoulder), ('Knee', injury.knee), ('Back', injury.back), ('Other', injury.other)):
+        if val and val.strip():
+            parts.append(f"{label}: {val.strip()}")
+    if not parts:
+        return None
+    flag = " [RED FLAG previously noted]" if injury.red_flag else ""
+    return "; ".join(parts) + flag + f" (last updated {injury.updated_at.strftime('%d %b %Y') if injury.updated_at else 'unknown'})"
+
+
+def _dryland_load(entries):
+    """RPE x duration load signal from a swimmer's own DrylandLogEntry rows,
+    see swim-coach/reference/load-management.md. `entries` must already be
+    sorted/filtered to the swimmer, any order."""
+    now = datetime.utcnow()
+    acute = sum(e.session_load() for e in entries if e.logged_at and (now - e.logged_at).days < 7)
+    chronic_total = sum(e.session_load() for e in entries if e.logged_at and (now - e.logged_at).days < 28)
+    chronic_weekly = chronic_total / 4.0
+    acwr = round(acute / chronic_weekly, 2) if chronic_weekly > 0 else None
+    return {'acute': acute, 'chronic_weekly': round(chronic_weekly), 'acwr': acwr, 'entries_count': len(entries)}
+
+
+@solo.route('/coach')
+@login_required
+@solo_required
+def coach():
+    from app import db
+    from models import AthleteProfile, CoachMessage, InjuryStatus, DrylandLogEntry
+    import athlete_model
+
+    topic = request.args.get('topic', 'nutrition')
+    if topic not in ('nutrition', 'dryland'):
+        topic = 'nutrition'
+
+    profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+    messages = (
+        db.session.query(CoachMessage)
+        .filter_by(user_id=current_user.id, topic=topic)
+        .order_by(CoachMessage.created_at.asc())
+        .limit(40)
+        .all()
+    )
+    injury = db.session.query(InjuryStatus).filter_by(user_id=current_user.id).first()
+    dryland_entries = (
+        db.session.query(DrylandLogEntry)
+        .filter_by(user_id=current_user.id)
+        .order_by(DrylandLogEntry.logged_at.desc())
+        .limit(10)
+        .all()
+    )
+    pool_state = athlete_model.get_state(current_user.id)
+
+    needs_injury_check = topic == 'dryland' and (not injury or injury.is_stale())
+
+    return render_template(
+        'solo_coach.html', topic=topic, profile=profile, messages=messages,
+        injury=injury, dryland_entries=dryland_entries, pool_state=pool_state,
+        needs_injury_check=needs_injury_check,
+    )
+
+
+@solo.route('/coach/message', methods=['POST'])
+@login_required
+@solo_required
+def coach_message():
+    from app import db
+    from models import AthleteProfile, CoachMessage, InjuryStatus, DrylandLogEntry
+    from validation import clean_text
+    import athlete_model
+
+    if not current_app.config.get('ANTHROPIC_API_KEY'):
+        return jsonify({'ok': False, 'error': "AI coach isn't set up yet."}), 503
+
+    data = request.get_json(silent=True) or {}
+    topic = data.get('topic')
+    if topic not in ('nutrition', 'dryland'):
+        return jsonify({'ok': False, 'error': 'Invalid topic.'}), 400
+
+    message = clean_text(data.get('message'), 2000)
+    if not message:
+        return jsonify({'ok': False, 'error': 'Type a message first.'}), 400
+
+    profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
+    injury = db.session.query(InjuryStatus).filter_by(user_id=current_user.id).first()
+    dryland_entries = (
+        db.session.query(DrylandLogEntry).filter_by(user_id=current_user.id).all()
+        if topic == 'dryland' else []
+    )
+    pool_state = athlete_model.get_state(current_user.id)
+    dryland_load = _dryland_load(dryland_entries) if topic == 'dryland' else None
+
+    history_rows = (
+        db.session.query(CoachMessage)
+        .filter_by(user_id=current_user.id, topic=topic)
+        .order_by(CoachMessage.created_at.desc())
+        .limit(12)
+        .all()
+    )
+    history = [{'role': m.role, 'content': m.content} for m in reversed(history_rows)]
+
+    from ai_utils import generate_coach_chat_reply
+    reply = generate_coach_chat_reply(
+        topic, message, profile, pool_state, _injury_summary(injury), dryland_load, history,
+        current_app.config['ANTHROPIC_API_KEY'], current_app.config['ANTHROPIC_MODEL'],
+    )
+
+    db.session.add(CoachMessage(user_id=current_user.id, topic=topic, role='user', content=message))
+    db.session.add(CoachMessage(user_id=current_user.id, topic=topic, role='assistant', content=reply))
+    db.session.commit()
+
+    return jsonify({'ok': True, 'reply': reply})
+
+
+@solo.route('/coach/injury', methods=['POST'])
+@login_required
+@solo_required
+def coach_injury():
+    from app import db
+    from models import InjuryStatus
+    from validation import clean_text
+
+    injury = db.session.query(InjuryStatus).filter_by(user_id=current_user.id).first() or \
+        InjuryStatus(user_id=current_user.id)
+    injury.shoulder = clean_text(request.form.get('shoulder'), 300) or 'None'
+    injury.knee = clean_text(request.form.get('knee'), 300) or 'None'
+    injury.back = clean_text(request.form.get('back'), 300) or 'None'
+    injury.other = clean_text(request.form.get('other'), 300) or 'None'
+    injury.red_flag = request.form.get('red_flag') == '1'
+    injury.updated_at = datetime.utcnow()
+    if not injury.id:
+        db.session.add(injury)
+    db.session.commit()
+
+    if injury.red_flag:
+        flash("That sounds like something to get checked by a physio or clinician before doing more dryland work — hold off on training that area for now.", 'error')
+    else:
+        flash('Injury status updated.', 'success')
+    return redirect(url_for('solo.coach', topic='dryland'))
+
+
+@solo.route('/coach/log-dryland', methods=['POST'])
+@login_required
+@solo_required
+def coach_log_dryland():
+    from app import db
+    from models import DrylandLogEntry
+    from validation import clean_int, clean_text
+
+    rpe = clean_int(request.form.get('rpe'), lo=1, hi=10)
+    duration = clean_int(request.form.get('duration_minutes'), key='duration_minutes')
+    if not rpe or not duration:
+        flash('RPE (1-10) and duration are needed to log a session.', 'error')
+        return redirect(url_for('solo.coach', topic='dryland'))
+
+    entry = DrylandLogEntry(
+        user_id=current_user.id,
+        focus=clean_text(request.form.get('focus'), 120) or 'Dryland session',
+        rpe=rpe,
+        duration_minutes=duration,
+        pain_notes=clean_text(request.form.get('pain_notes'), 500),
+    )
+    db.session.add(entry)
+    db.session.commit()
+    flash('Dryland session logged.', 'success')
+    return redirect(url_for('solo.coach', topic='dryland'))
 
 
 @solo.route('/leaderboard-optin', methods=['GET', 'POST'])

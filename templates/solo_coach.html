@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="chlorine">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI coach — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  body{background:var(--base);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;}
+  .cc-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .cc-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--ink);text-decoration:none;}
+  .cc-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:var(--muted);text-decoration:none;}
+  .cc-nav-logout:hover{color:var(--ink);}
+  .cc-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:var(--ink);text-decoration:none;}
+  .cc-wrap{max-width:640px;margin:0 auto;padding:16px 20px 40px;}
+  .cc-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--sig);margin-bottom:8px;}
+  .cc-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;margin:0 0 4px;color:var(--ink);}
+  .cc-sub{color:var(--muted);font-size:13.5px;margin:0 0 18px;line-height:1.5;}
+
+  .cc-tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .cc-tab{flex:1;text-align:center;padding:10px 8px;border:1.5px solid var(--line);border-radius:12px;font-weight:800;font-size:13px;text-decoration:none;color:var(--muted);background:var(--panel);}
+  .cc-tab.active{background:var(--sig);color:var(--sig-ink);border-color:var(--sig);}
+
+  .cc-card{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:16px 18px;margin-bottom:16px;}
+  .cc-card h3{font-family:'Schibsted Grotesk',sans-serif;font-size:15px;margin:0 0 10px;color:var(--ink);}
+  .cc-field-label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin:10px 0 5px;}
+  .cc-field-label:first-child{margin-top:0;}
+  .cc-input,.cc-textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;box-sizing:border-box;background:var(--raised);color:var(--ink);}
+  .cc-textarea{resize:vertical;min-height:44px;}
+  .cc-red-flag{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--err);margin-top:10px;}
+  .cc-btn{padding:11px 16px;background:var(--sig);color:var(--sig-ink);border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;margin-top:12px;}
+  .cc-btn-ghost{background:var(--raised);color:var(--ink);border:1px solid var(--line);}
+  .cc-inline-row{display:flex;gap:10px;}
+  .cc-inline-row > div{flex:1;}
+
+  .cc-injury-summary{font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:8px;}
+  .cc-injury-stale{background:var(--warn-dim);border:1.5px solid var(--warn);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--ink);margin-bottom:14px;}
+  .cc-toggle-link{font-size:12px;font-weight:800;color:var(--sig);text-decoration:none;cursor:pointer;}
+
+  .cc-chat{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;min-height:80px;}
+  .cc-msg{max-width:86%;padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;}
+  .cc-msg.user{align-self:flex-end;background:var(--sig);color:var(--sig-ink);border-bottom-right-radius:4px;}
+  .cc-msg.assistant{align-self:flex-start;background:var(--raised);color:var(--ink);border-bottom-left-radius:4px;}
+  .cc-msg-label{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin-bottom:3px;}
+  .cc-msg.user .cc-msg-label{color:var(--sig-ink);opacity:.7;}
+  .cc-empty{font-size:13px;color:var(--faint);padding:16px 0;text-align:center;}
+
+  .cc-composer{position:relative;}
+  .cc-composer textarea{width:100%;padding:12px 46px 12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:'Schibsted Grotesk',sans-serif;min-height:56px;resize:vertical;box-sizing:border-box;background:var(--raised);color:var(--ink);}
+  .cc-send-btn{position:absolute;right:8px;bottom:10px;width:32px;height:32px;border-radius:50%;border:none;background:var(--sig);color:var(--sig-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .cc-send-btn:disabled{opacity:.5;}
+  .voice-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid var(--sig);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+  .voice-btn svg{width:16px;height:16px;stroke:var(--ink);}
+  .voice-btn.voice-recording{background:var(--err);border-color:var(--err);animation:voicePulse 1s infinite;}
+  .voice-btn.voice-recording svg{stroke:#fff;}
+  @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,85,107,.5);}50%{box-shadow:0 0 0 6px rgba(255,85,107,0);}}
+  .cc-composer-hint{font-size:11px;color:var(--faint);margin:6px 0 0;}
+  .cc-thinking{align-self:flex-start;font-size:12.5px;color:var(--muted);padding:6px 13px;}
+
+  .cc-log-list{display:flex;flex-direction:column;gap:6px;}
+  .cc-log-row{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--line-soft);}
+  .cc-log-row:last-child{border-bottom:none;}
+</style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_pages.css') }}">
+</head>
+<body>
+
+<nav class="cc-nav">
+  <a href="/solo/program" class="cc-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    My AI plan
+  </a>
+  <a href="/logout" class="cc-nav-logout">Log out</a>
+  <a href="/" class="cc-nav-logo">STROKE</a>
+</nav>
+
+<div class="cc-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <p class="cc-eyebrow">Ask your AI coach</p>
+  <h1 class="cc-h1">{{ 'Nutrition' if topic == 'nutrition' else 'Dryland' }} chat</h1>
+  <p class="cc-sub">
+    {% if topic == 'nutrition' %}
+      Ask about meals, timing, hydration, or how to fuel around today's session — grounded in your actual training load, not a generic diet sheet.
+    {% else %}
+      Ask for a dryland session, shoulder/cuff work, or check in on an injury — reasoned against your pool load and current joint status.
+    {% endif %}
+  </p>
+
+  <div class="cc-tabs">
+    <a href="/solo/coach?topic=nutrition" class="cc-tab {{ 'active' if topic == 'nutrition' }}">Nutrition</a>
+    <a href="/solo/coach?topic=dryland" class="cc-tab {{ 'active' if topic == 'dryland' }}">Dryland</a>
+  </div>
+
+  {% if topic == 'dryland' %}
+    {% if injury and injury.has_anything_flagged() %}
+      <div class="cc-injury-summary"><b>On file:</b> {{ injury.shoulder if injury.shoulder != 'None' }}{% if injury.knee and injury.knee != 'None' %} · {{ injury.knee }}{% endif %}{% if injury.back and injury.back != 'None' %} · {{ injury.back }}{% endif %}{% if injury.other and injury.other != 'None' %} · {{ injury.other }}{% endif %} <a class="cc-toggle-link" onclick="ccToggle('ccInjuryForm')">update</a></div>
+    {% endif %}
+    {% if needs_injury_check %}
+    <div class="cc-injury-stale">
+      {% if injury %}It's been a while since you updated your injury status — quick check before we prescribe anything.{% else %}Before your first dryland session, tell us about any current pain so we don't prescribe around it.{% endif %}
+    </div>
+    {% endif %}
+    <div class="cc-card" id="ccInjuryForm" {% if not needs_injury_check %}style="display:none"{% endif %}>
+      <h3>Injury / joint status check</h3>
+      <form method="POST" action="/solo/coach/injury">
+        <label class="cc-field-label">Shoulder pain or discomfort? (side, sharp/dull, when it shows up)</label>
+        <input class="cc-input" name="shoulder" placeholder="None" value="{{ injury.shoulder if injury and injury.shoulder and injury.shoulder != 'None' else '' }}">
+        <label class="cc-field-label">Knee pain, especially inside the knee?</label>
+        <input class="cc-input" name="knee" placeholder="None" value="{{ injury.knee if injury and injury.knee and injury.knee != 'None' else '' }}">
+        <label class="cc-field-label">Lower back tightness or pain?</label>
+        <input class="cc-input" name="back" placeholder="None" value="{{ injury.back if injury and injury.back and injury.back != 'None' else '' }}">
+        <label class="cc-field-label">Anything else — wrist, hip, ankle?</label>
+        <input class="cc-input" name="other" placeholder="None" value="{{ injury.other if injury and injury.other and injury.other != 'None' else '' }}">
+        <label class="cc-red-flag">
+          <input type="checkbox" name="red_flag" value="1" {{ 'checked' if injury and injury.red_flag }}>
+          Any of this is sharp/sudden, numbness or tingling, a joint locking, pain waking me at night, or swelling/bruising
+        </label>
+        <button type="submit" class="cc-btn">Save status</button>
+      </form>
+    </div>
+
+    <div class="cc-card">
+      <h3>Log a dryland session <a class="cc-toggle-link" style="float:right" onclick="ccToggle('ccLogForm')">+ add</a></h3>
+      <form method="POST" action="/solo/coach/log-dryland" id="ccLogForm" style="display:none">
+        <label class="cc-field-label">Focus</label>
+        <input class="cc-input" name="focus" placeholder="e.g. Shoulder + core, light plyo" maxlength="120">
+        <div class="cc-inline-row">
+          <div><label class="cc-field-label">RPE (1-10)</label><input class="cc-input" name="rpe" type="number" min="1" max="10" required></div>
+          <div><label class="cc-field-label">Duration (min)</label><input class="cc-input" name="duration_minutes" type="number" min="1" max="240" required></div>
+        </div>
+        <label class="cc-field-label">Any pain during the session?</label>
+        <input class="cc-input" name="pain_notes" placeholder="None" maxlength="500">
+        <button type="submit" class="cc-btn cc-btn-ghost">Log session</button>
+      </form>
+      {% if dryland_entries %}
+      <div class="cc-log-list" style="margin-top:10px">
+        {% for e in dryland_entries[:5] %}
+        <div class="cc-log-row">
+          <span>{{ e.logged_at.strftime('%d %b') }} · {{ e.focus }}</span>
+          <span>RPE {{ e.rpe }} · {{ e.duration_minutes }}min</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="cc-card">
+    <div class="cc-chat" id="ccChat">
+      {% if not messages %}
+      <div class="cc-empty">No messages yet — ask a question below to get started.</div>
+      {% endif %}
+      {% for m in messages %}
+      <div class="cc-msg {{ m.role }}">
+        <span class="cc-msg-label">{{ 'You' if m.role == 'user' else 'Coach' }}</span>{{ m.content }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="cc-composer">
+      <textarea id="ccInput" maxlength="2000" placeholder="{{ 'e.g. What should I eat before a high-volume set tomorrow?' if topic == 'nutrition' else 'e.g. Give me a dryland session for today' }}"></textarea>
+      <button type="button" class="voice-btn" data-voice-target="ccInput" title="Dictate with your voice" aria-label="Voice input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2c2942" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+      </button>
+    </div>
+    <p class="cc-composer-hint">🎙️ Tap the mic to speak instead of typing. Enter to send, Shift+Enter for a new line.</p>
+    <button type="button" class="cc-btn" id="ccSendBtn" onclick="ccSend()">Send</button>
+  </div>
+</div>
+
+<script>
+  const CC_TOPIC = {{ topic|tojson }};
+
+  function ccToggle(id){
+    const el = document.getElementById(id);
+    el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+  }
+
+  function ccScrollToBottom(){
+    const chat = document.getElementById('ccChat');
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function ccAppendMsg(role, text){
+    const chat = document.getElementById('ccChat');
+    const empty = chat.querySelector('.cc-empty');
+    if (empty) empty.remove();
+    const div = document.createElement('div');
+    div.className = 'cc-msg ' + role;
+    const label = document.createElement('span');
+    label.className = 'cc-msg-label';
+    label.textContent = role === 'user' ? 'You' : 'Coach';
+    div.appendChild(label);
+    div.appendChild(document.createTextNode(text));
+    chat.appendChild(div);
+    ccScrollToBottom();
+    return div;
+  }
+
+  function ccSend(){
+    const input = document.getElementById('ccInput');
+    const btn = document.getElementById('ccSendBtn');
+    const text = input.value.trim();
+    if (!text) return;
+
+    ccAppendMsg('user', text);
+    input.value = '';
+    btn.disabled = true;
+    btn.textContent = 'Thinking…';
+    const thinking = document.createElement('div');
+    thinking.className = 'cc-thinking';
+    thinking.textContent = 'Coach is thinking…';
+    document.getElementById('ccChat').appendChild(thinking);
+    ccScrollToBottom();
+
+    fetch('/solo/coach/message', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({topic: CC_TOPIC, message: text}),
+    })
+      .then(r => r.json())
+      .then(data => {
+        thinking.remove();
+        if (data.ok) {
+          ccAppendMsg('assistant', data.reply);
+        } else {
+          ccAppendMsg('assistant', data.error || "Couldn't get a reply, try again.");
+        }
+      })
+      .catch(() => {
+        thinking.remove();
+        ccAppendMsg('assistant', "Couldn't reach the coach, check your connection and try again.");
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Send';
+      });
+  }
+
+  document.getElementById('ccInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      ccSend();
+    }
+  });
+
+  ccScrollToBottom();
+</script>
+<script src="{{ url_for('static', filename='js/voicelog.js') }}"></script>
+
+</body>
+</html>

@@ -134,6 +134,10 @@
   .pr-supp-ev--emerging{background:#eef2fc;color:#8b87a3;}
   .pr-supp-brands{font-size:11.5px;color:#6a6683;margin:0;}
   .pr-supp-cta{font-size:11.5px;font-weight:800;color:#5474d4;}
+  .pr-coach-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1.5px dashed #c8d5f6;border-radius:14px;padding:13px 16px;margin-bottom:16px;background:#f6f8fe;text-decoration:none;color:inherit;}
+  .pr-coach-cta-txt b{display:block;font-size:13.5px;color:#2c2942;}
+  .pr-coach-cta-txt span{display:block;font-size:12px;color:#6a6683;margin-top:2px;}
+  .pr-coach-cta-arrow{font-weight:800;color:#5474d4;flex-shrink:0;}
   .pr-demo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:6px;}
   .pr-demo-card{border:1px solid #e4e8f4;border-radius:14px;padding:12px 14px 14px;background:#fff;}
   .pr-demo-card svg{width:100%;height:auto;display:block;margin-bottom:8px;color:#2c2942;}
@@ -276,8 +280,12 @@
   {% endfor %}
   {% endif %}
 
-  {% if nutrition and nutrition.focus_note %}
   <div class="pr-section-label">Nutrition for you</div>
+  <a class="pr-coach-cta" href="/solo/coach?topic=nutrition">
+    <span class="pr-coach-cta-txt"><b>Ask your AI nutrition coach</b><span>Meals, timing, hydration — tied to today's actual training, not a static plan.</span></span>
+    <span class="pr-coach-cta-arrow">Chat →</span>
+  </a>
+  {% if nutrition and nutrition.focus_note %}
   <div class="pr-note-card">
     <p><b>{{ nutrition.focus_note }}</b></p>
     {% if nutrition.tip %}<p>{{ nutrition.tip }}</p>{% endif %}
@@ -322,8 +330,12 @@
   {% endif %}
   {% endif %}
 
-  {% if dryland and dryland.focus_note %}
   <div class="pr-section-label">Dryland for you</div>
+  <a class="pr-coach-cta" href="/solo/coach?topic=dryland">
+    <span class="pr-coach-cta-txt"><b>Ask your AI dryland coach</b><span>A session built around your pool load and current injury status, not a canned template.</span></span>
+    <span class="pr-coach-cta-arrow">Chat →</span>
+  </a>
+  {% if dryland and dryland.focus_note %}
   <div class="pr-note-card">
     <p><b>{{ dryland.focus_note }}</b></p>
     {% if dryland.note %}<p>{{ dryland.note }}</p>{% endif %}

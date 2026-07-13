@@ -1448,6 +1448,104 @@ def admin_dashboard():
     )
 
 
+@main.route('/admin/solo')
+@login_required
+@admin_required
+def admin_solo():
+    from app import db
+    from models import User
+
+    q = request.args.get('q', '').strip().lower()
+    paid_filter = request.args.get('paid', '')
+
+    users = (
+        db.session.query(User)
+        .filter(User.plan.in_(['solo', 'solo_pro']))
+        .order_by(User.created_at.desc())
+        .all()
+    )
+    if q:
+        users = [u for u in users if q in u.username.lower() or q in u.email.lower()]
+    if paid_filter == 'yes':
+        users = [u for u in users if u.solo_paid]
+    elif paid_filter == 'no':
+        users = [u for u in users if not u.solo_paid]
+
+    all_solo = (
+        db.session.query(User).filter(User.plan.in_(['solo', 'solo_pro'])).all()
+    )
+    paid_count = sum(1 for u in all_solo if u.solo_paid)
+
+    return render_template(
+        'admin_solo.html',
+        users=users, q=q, paid_filter=paid_filter,
+        total_solo=len(all_solo), paid_count=paid_count,
+    )
+
+
+@main.route('/admin/solo/<int:user_id>')
+@login_required
+@admin_required
+def admin_solo_detail(user_id):
+    from app import db
+    from models import User, AthleteProfile, CoachMessage, InjuryStatus, DrylandLogEntry
+
+    u = db.session.query(User).get(user_id)
+    if not u:
+        abort(404)
+
+    profile = db.session.query(AthleteProfile).filter_by(user_id=user_id).first()
+    injury = db.session.query(InjuryStatus).filter_by(user_id=user_id).first()
+    dryland_entries = (
+        db.session.query(DrylandLogEntry)
+        .filter_by(user_id=user_id)
+        .order_by(DrylandLogEntry.logged_at.desc())
+        .limit(10)
+        .all()
+    )
+    nutrition_msg_count = db.session.query(CoachMessage).filter_by(user_id=user_id, topic='nutrition').count()
+    dryland_msg_count = db.session.query(CoachMessage).filter_by(user_id=user_id, topic='dryland').count()
+    last_coach_message = (
+        db.session.query(CoachMessage)
+        .filter_by(user_id=user_id)
+        .order_by(CoachMessage.created_at.desc())
+        .first()
+    )
+
+    return render_template(
+        'admin_solo_detail.html',
+        u=u, profile=profile, injury=injury, dryland_entries=dryland_entries,
+        nutrition_msg_count=nutrition_msg_count, dryland_msg_count=dryland_msg_count,
+        last_coach_message=last_coach_message,
+        program=profile.get_program() if profile else {},
+        nutrition=profile.get_nutrition() if profile else {},
+        dryland=profile.get_dryland() if profile else {},
+    )
+
+
+@main.route('/admin/solo/<int:user_id>/paid', methods=['POST'])
+@login_required
+@admin_required
+def admin_solo_toggle_paid(user_id):
+    from app import db
+    from models import User
+
+    u = db.session.query(User).get(user_id)
+    if not u:
+        abort(404)
+
+    u.solo_paid = not u.solo_paid
+    u.solo_paid_at = datetime.utcnow() if u.solo_paid else None
+    db.session.commit()
+    _log_admin_action('toggle_solo_paid', 'User', u.id, f"solo_paid -> {u.solo_paid}")
+    flash(f"{u.username} marked as {'paid' if u.solo_paid else 'unpaid'}.", 'success')
+
+    next_url = request.form.get('next', '')
+    if next_url.startswith('/admin/solo'):
+        return redirect(next_url)
+    return redirect(url_for('main.admin_solo'))
+
+
 @main.route('/admin/users/<int:user_id>/update', methods=['POST'])
 @login_required
 @admin_required

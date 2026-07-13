@@ -11,6 +11,8 @@ NEW_COLUMNS = {
         ("verify_attempts", "INTEGER DEFAULT 0"),
         ("failed_login_attempts", "INTEGER DEFAULT 0"),
         ("login_locked_until", "DATETIME"),
+        ("solo_paid", "BOOLEAN DEFAULT 0"),
+        ("solo_paid_at", "DATETIME"),
     ],
     'swim': [
         ("tag", "VARCHAR(10) DEFAULT 'practice'"),
