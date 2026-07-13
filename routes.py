@@ -185,7 +185,8 @@ def login():
             if not user.is_verified:
                 flash('Please verify your email first.', 'error')
                 return redirect(url_for('main.verify', email=email))
-            login_user(user)
+            remember = bool(request.form.get('remember'))
+            login_user(user, remember=remember)
             if user.is_admin:
                 return redirect(url_for('main.admin_dashboard'))
             if user.role == 'coach':
