@@ -25,6 +25,19 @@
     grid-column:1/-1;padding:14px;background:#c8d5f6;border:1px solid #e4e8f4;border-radius:10px;font-weight:800;text-transform:uppercase;font-size:13px;cursor:pointer;
   }
 
+  .g-time-group{display:flex;align-items:center;gap:4px;min-width:0;}
+  .g-time-group input{
+    width:0;flex:1 1 0;text-align:center;padding:12px 4px;
+    -moz-appearance:textfield;
+  }
+  .g-time-group input::-webkit-outer-spin-button,
+  .g-time-group input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .g-time-sep{font-weight:800;color:#8b87a3;}
+
+  @media (max-width: 520px){
+    .g-form{grid-template-columns:1fr;}
+  }
+
   .g-goal{
     display:flex;justify-content:space-between;align-items:center;gap:14px;
     border:1px solid #e4e8f4;border-radius:16px;padding:18px 20px;margin-bottom:12px;background:#fff;
@@ -64,7 +77,14 @@
       <option value="25m">25m</option>
       <option value="50m">50m</option>
     </select>
-    <input type="text" name="target_time" placeholder="Target time, e.g. 0:58.50" required maxlength="10" inputmode="numeric">
+    <div class="g-time-group">
+      <input type="number" inputmode="numeric" id="tMin" placeholder="Min" min="0" max="59" maxlength="2" oninput="gTimeClamp(this,59,'tSec',1)">
+      <span class="g-time-sep">:</span>
+      <input type="number" inputmode="numeric" id="tSec" placeholder="Sec" min="0" max="59" maxlength="2" oninput="gTimeClamp(this,59,'tMs')">
+      <span class="g-time-sep">.</span>
+      <input type="number" inputmode="numeric" id="tMs" placeholder="00" min="0" max="99" maxlength="2" oninput="gTimeClamp(this,99,null)">
+    </div>
+    <input type="hidden" name="target_time" id="target_time_hidden">
     <input type="date" name="target_date">
     <input class="g-full" type="text" name="notes" placeholder="Notes (optional)" maxlength="500">
     <button type="submit">Set goal</button>
@@ -97,6 +117,36 @@
     <p class="panel-note">No goals set yet — add one above.</p>
   {% endif %}
 </div>
+
+<script>
+function gTimeClamp(el, max, nextId, advanceAt){
+  let v = el.value.replace(/[^0-9]/g, '');
+  if(v.length > 2) v = v.slice(0, 2);
+  let num = parseInt(v, 10);
+  if(!isNaN(num)){
+    if(num > max) num = max;
+    el.value = num;
+    if(v.length >= (advanceAt || 2) && nextId) document.getElementById(nextId).focus();
+  } else {
+    el.value = '';
+  }
+}
+
+document.querySelector('.g-form').addEventListener('submit', function(e){
+  const min = document.getElementById('tMin').value;
+  const sec = document.getElementById('tSec').value;
+  const ms = document.getElementById('tMs').value;
+  if(sec === ''){
+    e.preventDefault();
+    document.getElementById('tSec').focus();
+    return;
+  }
+  const secPadded = sec.padStart(2, '0');
+  const msPadded = (ms || '0').padStart(2, '0');
+  document.getElementById('target_time_hidden').value =
+    min ? `${parseInt(min, 10)}:${secPadded}.${msPadded}` : `${secPadded}.${msPadded}`;
+});
+</script>
 
 </body>
 </html>
