@@ -132,8 +132,26 @@ TOOL_SCHEMA = {
                             "enum": SECTIONS,
                             "description": "Which part of the session this belongs to. Default to 'Main set' if unclear.",
                         },
-                        "reps": {"type": "integer", "description": "Number of repeats, e.g. the 8 in 8x100."},
-                        "dist": {"type": "integer", "description": "Distance per rep in metres, e.g. the 100 in 8x100."},
+                        "reps": {
+                            "type": "integer",
+                            "description": (
+                                "Number of repeats, e.g. the 8 in 8x100. Only go above 1 when the board actually "
+                                "writes rep notation like '8x100' or lists separate numbered reps. If instead the "
+                                "board gives ONE continuous total distance (e.g. '300', '400m continuous') that "
+                                "happens to rotate internally through kick/drill/swim or alternating strokes every "
+                                "50 or 25, that is still reps=1 -- do not reverse-engineer a reps x sub-distance "
+                                "split just because the rotation unit divides evenly into the total. The rotation "
+                                "detail goes in 'note' instead."
+                            ),
+                        },
+                        "dist": {
+                            "type": "integer",
+                            "description": (
+                                "Distance per rep in metres, e.g. the 100 in 8x100. When reps=1 this is the literal "
+                                "total distance written on the board (e.g. '300' -> dist=300), even if that swim "
+                                "internally rotates through several 50s or 25s of different kick/drill/swim/stroke."
+                            ),
+                        },
                         "stroke": {
                             "type": "string",
                             "enum": sorted(STROKE_CODES),
@@ -228,7 +246,13 @@ PROMPT = (
     "the rep as one block and put the rotation/detail text in 'note' so it isn't lost.\n"
     "- A rep count that's broken into named sub-groups, e.g. '9x50 IM kick 3 Fly, 3 Breast, 3 Free' "
     "or '12x25 Max timed 60: 6x Fr, 6x Choice': keep it as one block with reps=9 (or 12) and put the "
-    "breakdown in 'note'."
+    "breakdown in 'note'.\n"
+    "- CRITICAL -- don't confuse a continuous total with a rep count: '300 alternating 50 kick/drill/"
+    "swim', '400 continuous: 25 drill/25 swim', 'straight 300, rotate kick-drill-swim by 50s' are all "
+    "ONE number (300, 400) written on the board, not rep notation. Record reps=1, dist=300 (the literal "
+    "total as written), and put 'alternating 50 kick/drill/swim' (or similar) in 'note'. Only split into "
+    "reps x dist when the board itself actually writes it as 'Nx' (e.g. '6x50') -- never invent that "
+    "split just because the rotation's 50 or 25 unit happens to divide evenly into the total."
 )
 
 
@@ -355,7 +379,12 @@ TRANSCRIPT_PROMPT = (
     "swimming fly-back-breast-free in that order.\n"
     "- If the swimmer doesn't say a section (warmup/main set/cooldown), infer it from context -- 'warm "
     "up' or 'warmup' words mean section='Warm up', 'cool down' means section='Cool down', otherwise "
-    "default to 'Main set'."
+    "default to 'Main set'.\n"
+    "- CRITICAL -- don't confuse a continuous total with a rep count: 'three hundred alternating fifty "
+    "kick drill swim' or 'four hundred continuous, twenty-five drill twenty-five swim' is ONE number "
+    "(300, 400) with an internal rotation, not a rep count. Record reps=1, dist=300 (the literal total "
+    "spoken), and put the rotation description in 'note'. Only use reps > 1 when the swimmer actually "
+    "says it as reps (e.g. 'six times fifty' / '6x50')."
 )
 
 
