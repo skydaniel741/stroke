@@ -210,7 +210,23 @@ TOOL_SCHEMA = {
                                 "breast-free) -> note='Fly-Bk / Bk-Br / Br-Fr'; (2) sub-breakdowns of a rep count, e.g. "
                                 "'9x50 IM kick 3 Fly, 3 Breast, 3 Free' -> note='3 Fly, 3 Breast, 3 Free'; (3) other "
                                 "strokes swept into 'stroke' being a best guess, e.g. a warm-up mixing free/back/kick "
-                                "drills -> note='+ backstroke, kick drill'. Empty string if none."
+                                "drills -> note='+ backstroke, kick drill'; (4) a small subscript/superscript number or "
+                                "fraction written near the main line (e.g. a tiny '5/1.5' tucked under a rep count) -- "
+                                "this is a secondary annotation, NEVER let it distort reps/dist/rest on the main line. "
+                                "Put your best reading of it first in 'note' (e.g. note='(5/1.5) build each rep') so it "
+                                "stays visible even if its exact meaning is unclear. Empty string if none."
+                            ),
+                        },
+                        "round_reps": {
+                            "type": "integer",
+                            "description": (
+                                "Only set this above 1 when the board draws an explicit bracket/brace grouping several "
+                                "DIFFERENT blocks together with one multiplier in front, e.g. '2x{ 4x75 ... / 8x50 ... / "
+                                "2x25 ... }' or '3x[ ... ]' -- that whole bracketed group is swum as one unit N times. "
+                                "Give every block inside that bracket the SAME round_reps (e.g. 2), so they can be shown "
+                                "as one grouped round. This is different from a normal 'reps' repeat of a single "
+                                "identical line (e.g. '8x100' is just reps=8, round_reps=1) -- round_reps is only for a "
+                                "bracket wrapping multiple distinct lines. Default to 1 (omit it) for every ungrouped block."
                             ),
                         },
                     },
@@ -252,7 +268,30 @@ PROMPT = (
     "ONE number (300, 400) written on the board, not rep notation. Record reps=1, dist=300 (the literal "
     "total as written), and put 'alternating 50 kick/drill/swim' (or similar) in 'note'. Only split into "
     "reps x dist when the board itself actually writes it as 'Nx' (e.g. '6x50') -- never invent that "
-    "split just because the rotation's 50 or 25 unit happens to divide evenly into the total."
+    "split just because the rotation's 50 or 25 unit happens to divide evenly into the total.\n"
+    "- BE KNOWLEDGEABLE, NOT JUST LITERAL, ABOUT NUMBERS: handwritten digits get misread ('90' for "
+    "'100', '0:20' for '2:00', an '8' that's really a '3'). You know swim conventions, so use them as a "
+    "sanity check on your own read rather than transcribing blindly. Distances are almost always clean "
+    "numbers -- multiples of 25 (25/50/75/100/150/200/300/400 etc.), with only breakout-style reps ever "
+    "landing on something like 10 or 15. If your first read of a distance is an odd, non-standard number "
+    "(e.g. 90, 88, 110) look again: it is very likely a misread of the nearest clean distance (90 -> 100), "
+    "not a genuinely unusual distance -- prefer the clean value unless the board is unambiguous that it "
+    "really is odd. The same goes for times: rest/interval numbers are normally round-ish (:05 "
+    "increments, or whole minutes) -- a jagged read like '0:37' is more likely '0:35' or '0:30'.\n"
+    "- CRITICAL PHYSICAL SANITY CHECK: an interval/send-off can never be shorter than the swim it times "
+    "-- a swimmer cannot leave again on '0:20' for a 100m rep when swimming 100m itself takes roughly a "
+    "minute or more. If your read produces an interval that's obviously too short for the distance and "
+    "stroke, you almost certainly misread a digit (the interval is probably a longer number you read "
+    "short, e.g. '2:00' misread as '0:20', or the distance is smaller than you think, e.g. a 25 not a "
+    "100). Re-examine the handwriting and correct it before answering; never output a send-off that is "
+    "physically impossible to swim.\n"
+    "- ROUNDS -- a bracket/brace grouping several different lines under one multiplier, e.g. "
+    "'2x{ 4x75 .../ 8x50 .../ 2x25 ... }' or '3x[ ... ]': this means the WHOLE bracketed group of blocks "
+    "is repeated together as one round, not that any single line repeats that many times. Record each "
+    "block inside the bracket normally (its own reps/dist/etc as written on that line) and set "
+    "'round_reps' to the bracket's multiplier (2, 3, ...) on every block inside it, so the app can show "
+    "them grouped as one round. Leave round_reps at 1 (omit it) for anything not inside a bracket, "
+    "including ordinary 'Nx' reps of a single line -- that's just 'reps', not a round."
 )
 
 
@@ -265,20 +304,50 @@ def _clamp_block(raw):
     if reps <= 0 or dist <= 0:
         return None
 
+    # Backstop for OCR/transcription misreads: real swim distances are almost
+    # always a clean multiple of 25 (or a short breakout-style number under
+    # 40). Snap a near-miss read (e.g. 90 -> 100) to the nearest multiple of
+    # 25 rather than trusting a jagged digit at face value -- the prompt asks
+    # the model to do this itself, but this catches anything that slips through.
+    if dist >= 40:
+        nearest_25 = round(dist / 25) * 25
+        if nearest_25 != dist and abs(nearest_25 - dist) <= 12:
+            dist = nearest_25
+
     stroke = raw.get('stroke') if raw.get('stroke') in STROKE_CODES else 'FR'
     modifier = raw.get('modifier') if raw.get('modifier') in MODIFIERS else ''
     section = raw.get('section') if raw.get('section') in SECTIONS else 'Main set'
     rest = str(raw.get('rest') or '').strip()
     note = str(raw.get('note') or '').strip()
-    # 'interval' = send-off/cycle time ("on 2:10" -- leave again every 2:10);
-    # 'rest' = an explicit recovery gap. Most repeat sets (reps > 1) are written
-    # as an interval/send-off, so that's the sensible default when unspecified.
-    rest_type = raw.get('rest_type') if raw.get('rest_type') in ('interval', 'rest') else ('interval' if reps > 1 else 'rest')
 
-    return {
+    from swim_logic import estimate_rep_seconds, infer_rest_type, parse_time
+    rest_secs = parse_time(rest)
+    est_swim = estimate_rep_seconds(dist, stroke, modifier)
+    # 'interval' = send-off/cycle time ("on 2:10" -- leave again every 2:10);
+    # 'rest' = an explicit recovery gap. Falls back to the same physically-
+    # grounded guess used everywhere else when the model omits rest_type, and
+    # overrides even an explicit 'interval' read that's physically impossible
+    # (a send-off can never be shorter than the swim it times) -- if the model
+    # says 'interval' but the number can't be one, trust the number over the
+    # label and reclassify rather than silently dropping the block.
+    declared = raw.get('rest_type') if raw.get('rest_type') in ('interval', 'rest') else None
+    if declared == 'interval' and rest_secs is not None and est_swim is not None and rest_secs < est_swim:
+        declared = None
+    rest_type = declared or infer_rest_type(reps, rest_secs, est_swim, note)
+
+    try:
+        round_reps = int(raw.get('round_reps') or 1)
+    except (TypeError, ValueError):
+        round_reps = 1
+    round_reps = max(1, min(round_reps, 20))
+
+    block = {
         'section': section, 'reps': reps, 'dist': dist, 'stroke': stroke,
         'modifier': modifier, 'rest': rest, 'rest_type': rest_type, 'note': note,
     }
+    if round_reps > 1:
+        block['round_reps'] = round_reps
+    return block
 
 
 def normalize_image(raw_bytes):
@@ -384,7 +453,15 @@ TRANSCRIPT_PROMPT = (
     "kick drill swim' or 'four hundred continuous, twenty-five drill twenty-five swim' is ONE number "
     "(300, 400) with an internal rotation, not a rep count. Record reps=1, dist=300 (the literal total "
     "spoken), and put the rotation description in 'note'. Only use reps > 1 when the swimmer actually "
-    "says it as reps (e.g. 'six times fifty' / '6x50')."
+    "says it as reps (e.g. 'six times fifty' / '6x50').\n"
+    "- CRITICAL PHYSICAL SANITY CHECK: an interval/send-off can never be shorter than the swim it times. "
+    "If your transcription implies an impossible send-off (e.g. 'on 20 seconds' for a 100), you likely "
+    "mis-split a number ('2:10' heard as '20') -- reconsider before answering rather than outputting "
+    "something unswimmable.\n"
+    "- ROUNDS: if the swimmer describes a group of several different reps repeated together as a unit, "
+    "e.g. 'two rounds of 4x75 then 8x50 then 2x25', record each of those blocks normally and set "
+    "'round_reps'=2 on all of them so the app can group them as one repeated round. Leave round_reps at "
+    "1 (omit it) for a plain 'Nx' repeat of a single line."
 )
 
 

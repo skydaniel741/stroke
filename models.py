@@ -578,10 +578,51 @@ class SavedSet(db.Model):
         total = 0
         for s in self.get_sets():
             try:
-                total += int(s.get('reps', 0)) * int(s.get('dist', 0))
+                round_reps = int(s.get('round_reps') or 1)
+                total += int(s.get('reps', 0)) * int(s.get('dist', 0)) * round_reps
             except:
                 pass
         return total
+
+    def estimated_duration_seconds(self):
+        """Roughly how long this set takes to swim, using the same pace model
+        the AI coach uses to validate sets (swim_logic.analyze_block) at a
+        generic Intermediate pace, since a library set isn't tied to one
+        swimmer's level."""
+        from swim_logic import analyze_block
+        total = 0.0
+        for b in self.get_sets():
+            try:
+                reps = int(b.get('reps') or 0)
+            except (TypeError, ValueError):
+                reps = 0
+            if reps <= 0:
+                continue
+            try:
+                round_reps = int(b.get('round_reps') or 1)
+            except (TypeError, ValueError):
+                round_reps = 1
+            analysis = analyze_block(b)
+            est_swim = analysis.get('est_swim') or 0
+            if analysis.get('interval') is not None:
+                total += reps * round_reps * analysis['interval']
+            elif analysis.get('rest') is not None:
+                total += reps * round_reps * (est_swim + analysis['rest'])
+            else:
+                total += reps * round_reps * est_swim
+        return round(total)
+
+    def estimated_duration_label(self):
+        secs = self.estimated_duration_seconds()
+        if secs <= 0:
+            return None
+        mins = round(secs / 60)
+        if mins < 1:
+            return '<1 min'
+        if mins < 60:
+            return f'~{mins} min'
+        hours, rem = divmod(mins, 60)
+        return f'~{hours}h {rem}m' if rem else f'~{hours}h'
 
 
 class CoachAssignment(db.Model):

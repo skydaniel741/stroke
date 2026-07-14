@@ -15,7 +15,7 @@ import json
 import math
 import re
 
-from swim_logic import parse_time, fmt_time
+from swim_logic import parse_time, fmt_time, estimate_rep_seconds, infer_rest_type
 
 # One place for every numeric bound in the app: (min, max).
 LIMITS = {
@@ -182,26 +182,42 @@ def clean_block(raw):
     if reps * dist > MAX_BLOCK_VOLUME:
         return None
 
+    stroke = raw.get('stroke') if raw.get('stroke') in _STROKES else 'FR'
+    modifier = raw.get('modifier') if raw.get('modifier') in _MODIFIERS else ''
+    note = clean_text(raw.get('note'), 200)
+
     rest_raw = raw.get('rest')
     rest = ''
+    rest_secs = None
     if rest_raw not in (None, ''):
         secs = parse_time(rest_raw)
         lo, hi = LIMITS['rest_seconds']
         if secs is not None and lo <= secs <= hi:
             rest = fmt_time(secs)  # normalized 'M:SS'
+            rest_secs = secs
         # Unparseable/absurd rest just gets dropped rather than sinking the block.
 
-    reps_default_type = 'interval' if reps > 1 else 'rest'
-    return {
+    est_swim = estimate_rep_seconds(dist, stroke, modifier)
+    reps_default_type = infer_rest_type(reps, rest_secs, est_swim, note)
+
+    block = {
         'section': raw.get('section') if raw.get('section') in _SECTIONS else 'Main set',
         'reps': reps,
         'dist': dist,
-        'stroke': raw.get('stroke') if raw.get('stroke') in _STROKES else 'FR',
-        'modifier': raw.get('modifier') if raw.get('modifier') in _MODIFIERS else '',
+        'stroke': stroke,
+        'modifier': modifier,
         'rest': rest,
         'rest_type': raw.get('rest_type') if raw.get('rest_type') in ('interval', 'rest') else reps_default_type,
-        'note': clean_text(raw.get('note'), 200),
+        'note': note,
     }
+    # round_reps > 1 marks this block as part of a bracketed "round" (several
+    # different blocks repeated together as one unit) -- preserved here so
+    # editing/re-saving a scanned set through the form doesn't drop the
+    # grouping. Anything outside 1-20 is almost certainly a bad read.
+    round_reps = clean_int(raw.get('round_reps'), key=None, lo=1, hi=20)
+    if round_reps and round_reps > 1:
+        block['round_reps'] = round_reps
+    return block
 
 
 def clean_sets_json(raw_json):

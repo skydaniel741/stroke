@@ -57,7 +57,7 @@
     <a href="/sets/view/{{ s.id }}" class="set-card" style="--cat-color:{{ category.color }}">
       <span class="set-card-cat">{{ category.label }}</span>
       <p class="set-card-name">{{ s.name }}</p>
-      <p class="set-card-meta">{{ s.total_distance() }}m · {{ s.pool }} pool · {{ s.session_type }}</p>
+      <p class="set-card-meta">{{ s.total_distance() }}m · {{ s.pool }} pool · {{ s.session_type }}{% if s.estimated_duration_label() %} · {{ s.estimated_duration_label() }}{% endif %}</p>
       <div class="set-card-badges">
         <span class="set-card-badge diff-{{ (s.difficulty or 'Medium')|lower }}">{{ s.difficulty or 'Medium' }}</span>
         {% if (s.distance_focus or 'All') != 'All' %}<span class="set-card-badge">{{ s.distance_focus }} distance</span>{% endif %}

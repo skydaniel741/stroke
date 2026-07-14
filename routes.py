@@ -33,6 +33,28 @@ STROKE_LABELS = {
 DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Technical']
 DISTANCE_FOCUS = ['Short', 'Middle', 'Long', 'All']
 
+
+def _group_rounds(blocks):
+    """Collapse a run of consecutive blocks sharing the same round_reps > 1
+    (a whiteboard bracket like '2x{ 4x75 / 8x50 / 2x25 }') into one 'round'
+    row, so the template can show a single '×N rounds' badge beside the whole
+    group instead of repeating it inside every block. Ungrouped blocks
+    (round_reps absent or 1) pass through as their own row."""
+    rows = []
+    i, n = 0, len(blocks)
+    while i < n:
+        rr = int(blocks[i].get('round_reps') or 1)
+        if rr > 1:
+            group = []
+            while i < n and int(blocks[i].get('round_reps') or 1) == rr:
+                group.append(blocks[i])
+                i += 1
+            rows.append({'kind': 'round', 'round_reps': rr, 'blocks': group})
+        else:
+            rows.append({'kind': 'single', 'block': blocks[i]})
+            i += 1
+    return rows
+
 @main.route('/')
 def home():
     return render_template('index.html')
@@ -694,12 +716,15 @@ def sets_view(set_id):
         blocks = []
 
     # Older sets stored before rest_type existed don't have it -- fall back to
-    # the same heuristic used for freshly-parsed AI blocks: a repeat set
-    # (reps > 1) is almost always written as a send-off/interval, a single
-    # rep is more likely genuine rest before the next block.
+    # the same physically-grounded guess used everywhere else: a send-off
+    # can never be shorter than the swim it times, so a too-short rest can
+    # only be a literal rest gap, not an interval.
+    from swim_logic import parse_time as _parse_time, estimate_rep_seconds, infer_rest_type
     for b in blocks:
         if b.get('rest_type') not in ('interval', 'rest'):
-            b['rest_type'] = 'interval' if int(b.get('reps') or 0) > 1 else 'rest'
+            reps = int(b.get('reps') or 0)
+            est_swim = estimate_rep_seconds(b.get('dist'), b.get('stroke'), b.get('modifier'))
+            b['rest_type'] = infer_rest_type(reps, _parse_time(b.get('rest')), est_swim, b.get('note'))
 
     # Group blocks into workout sections in canonical order. Older sets
     # without a section field all land in "Main set".
@@ -709,10 +734,10 @@ def sets_view(set_id):
         sec_blocks = [b for b in blocks if b.get('section', 'Main set') == name]
         if sec_blocks:
             dist = sum(
-                (int(b.get('reps', 0) or 0)) * (int(b.get('dist', 0) or 0))
+                (int(b.get('reps', 0) or 0)) * (int(b.get('dist', 0) or 0)) * int(b.get('round_reps') or 1)
                 for b in sec_blocks
             )
-            sections.append({'name': name, 'blocks': sec_blocks, 'distance': dist})
+            sections.append({'name': name, 'blocks': sec_blocks, 'rows': _group_rounds(sec_blocks), 'distance': dist})
 
     return render_template(
         'sets_view.html',

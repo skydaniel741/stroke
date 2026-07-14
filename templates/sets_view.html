@@ -58,6 +58,12 @@
       <span class="set-stat-val">{{ sections|length }}</span>
       <span class="set-stat-label">Section{{ 's' if sections|length != 1 else '' }}</span>
     </div>
+    {% if s.estimated_duration_label() %}
+    <div class="set-stat">
+      <span class="set-stat-val">{{ s.estimated_duration_label() }}</span>
+      <span class="set-stat-label">Est. duration</span>
+    </div>
+    {% endif %}
   </div>
 
   <div class="no-print">
@@ -68,20 +74,47 @@
         <span class="set-section-dist">{{ sec.distance }}m</span>
       </div>
       <div class="set-block-list">
-        {% for b in sec.blocks %}
-        <div class="set-block">
-          <div class="set-block-num">{{ loop.index }}</div>
-          <div class="set-block-body">
-            <p class="set-block-main">{{ b.reps }} <span class="set-block-x">×</span> {{ b.dist }}<span class="set-block-unit">m</span> <span class="set-block-stroke-inline">{{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}</span></p>
-            {% if b.note %}<span class="set-block-note">{{ b.note }}</span>{% endif %}
+        {% set num = namespace(n=0) %}
+        {% for row in sec.rows %}
+          {% if row.kind == 'round' %}
+          <div class="set-round">
+            <div class="set-round-badge"><span>× {{ row.round_reps }}</span></div>
+            <div class="set-round-blocks">
+              {% for b in row.blocks %}
+              {% set num.n = num.n + 1 %}
+              <div class="set-block">
+                <div class="set-block-num">{{ num.n }}</div>
+                <div class="set-block-body">
+                  <p class="set-block-main">{{ b.reps }} <span class="set-block-x">×</span> {{ b.dist }}<span class="set-block-unit">m</span> <span class="set-block-stroke-inline">{{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}</span></p>
+                  {% if b.note %}<span class="set-block-note">{{ b.note }}</span>{% endif %}
+                </div>
+                <div class="set-block-rest">
+                  {% if b.rest and b.rest not in ['0', '0:00'] %}
+                  <span class="set-block-rest-label">{{ 'On' if b.rest_type == 'interval' else 'Rest' }}</span>
+                  <span class="set-block-rest-val">{{ b.rest }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
           </div>
-          <div class="set-block-rest">
-            {% if b.rest and b.rest not in ['0', '0:00'] %}
-            <span class="set-block-rest-label">{{ 'On' if b.rest_type == 'interval' else 'Rest' }}</span>
-            <span class="set-block-rest-val">{{ b.rest }}</span>
-            {% endif %}
+          {% else %}
+          {% set num.n = num.n + 1 %}
+          {% set b = row.block %}
+          <div class="set-block">
+            <div class="set-block-num">{{ num.n }}</div>
+            <div class="set-block-body">
+              <p class="set-block-main">{{ b.reps }} <span class="set-block-x">×</span> {{ b.dist }}<span class="set-block-unit">m</span> <span class="set-block-stroke-inline">{{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}</span></p>
+              {% if b.note %}<span class="set-block-note">{{ b.note }}</span>{% endif %}
+            </div>
+            <div class="set-block-rest">
+              {% if b.rest and b.rest not in ['0', '0:00'] %}
+              <span class="set-block-rest-label">{{ 'On' if b.rest_type == 'interval' else 'Rest' }}</span>
+              <span class="set-block-rest-val">{{ b.rest }}</span>
+              {% endif %}
+            </div>
           </div>
-        </div>
+          {% endif %}
         {% endfor %}
       </div>
     </div>
@@ -103,7 +136,7 @@
     </div>
 
     <p class="print-title">{{ s.name }}</p>
-    <p class="print-meta">{{ category.label }} &nbsp;·&nbsp; {{ s.pool }} pool &nbsp;·&nbsp; {{ s.session_type }} &nbsp;·&nbsp; {{ s.total_distance() }}m total</p>
+    <p class="print-meta">{{ category.label }} &nbsp;·&nbsp; {{ s.pool }} pool &nbsp;·&nbsp; {{ s.session_type }} &nbsp;·&nbsp; {{ s.total_distance() }}m total{% if s.estimated_duration_label() %} &nbsp;·&nbsp; {{ s.estimated_duration_label() }}{% endif %}</p>
 
     {% if s.description %}
     <p class="print-desc">{{ s.description }}</p>
@@ -112,11 +145,22 @@
     {% for sec in sections %}
     <div class="print-section">
       <p class="print-section-head">{{ sec.name }} <span class="print-section-dist">— {{ sec.distance }}m</span></p>
-      {% for b in sec.blocks %}
-      <div class="print-line">
-        <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">{{ 'on ' + b.rest if b.rest_type == 'interval' else '@ ' + b.rest + ' rest' }}</span>{% endif %}</p>
-        {% if b.note %}<p class="print-line-note">{{ b.note }}</p>{% endif %}
-      </div>
+      {% for row in sec.rows %}
+        {% if row.kind == 'round' %}
+        <p class="print-line-round">× {{ row.round_reps }} rounds:</p>
+        {% for b in row.blocks %}
+        <div class="print-line print-line-indent">
+          <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">{{ 'on ' + b.rest if b.rest_type == 'interval' else '@ ' + b.rest + ' rest' }}</span>{% endif %}</p>
+          {% if b.note %}<p class="print-line-note">{{ b.note }}</p>{% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        {% set b = row.block %}
+        <div class="print-line">
+          <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">{{ 'on ' + b.rest if b.rest_type == 'interval' else '@ ' + b.rest + ' rest' }}</span>{% endif %}</p>
+          {% if b.note %}<p class="print-line-note">{{ b.note }}</p>{% endif %}
+        </div>
+        {% endif %}
       {% endfor %}
     </div>
     {% endfor %}

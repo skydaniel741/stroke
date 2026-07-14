@@ -563,6 +563,49 @@
   margin-top:2px;
 }
 
+/* A bracketed whiteboard round ("2x{ 4x75 / 8x50 / 2x25 }") -- the multiplier
+   sits in a badge down the side instead of being repeated inside every block. */
+.set-round{
+  display:flex;
+  gap:14px;
+  align-items:stretch;
+  background:rgba(111,127,224,.06);
+  border:1px solid #e4e8f4;
+  border-radius:18px;
+  padding:14px;
+}
+
+.set-round-badge{
+  flex-shrink:0;
+  width:40px;
+  border-radius:12px;
+  background:#6f7fe0;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.set-round-badge span{
+  writing-mode:vertical-rl;
+  transform:rotate(180deg);
+  font-family:'Schibsted Grotesk',sans-serif;
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+
+.set-round-blocks{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.set-round-blocks .set-block{box-shadow:none}
+
 .set-detail-actions{
   display:flex;
   gap:14px;
@@ -615,6 +658,9 @@
   .set-block-rest{margin-left:58px}
   .cat-header{flex-wrap:wrap;gap:14px}
   .cat-header-icon{width:52px;height:52px;padding:12px}
+  .set-round{flex-direction:column}
+  .set-round-badge{width:auto;padding:6px}
+  .set-round-badge span{writing-mode:horizontal-tb;transform:none}
 }
 
 /* ---------- PRINT ----------
@@ -628,7 +674,11 @@
 @media print{
   .sets-nav, .no-print{display:none !important}
   .print-only{display:block}
-  body{background:#fff}
+  /* [data-skin="chlorine"] body{background:var(--base)} in chlorine.css is
+     more specific than a plain `body` rule, so it wins the cascade even
+     inside this print media query -- match its specificity here or the
+     printed page comes out dark instead of white paper. */
+  html[data-skin="chlorine"] body, body{background:#fff}
   .sets-wrap{max-width:100%;padding:0}
   .set-detail-wrap{max-width:100%}
 
@@ -638,6 +688,7 @@
     font-family:'Schibsted Grotesk','Segoe UI',Arial,sans-serif;
     color:#1e1b2e;
     max-width:660px;
+    background:#fff;
   }
 
   .print-head{
@@ -712,10 +763,21 @@
     color:#4d4966;
   }
 
+  .print-line-round{
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#4d4966;
+    margin:6px 0 2px 14px;
+  }
+
   .print-line{
     padding:3px 0 3px 14px;
     break-inside:avoid;
   }
+
+  .print-line-indent{padding-left:28px}
 
   .print-line-main{
     font-size:14px;

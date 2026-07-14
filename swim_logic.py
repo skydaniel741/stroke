@@ -141,6 +141,29 @@ MIN_REST = {'Beginner': 15.0, 'Intermediate': 10.0, 'Advanced': 5.0, 'Competitiv
 # A send-off that leaves more rest than this is just dead time on the clock.
 MAX_SENSIBLE_REST = 240.0
 
+# Notes that describe a broken swim (short pauses mid-effort) or an explicit
+# full-recovery gap -- these are never a send-off, no matter the rep count.
+_EXPLICIT_REST_NOTE_RE = re.compile(r'\bbroken\b|\bround 1\b|\bround 2\b|full recovery', re.I)
+
+
+def infer_rest_type(reps, rest_seconds, est_swim_seconds, note=''):
+    """Best-guess classification when a block has no explicit rest_type.
+
+    A send-off/interval can never be shorter than the swim it's timing --
+    you can't leave again before you've finished the rep -- so a stated time
+    under the estimated swim time can only be a literal rest gap. Otherwise
+    fall back to swim convention: repeat sets (reps > 1) are almost always
+    written as a send-off, unless the note clearly describes a broken swim
+    or an explicit full-recovery gap.
+    """
+    if not reps or reps <= 1:
+        return 'rest'
+    if rest_seconds is not None and est_swim_seconds is not None and rest_seconds < est_swim_seconds:
+        return 'rest'
+    if note and _EXPLICIT_REST_NOTE_RE.search(note):
+        return 'rest'
+    return 'interval'
+
 
 def analyze_block(block, level=None, age=None, fitness=None):
     """Break one set block down into its real components.
@@ -163,7 +186,7 @@ def analyze_block(block, level=None, age=None, fitness=None):
                                level=level, age=age, fitness=fitness)
     rest_secs = parse_time(block.get('rest'))
     rest_type = block.get('rest_type') if block.get('rest_type') in ('interval', 'rest') else (
-        'interval' if reps > 1 else 'rest'
+        infer_rest_type(reps, rest_secs, est, block.get('note'))
     )
     min_rest = MIN_REST.get(level or DEFAULT_LEVEL, 10.0)
 
