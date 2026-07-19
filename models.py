@@ -21,7 +21,12 @@ class User(db.Model, UserMixin):
     verify_attempts = db.Column(db.Integer, default=0)
     failed_login_attempts = db.Column(db.Integer, default=0)
     login_locked_until = db.Column(db.DateTime, nullable=True)
-    role = db.Column(db.String(20), default='swimmer')  # 'swimmer' or 'coach'
+    role = db.Column(db.String(20), default='swimmer')  # 'swimmer', 'coach', or 'parent'
+    # Marked by a coach from the squad roster -- purely a display flag today
+    # (shows a "Minor" badge, surfaces the "Invite parent" action). Doesn't
+    # itself restrict anything; the existing requires_consent/ConsentRecord
+    # flow on SquadMembership is the actual guardian-consent gate.
+    is_minor = db.Column(db.Boolean, default=False)
     share_leaderboard = db.Column(db.Boolean, default=False)
     # Solo is a paid $12/mo tier (see index.html pricing) -- there's no card
     # checkout wired up yet, so payment is verified manually and an admin
@@ -111,6 +116,8 @@ class Session(db.Model):
     logged_at = db.Column(db.DateTime, default=datetime.utcnow)
     source = db.Column(db.String(20), default='self')  # 'self' or 'squad' (auto-logged by coach roll call)
     squad_event_id = db.Column(db.Integer, db.ForeignKey('squad_event.id'), nullable=True)
+    # Set when this logged session fulfilled a TrainingPlan session (see plan_logic.link_completed).
+    planned_session_id = db.Column(db.Integer, db.ForeignKey('planned_session.id'), nullable=True)
 
     def get_sets(self):
         try:
@@ -368,6 +375,26 @@ class Standard(db.Model):
             return float(t)
         except (ValueError, TypeError):
             return None
+
+
+class ParentLink(db.Model):
+    """Links a parent/guardian account to a swimmer's, read-only. The
+    swimmer generates the invite (see routes_parent.invite); the parent
+    claims it at /parent/join/<token> to create or attach their own
+    role='parent' account. One swimmer can have several parents linked,
+    and one parent can be linked to several swimmers (e.g. siblings)."""
+    __tablename__ = 'parent_link'
+
+    id = db.Column(db.Integer, primary_key=True)
+    swimmer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    invite_token = db.Column(db.String(64), unique=True, nullable=False)
+    status = db.Column(db.String(20), default='pending')  # pending/active/revoked
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    claimed_at = db.Column(db.DateTime, nullable=True)
+
+    swimmer = db.relationship('User', foreign_keys=[swimmer_id])
+    parent = db.relationship('User', foreign_keys=[parent_id])
 
 
 class AdminAuditLog(db.Model):
@@ -644,4 +671,101 @@ class CoachAssignment(db.Model):
     saved_set = db.relationship('SavedSet')
     squad = db.relationship('Squad')
     swimmer = db.relationship('User', foreign_keys=[swimmer_id])
+
+
+class CssRecord(db.Model):
+    """One Critical Swim Speed measurement for a swimmer. CSS is the pace
+    (seconds per 100m) a swimmer can sustain for ~20-30 minutes -- the anchor
+    every training-plan target time and send-off is derived from. Computed
+    from a 400m + 200m freestyle time trial pair, estimated from the level
+    pace model when no trials exist, or entered manually."""
+    __tablename__ = 'css_record'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    t400_seconds = db.Column(db.Float, nullable=True)  # None when estimated
+    t200_seconds = db.Column(db.Float, nullable=True)
+    css_per_100 = db.Column(db.Float, nullable=False)  # seconds per 100m
+    source = db.Column(db.String(20), default='time_trial')  # time_trial/estimated/manual
+    swim_400_id = db.Column(db.Integer, db.ForeignKey('swim.id'), nullable=True)
+    swim_200_id = db.Column(db.Integer, db.ForeignKey('swim.id'), nullable=True)
+    pool = db.Column(db.String(10), default='25m')
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class TrainingPlan(db.Model):
+    """A multi-week, event-targeted training plan (deterministic, built by
+    plan_logic.build_plan -- separate from the AI weekly program on
+    AthleteProfile). One active plan per user; generating a new one marks the
+    previous plan 'abandoned'."""
+    __tablename__ = 'training_plan'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20), default='active')  # active/completed/abandoned
+    goal_event = db.Column(db.String(50), nullable=True)  # e.g. '100m Freestyle'; NULL = just improve
+    pool = db.Column(db.String(10), default='25m')
+    race_date = db.Column(db.Date, nullable=True)
+    target_time = db.Column(db.String(20), nullable=True)
+    start_date = db.Column(db.Date, nullable=False)  # Monday of week 1
+    weeks = db.Column(db.Integer, nullable=False)
+    sessions_per_week = db.Column(db.Integer, nullable=False)
+    preferred_days = db.Column(db.Text)  # JSON list of weekday ints, 0=Monday
+    css_record_id = db.Column(db.Integer, db.ForeignKey('css_record.id'), nullable=True)
+    phase_map_json = db.Column(db.Text)  # JSON list per week: {phase, deload}
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    planned_sessions = db.relationship('PlannedSession', backref='plan', lazy=True)
+    css_record = db.relationship('CssRecord')
+
+    def get_preferred_days(self):
+        try:
+            return json.loads(self.preferred_days or '[]')
+        except (ValueError, TypeError):
+            return []
+
+    def get_phase_map(self):
+        try:
+            return json.loads(self.phase_map_json or '[]')
+        except (ValueError, TypeError):
+            return []
+
+
+class PlannedSession(db.Model):
+    """One dated workout inside a TrainingPlan. blocks_json holds the RESOLVED
+    set blocks (same shape as SavedSet.sets_data / Session.sets_data) with
+    real target times and send-offs already baked in from the swimmer's CSS."""
+    __tablename__ = 'planned_session'
+
+    id = db.Column(db.Integer, primary_key=True)
+    plan_id = db.Column(db.Integer, db.ForeignKey('training_plan.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    week_index = db.Column(db.Integer, nullable=False)  # 0-based
+    phase = db.Column(db.String(12))  # base/build/taper
+    is_deload = db.Column(db.Boolean, default=False)
+    slot = db.Column(db.String(20))  # technique/threshold/sprint/endurance/css_test
+    scheduled_date = db.Column(db.Date, nullable=False)
+    template_key = db.Column(db.String(60))
+    title = db.Column(db.String(120))
+    blocks_json = db.Column(db.Text)  # resolved blocks, SavedSet shape
+    target_meters = db.Column(db.Integer)
+    status = db.Column(db.String(12), default='planned')  # planned/completed/missed/skipped
+    completed_session_id = db.Column(db.Integer, db.ForeignKey('session.id'), nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+    def get_blocks(self):
+        try:
+            return json.loads(self.blocks_json or '[]')
+        except (ValueError, TypeError):
+            return []
+
+    def total_distance(self):
+        total = 0
+        for b in self.get_blocks():
+            try:
+                total += int(b.get('reps', 0)) * int(b.get('dist', 0)) * int(b.get('round_reps') or 1)
+            except (TypeError, ValueError):
+                pass
+        return total
 

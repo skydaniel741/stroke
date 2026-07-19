@@ -33,3 +33,12 @@ def coach_required(f):
             abort(403)
         return f(*args, **kwargs)
     return wrapper
+
+
+def parent_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated or (current_user.role != 'parent' and not current_user.is_admin):
+            abort(403)
+        return f(*args, **kwargs)
+    return wrapper

@@ -432,6 +432,170 @@ def test_http(app):
 
 
 # ===========================================================================
+# Training plans: CSS engine, template resolution, plan generation
+# ===========================================================================
+
+def test_training_plan(app):
+    import json as _json
+    from datetime import date
+    import plan_logic as pl
+    from workout_templates import TEMPLATES, templates_for
+    from swim_logic import parse_time, MIN_REST, WEEK_CAP, SESSION_CAP, STROKE_FACTOR, MODIFIER_FACTOR
+
+    # --- CSS math ---
+    check('CSS from 400/200 pair', pl.compute_css(352.0, 168.0) == 92.0)
+    check('CSS rejects implausible pair', pl.compute_css(300.0, 168.0) is None)
+    check('CSS rejects missing input', pl.compute_css(None, 168.0) is None)
+    check('CSS rejects absurd pace', pl.compute_css(1000.0, 100.0) is None)
+    z = pl.zones(92.0)
+    check('zone offsets exact', z['recovery'] == 104.0 and z['endurance'] == 98.0
+          and z['tempo'] == 94.0 and z['threshold'] == 92.0 and z['vo2max'] == 88.0)
+
+    # --- every template resolves consistently at every level ---
+    bad = []
+    for t in TEMPLATES:
+        for lvl, css in (('Beginner', 130.0), ('Intermediate', 95.0),
+                         ('Advanced', 80.0), ('Competitive', 70.0)):
+            for tm in (1200, 2200, 3500):
+                blocks = pl.resolve_template(t, css, level=lvl, target_meters=tm)
+                zz = pl.zones(css)
+                for b in blocks:
+                    if b.get('rest_type') != 'interval' or b.get('zone') in (None, 'max'):
+                        continue
+                    pace = (zz[b['zone']] * STROKE_FACTOR.get(b.get('stroke') or 'FR', 1.0)
+                            * MODIFIER_FACTOR.get(b.get('modifier') or '', 1.0))
+                    so = parse_time(b['rest'])
+                    if so is None or so - pace * b['dist'] / 100.0 < MIN_REST[lvl] - 0.01:
+                        bad.append((t['key'], lvl, tm))
+    check('all send-offs leave at least min rest at prescribed pace', not bad, bad[:5])
+
+    # Every slot/phase pool a plan can ask for has at least one template.
+    empty = [(s, p, l) for s in ('technique', 'threshold', 'sprint', 'endurance', 'css_test')
+             for p in ('base', 'build') for l in ('Beginner', 'Intermediate', 'Advanced', 'Competitive')
+             if not templates_for(s, p, l)]
+    check('no empty template pools for base/build', not empty, empty)
+    check('taper pools exist for technique+sprint', templates_for('technique', 'taper', 'Beginner')
+          and templates_for('sprint', 'taper', 'Intermediate'))
+
+    # --- phase map ---
+    pm = pl.build_phase_map(16, 3)
+    check('16wk: base then build then taper',
+          pm[0]['phase'] == 'base' and pm[7]['phase'] == 'build' and pm[13]['phase'] == 'taper'
+          and pm[15]['phase'] == 'taper')
+    check('deloads on the 4-week wave, never in taper',
+          pm[3]['deload'] and pm[7]['deload'] and pm[11]['deload'] and not pm[15]['deload'])
+
+    # --- full plan generation against the DB ---
+    from app import db
+    from models import User, Swim, Session, AthleteProfile, TrainingPlan, PlannedSession, CssRecord
+
+    with app.app_context():
+        # Swimmer WITH recent time trials: CSS comes from real swims.
+        u = _mk_user(db, User, 'planner@test.com')
+        _seed_swims(db, Swim, u.id, '400m Freestyle', [('5:52.00', 20)])
+        _seed_swims(db, Swim, u.id, '200m Freestyle', [('2:48.00', 20)])
+        prof = AthleteProfile(user_id=u.id, level='Intermediate', age=17,
+                              training_days_per_week=4, fitness_ability='Good')
+        db.session.add(prof)
+        db.session.commit()
+
+        race = date.today() + timedelta(weeks=12)
+        plan = pl.build_plan(u.id, prof, goal_event='100m Freestyle', pool='25m',
+                             race_date=race, target_time='1:00.00',
+                             sessions_per_week=4, preferred_days=[0, 2, 4, 6])
+        check('plan created', plan is not None and plan.status == 'active')
+        rec = db.session.get(CssRecord, plan.css_record_id)
+        check('CSS measured from logged trials', rec.source == 'time_trial'
+              and abs(rec.css_per_100 - 92.0) < 0.01, (rec.source, rec.css_per_100))
+
+        sessions = PlannedSession.query.filter_by(plan_id=plan.id).all()
+        check('one session per slot per week', len(sessions) == plan.weeks * 4, len(sessions))
+        check('100m event gets a 2-week taper',
+              sum(1 for w in plan.get_phase_map() if w['phase'] == 'taper') == 2)
+
+        # Volume respects caps; no template repeats in the same slot two weeks running.
+        by_week = {}
+        for s in sessions:
+            by_week.setdefault(s.week_index, []).append(s)
+        for w, ss in by_week.items():
+            wk_total = sum(s.target_meters or 0 for s in ss)
+            check(f'week {w} volume under cap', wk_total <= WEEK_CAP['Intermediate'], wk_total)
+            for s in ss:
+                check(f'session under cap w{w}', (s.target_meters or 0) <= SESSION_CAP['Intermediate'],
+                      s.target_meters)
+        repeats = []
+        for s in sessions:
+            nxt = [x for x in by_week.get(s.week_index + 1, []) if x.slot == s.slot]
+            if nxt and nxt[0].template_key == s.template_key and s.slot != 'css_test':
+                repeats.append((s.week_index, s.slot, s.template_key))
+        check('no same-slot template repeats in consecutive weeks', not repeats, repeats[:4])
+
+        # Blocks are stored resolved and renderable.
+        b0 = sessions[0].get_blocks()
+        check('blocks resolved with rest + note', b0 and all('rest' in b and 'note' in b for b in b0))
+
+        # completion linking: log a Session on a planned day.
+        first = min((s for s in sessions), key=lambda s: s.scheduled_date)
+        logged = Session(user_id=u.id, session_type='Training', pool='25m',
+                         sets_data=_json.dumps(b0),
+                         logged_at=datetime.combine(first.scheduled_date, datetime.min.time()))
+        db.session.add(logged)
+        db.session.commit()
+        ps = pl.link_completed(u.id, logged)
+        check('logged session completes the planned one', ps is not None and ps.status == 'completed'
+              and logged.planned_session_id == ps.id)
+
+        # Swimmer WITHOUT trials: estimated CSS + week-0 test scheduled.
+        u2 = _mk_user(db, User, 'newbie-plan@test.com')
+        prof2 = AthleteProfile(user_id=u2.id, level='Beginner', age=30,
+                               training_days_per_week=3, fitness_ability='Moderate')
+        db.session.add(prof2)
+        db.session.commit()
+        plan2 = pl.build_plan(u2.id, prof2, sessions_per_week=3)  # no race date
+        check('no-race plan is 8 weeks, no taper', plan2.weeks == 8
+              and all(w['phase'] != 'taper' for w in plan2.get_phase_map()))
+        rec2 = db.session.get(CssRecord, plan2.css_record_id)
+        check('CSS estimated for trial-less swimmer', rec2.source == 'estimated')
+        wk0 = PlannedSession.query.filter_by(plan_id=plan2.id, week_index=0).all()
+        check('week 0 includes the CSS test', any(s.slot == 'css_test' for s in wk0))
+        last_wk = PlannedSession.query.filter_by(plan_id=plan2.id, week_index=plan2.weeks - 1).all()
+        check('no-race plan ends in a retest', any(s.slot == 'css_test' for s in last_wk))
+
+        # New plan abandons the old one.
+        plan3 = pl.build_plan(u2.id, prof2, sessions_per_week=2)
+        check('previous plan abandoned', db.session.get(TrainingPlan, plan2.id).status == 'abandoned'
+              and plan3.status == 'active')
+
+        # Race too soon: refused with a friendly error.
+        try:
+            pl.build_plan(u.id, prof, goal_event='100m Freestyle',
+                          race_date=date.today() + timedelta(days=10), sessions_per_week=3)
+            check('too-soon race refused', False, 'no ValueError raised')
+        except ValueError as e:
+            check('too-soon race refused', '4 weeks' in str(e))
+
+        # rebuild_future_sessions after a manual CSS entry.
+        newrec = CssRecord(user_id=u2.id, css_per_100=100.0, source='manual', pool='25m')
+        db.session.add(newrec)
+        db.session.commit()
+        n = pl.rebuild_future_sessions(plan3, newrec)
+        check('future sessions re-resolved on new CSS', n > 0
+              and db.session.get(TrainingPlan, plan3.id).css_record_id == newrec.id, n)
+
+        # sweep_missed marks stale sessions without touching future ones.
+        stale = PlannedSession.query.filter_by(plan_id=plan3.id).order_by(PlannedSession.scheduled_date).first()
+        stale.scheduled_date = date.today() - timedelta(days=10)
+        db.session.commit()
+        pl.sweep_missed(plan3)
+        check('stale session marked missed',
+              db.session.get(PlannedSession, stale.id).status == 'missed')
+        future_ok = PlannedSession.query.filter(PlannedSession.plan_id == plan3.id,
+                                                PlannedSession.scheduled_date >= date.today(),
+                                                PlannedSession.status == 'planned').count()
+        check('future sessions untouched by sweep', future_ok > 0)
+
+
+# ===========================================================================
 
 def main():
     print('Building test app (throwaway DB)...')
@@ -449,6 +613,7 @@ def main():
         ('Progression engine', test_progression, False),
         ('Input validation', test_validation, False),
         ('Athlete model + weekly reports', test_athlete_model, True),
+        ('Training plans (CSS + generator)', test_training_plan, True),
         ('HTTP layer', test_http, True),
     ]
     for name, fn, needs_app in suites:

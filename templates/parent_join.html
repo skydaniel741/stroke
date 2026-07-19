@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="chlorine">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent access — STROKE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
+</head>
+<body>
+<div class="cx-auth">
+
+    <aside class="cx-auth-brand">
+        <div class="cx-auth-brand-top">
+            <a href="/" class="cx-brand" aria-label="STROKE home">
+                <svg viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/></svg>
+            </a>
+            <span class="cx-auth-wordmark">STROKE</span>
+        </div>
+        <div class="cx-auth-statement">
+            <div class="cx-auth-tag"><span class="rule"></span>Parent access</div>
+            <h2 style="margin-top:14px">See how <em>{{ link.swimmer.username }}</em> is really doing.</h2>
+            <p>A read-only view: recent times and personal bests, attendance, and how training is landing. No editing, no full training log.</p>
+        </div>
+        <div class="cx-auth-tag" style="color:var(--faint)">Built poolside</div>
+    </aside>
+
+    <main class="cx-auth-formside">
+        <div class="cx-auth-card">
+            <h1>Create your parent account</h1>
+            <p class="cx-auth-sub">This links you to {{ link.swimmer.username }}'s account, read-only.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            <form method="POST">
+                <div class="cx-field">
+                    <label>Your name</label>
+                    <input type="text" name="username" class="cx-input" placeholder="Your name" required minlength="3" maxlength="30">
+                </div>
+                <div class="cx-field">
+                    <label>Email</label>
+                    <input type="email" name="email" class="cx-input" placeholder="you@example.com" autocomplete="username" required>
+                </div>
+                <div class="cx-field">
+                    <label>Password</label>
+                    <input type="password" name="password" class="cx-input" placeholder="min 8 characters" autocomplete="new-password" required minlength="8">
+                </div>
+                <button type="submit" class="cx-btn-primary">Create account &amp; link</button>
+            </form>
+
+            <p class="cx-auth-switch">Already have a parent account? <a href="/login">Log in</a>, then open this invite link again to add {{ link.swimmer.username }}.</p>
+        </div>
+    </main>
+</div>
+</body>
+</html>

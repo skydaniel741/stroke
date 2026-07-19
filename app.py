@@ -88,9 +88,11 @@ def create_app():
         from routes import main
         from routes_solo import solo
         from routes_coach import coach
+        from routes_parent import parent_bp
         app.register_blueprint(main)
         app.register_blueprint(solo)
         app.register_blueprint(coach)
+        app.register_blueprint(parent_bp)
 
         db.create_all()
 

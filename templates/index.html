@@ -1,388 +1,298 @@
 <!DOCTYPE html>
-<html lang="en" data-skin="chlorine" class="lx">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stroke — a simpler way to log swimming</title>
+<title>STROKE: swim team software for coaches, parents and swimmers</title>
+<meta name="description" content="Take attendance and it logs the set. Scan the results board and every best time gets filed. Parents get their own read-only view. Swimmers training on their own get a plan built around their times.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_landing.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stroke_landing.css') }}">
 </head>
-<body>
-<div class="lx-wrap">
+<body class="sl">
 
-<nav class="lx-nav">
-  <span class="lx-logo">STROKE</span>
-  <div class="lx-nav-links">
-    <a href="#log">How it works</a>
-    <a href="#library">Set library</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#coaches">Coaches</a>
-    <a href="/login">Log in</a>
-    <a href="/signup" class="lx-nav-cta">Get started free</a>
+<nav class="nav">
+  <a href="#top" class="nav-logo">STROKE</a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#parents">Parent view</a>
+    <a href="#solo">For swimmers</a>
+    <a href="/login" class="nav-coach">Coach login</a>
+    <a href="/signup?as=coach" class="nav-cta">Start your squad free</a>
   </div>
-  <button class="lx-nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+  <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
 </nav>
-<div class="lx-mobile-menu" id="mobileMenu">
-  <a href="#log">How it works</a>
-  <a href="#library">Set library</a>
-  <a href="#pricing">Pricing</a>
-  <a href="#coaches">Coaches</a>
-  <a href="/login">Log in</a>
-  <a href="/signup">Get started free</a>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#how">How it works</a>
+  <a href="#features">Features</a>
+  <a href="#parents">Parent view</a>
+  <a href="#solo">For swimmers</a>
+  <a href="/login">Coach login</a>
+  <a href="/signup?as=coach">Start your squad free</a>
 </div>
 
 <!-- HERO -->
-<section class="lx-hero" id="top">
-  <div class="lx-hero-glow lx-hero-glow--1"></div>
-  <div class="lx-hero-glow lx-hero-glow--2"></div>
-  <div class="lx-hero-grid">
-    <div class="lx-hero-content">
-      <div class="lx-hero-pill lreveal"><span class="dot"></span>Built poolside, not in a boardroom</div>
-      <h1 class="lreveal">A logbook that keeps up with <span class="script">your</span> <span class="acc">training.</span></h1>
-      <p class="lx-hero-sub lreveal">Stroke started as a way to stop losing sets to a wet notebook. Scan the whiteboard, say the set out loud, or type it once and reuse it, then watch every best time, split and points score add up over a season.</p>
-      <div class="lx-hero-actions lreveal">
-        <a href="/signup" class="btn-solid">Get started free</a>
-        <a href="#log" class="btn-ghost">See how it works</a>
+<section class="hero" id="top">
+  <div class="hero-grid">
+    <div class="hero-content">
+      <div class="hero-pill rv"><span class="dot"></span>For swim coaches, parents and swimmers</div>
+      <a href="/signup?as=coach" class="hero-headline rv" aria-label="Start your squad free">
+        <h1>Run your whole swim squad <span class="u">from one screen.</span></h1>
+        <p class="hero-sub">Roll call logs the set. A photo of the results board files every swimmer's time. Parents get their own view. Swimmers training solo get their own plan.</p>
+      </a>
+      <div class="hero-actions rv">
+        <a href="/signup?as=coach" class="btn btn-primary">Start your squad free</a>
+        <a href="#how" class="btn btn-ghost">See how it works</a>
+      </div>
+      <div class="persona-row rv">
+        <a href="/signup?as=coach" class="persona-pill">I'm a coach &rarr;</a>
+        <a href="#parents" class="persona-pill">I'm a parent &rarr;</a>
+        <a href="/signup" class="persona-pill">I'm a swimmer &rarr;</a>
       </div>
     </div>
 
-    <div class="lx-hero-mocks lreveal" aria-hidden="true">
-      <div class="mock-chip">
-        <span class="mock-chip-num num">863</span>
-        <span class="mock-chip-lbl">World Aquatics points</span>
-      </div>
-      <div class="mock-phone">
-        <div class="mock-phone-notch"></div>
-        <p class="mock-phone-title">Enter time</p>
-        <p class="mock-phone-chip">100m Freestyle · 25m</p>
-        <p class="mock-phone-time num">0:52.34</p>
-        <div class="mock-numpad">
-          <span>1</span><span>2</span><span>3</span>
-          <span>4</span><span>5</span><span>6</span>
-          <span>7</span><span>8</span><span>9</span>
-          <span></span><span>0</span><span>&#9003;</span>
+    <a href="/signup?as=coach" class="hero-mock rv" aria-label="See how attendance logs a set">
+      <div class="mock card tap">
+        <div class="mock-top">
+          <span class="mock-tag">Attendance · today</span>
+          <span class="mock-pts">
+            <span class="mock-pts-num num">11/12</span>
+            <span class="mock-pts-lbl">present</span>
+          </span>
         </div>
-        <div class="mock-phone-btn">Save swim</div>
+        <p class="mock-event">Senior Performance · AM session</p>
+        <p class="mock-time num" style="font-size:34px">Set logged</p>
+        <span class="mock-pb">Auto-logged for everyone present</span>
+        <div class="mock-divider"></div>
+        <p class="mock-set-lbl">Today's set</p>
+        <p class="mock-set-name">CSS Threshold 100s</p>
+        <p class="mock-set-line num">12 × 100m Free @ CSS pace</p>
       </div>
-      <div class="mock-card mock-card--pb">
-        <p class="mock-card-label">Personal best</p>
-        <p class="mock-card-title">100m Freestyle</p>
-        <p class="mock-card-big num">52.34</p>
-        <p class="mock-card-sub">25m pool · logged in 5 seconds</p>
-      </div>
-      <div class="mock-card mock-card--set">
-        <p class="mock-card-label">From the set library</p>
-        <p class="mock-card-title">CSS Threshold 100s</p>
-        <p class="mock-card-line num">12 × 100m Freestyle @ 0:20</p>
-        <p class="mock-card-sub">at CSS pace — same time every 100</p>
-      </div>
-    </div>
+    </a>
   </div>
 </section>
 
 <!-- MARQUEE -->
-<div class="lx-marquee">
-  <div class="lx-marquee-track">
-    <span>Log in seconds</span><span class="lx-marquee-dot">●</span>
-    <span>Track every PB</span><span class="lx-marquee-dot">●</span>
-    <span>World Aquatics points built in</span><span class="lx-marquee-dot">●</span>
-    <span>Ready-made set library</span><span class="lx-marquee-dot">●</span>
-    <span>No watch needed</span><span class="lx-marquee-dot">●</span>
-    <span>Log in seconds</span><span class="lx-marquee-dot">●</span>
-    <span>Track every PB</span><span class="lx-marquee-dot">●</span>
-    <span>World Aquatics points built in</span><span class="lx-marquee-dot">●</span>
-    <span>Ready-made set library</span><span class="lx-marquee-dot">●</span>
-    <span>No watch needed</span><span class="lx-marquee-dot">●</span>
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>Attendance auto-logs the set</span><span class="marquee-dot">●</span>
+    <span>Scan the results board</span><span class="marquee-dot">●</span>
+    <span>Parent view included</span><span class="marquee-dot">●</span>
+    <span>Multi-squad support</span><span class="marquee-dot">●</span>
+    <span>AI training insights</span><span class="marquee-dot">●</span>
+    <span>Attendance auto-logs the set</span><span class="marquee-dot">●</span>
+    <span>Scan the results board</span><span class="marquee-dot">●</span>
+    <span>Parent view included</span><span class="marquee-dot">●</span>
+    <span>Multi-squad support</span><span class="marquee-dot">●</span>
+    <span>AI training insights</span><span class="marquee-dot">●</span>
   </div>
 </div>
 
-<!-- THREE WAYS TO LOG -->
-<section class="lx-sec" id="log">
-  <div class="lx-inner lx-inner--center">
-    <p class="lx-label lreveal">How you log</p>
-    <h2 class="lx-h lreveal">No watch needed.<br>No typing the same set twice.</h2>
-    <p class="lx-sub lreveal">Most trackers assume you're wearing a $200 watch or want to type out every 100 by hand. Stroke assumes you're standing on deck with wet hands and thirty seconds before the next rep.</p>
-    <div class="lx-log3">
-      <div class="lx-log3-card lreveal ld1">
-        <span class="lx-log3-num">01</span>
-        <div class="lx-log3-icon">
-          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-        </div>
-        <p class="lx-log3-title">Photo scan</p>
-        <p class="lx-log3-desc">Point your phone at the whiteboard. We read your coach's handwriting, shorthand, arrows and all, and turn it into a logged set.</p>
-        <span class="lx-badge solo">Solo</span>
-      </div>
-      <div class="lx-log3-card lreveal ld2">
-        <span class="lx-log3-num">02</span>
-        <div class="lx-log3-icon">
-          <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-        </div>
-        <p class="lx-log3-title">Voice record</p>
-        <p class="lx-log3-desc">Say it the way your coach says it, "ten by one hundred free on one thirty", and it lands as a structured session automatically.</p>
-        <span class="lx-badge solo">Solo</span>
-      </div>
-      <div class="lx-log3-card lreveal ld3">
-        <span class="lx-log3-num">03</span>
-        <div class="lx-log3-icon">
+<!-- HOW IT WORKS -->
+<section class="sec" id="how">
+  <div class="inner center">
+    <p class="eyebrow rv">How it works</p>
+    <h2 class="sec-h rv">Three steps. Whole squad.</h2>
+    <p class="sec-sub rv">Mark the roll, scan the board, watch the squad move. The admin disappears into the workout.</p>
+    <div class="steps">
+      <a href="/signup?as=coach" class="step card tap rv d1">
+        <span class="step-num">1</span>
+        <span class="step-body">
+          <span class="step-title">Take attendance</span>
+          <span class="step-desc">Mark who showed up. Today's set logs itself as a session for every swimmer present, no separate write-up after practice.</span>
+          <span class="step-go">Set up attendance &rarr;</span>
+        </span>
+      </a>
+      <a href="/signup?as=coach" class="step card tap rv d2">
+        <span class="step-num">2</span>
+        <span class="step-body">
+          <span class="step-title">Scan the results board</span>
+          <span class="step-desc">Photograph a test set on the whiteboard and every swimmer's best rep gets filed against their name automatically.</span>
+          <span class="step-go">See the scanner &rarr;</span>
+        </span>
+      </a>
+      <a href="/signup?as=coach" class="step card tap rv d3">
+        <span class="step-num">3</span>
+        <span class="step-body">
+          <span class="step-title">See the whole squad move</span>
+          <span class="step-desc">Times, World Aquatics points and an AI read on how training's landing, squad-wide. Each parent gets their own read-only view too.</span>
+          <span class="step-go">See team analytics &rarr;</span>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- EVERYTHING YOU ALREADY DO -->
+<section class="sec sec--alt" id="features">
+  <div class="inner center">
+    <p class="eyebrow rv">Built for the deck</p>
+    <h2 class="sec-h rv">Everything you already do, just faster.</h2>
+    <p class="sec-sub rv">Not a generic team app bolted onto swimming. Built around roll call, test sets and session planning the way a squad actually runs.</p>
+    <div class="log3">
+      <a href="/signup?as=coach" class="log3-card card tap rv d1">
+        <span class="log3-k">01</span>
+        <span class="log3-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        </span>
+        <span class="log3-title">Roster &amp; attendance</span>
+        <span class="log3-desc">Invite a swimmer by email or import a CSV. Mark the roll and the day's set auto-logs for everyone present.<span class="tap-arrow"></span></span>
+      </a>
+      <a href="/signup?as=coach" class="log3-card card tap rv d2">
+        <span class="log3-k">02</span>
+        <span class="log3-icon">
           <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-        </div>
-        <p class="lx-log3-title">Manual entry</p>
-        <p class="lx-log3-desc">Type it once, save it as a template. Most swimmers never type the same set twice, next time it's one tap.</p>
-        <span class="lx-badge free">Free</span>
-      </div>
+        </span>
+        <span class="log3-title">Session builder</span>
+        <span class="log3-desc">Build a set once, save it to the library, and assign it to a squad or a single swimmer with a due date.<span class="tap-arrow"></span></span>
+      </a>
+      <a href="/signup?as=coach" class="log3-card card tap rv d3">
+        <span class="log3-k">03</span>
+        <span class="log3-icon">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        </span>
+        <span class="log3-title">Results-board scanner</span>
+        <span class="log3-desc">Photograph a test set's results board and every swimmer's best rep gets filed as a timed swim, tagged and searchable.<span class="tap-arrow"></span></span>
+      </a>
     </div>
   </div>
 </section>
 
-<!-- BIG STAT MOMENT -->
-<section class="lx-statmoment">
-  <div class="lreveal">
-    <p class="lx-label">The whole point</p>
-    <h2 class="lx-statmoment-h">
-      <span class="lx-statmoment-big num">5</span>
-      <span class="lx-statmoment-rest"><span class="lx-statmoment-unit">seconds</span><br>to log a swim.</span>
+<!-- STAT MOMENT -->
+<section class="statmoment">
+  <a href="/signup?as=coach" class="statmoment-block rv">
+    <p class="eyebrow">The whole point</p>
+    <h2 class="statmoment-h">
+      <span class="statmoment-big num">1</span>
+      <span class="statmoment-rest"><span class="statmoment-unit">tap</span><br>for the whole squad's attendance.</span>
     </h2>
-    <p class="lx-statmoment-sub">Not five minutes hunting for the app you meant to open. Five seconds, wet fingers and all.</p>
-  </div>
+    <p class="statmoment-sub">Not a spreadsheet after practice. Mark the roll once, and the set's already logged for everyone who swam it.</p>
+  </a>
 </section>
 
-<!-- AI ENGINE -->
-<section class="lx-sec" id="ai">
-  <div class="lx-inner">
-    <div class="lx-ai-head lreveal">
-      <p class="lx-label">The engine underneath</p>
-      <h2 class="lx-h">Not a chatbot.<br>A model that <em>knows your swimming.</em></h2>
-      <p class="lx-sub">Point your camera at the whiteboard or say the set out loud and Stroke turns it into structured training in seconds. Every swim you log feeds a private model of you, so the feedback gets sharper the more you train.</p>
-    </div>
-
-    <div class="lx-ai-statgrid">
-      <div class="lx-ai-stat lreveal ld1"><div class="lx-ai-stat-num num">40<small>+</small></div><div class="lx-ai-stat-lbl">Coaching shorthands read from a whiteboard: arrows, "desc", "@", build, negative split and more.</div></div>
-      <div class="lx-ai-stat lreveal ld1"><div class="lx-ai-stat-num num">17</div><div class="lx-ai-stat-lbl">Pool events scored to World Aquatics points the moment a time lands, long course and short course.</div></div>
-      <div class="lx-ai-stat lreveal ld2"><div class="lx-ai-stat-num num">0</div><div class="lx-ai-stat-lbl">Watches, straps or wearables needed. The intelligence lives in the log, not on your wrist.</div></div>
-      <div class="lx-ai-stat lreveal ld2"><div class="lx-ai-stat-num num">1</div><div class="lx-ai-stat-lbl">Model per swimmer, learning your paces and thresholds session by session instead of a generic table.</div></div>
-    </div>
-
-    <div class="lx-ai-pipe">
-      <div class="lx-ai-step lreveal ld1"><span class="lx-ai-step-k">1</span><p class="lx-ai-step-t">Read</p><p class="lx-ai-step-d">Camera or voice in. The model parses handwriting and swim shorthand into a clean set: reps, distance, stroke, interval and rest.</p></div>
-      <div class="lx-ai-step lreveal ld2"><span class="lx-ai-step-k">2</span><p class="lx-ai-step-t">Understand</p><p class="lx-ai-step-d">Every rep is read against your own history, so a 100 free today is measured on your paces, not a one-size table of averages.</p></div>
-      <div class="lx-ai-step lreveal ld3"><span class="lx-ai-step-k">3</span><p class="lx-ai-step-t">Coach back</p><p class="lx-ai-step-d">You get a plain language read on where the session sat and what moved since your last block. No dashboard of charts to decode.</p></div>
-    </div>
-
-    <p class="lx-ai-note lreveal">Insights are guidance built from your own logged data, not medical or performance advice. Points and course conversions are estimates based on record-pace ratios.</p>
-  </div>
-</section>
-
-<!-- SET LIBRARY -->
-<section class="lx-sec lx-sec--alt" id="library">
-  <div class="lx-inner">
-    <div class="lx-split">
-      <div class="lreveal-l">
-        <p class="lx-label">Set library</p>
-        <h2 class="lx-h">Never train on<br>a blank page.</h2>
-        <p class="lx-sub">A built-in library of complete workouts, warm up to cool down, with coaching notes, written the way coaches write them. Pick what today needs, log it in one tap, or print a deck sheet for the pool.</p>
-      </div>
-      <div class="lx-chips lreveal-r">
-        <span class="lx-chip">Fast sets</span>
-        <span class="lx-chip">Easy sets</span>
-        <span class="lx-chip">Heart rate</span>
-        <span class="lx-chip">Drills</span>
-        <span class="lx-chip">Lactate</span>
-        <span class="lx-chip">Fitness</span>
-        <span class="lx-chip">Open water</span>
-        <span class="lx-chip">Triathlon</span>
-        <div class="lx-mini-card">
-          <p class="lx-mini-label">From the library</p>
-          <p class="lx-mini-name">CSS Threshold 100s</p>
-          <p class="lx-mini-line num">12 × 100m Freestyle @ 0:20 rest</p>
-          <p class="lx-mini-note">at CSS pace — same time every 100</p>
+<!-- PARENT VIEW -->
+<section class="sec sec--alt" id="parents">
+  <div class="inner">
+    <p class="parent-arrived-note center" style="max-width:52ch;margin:0 auto 28px;font-size:14px;color:var(--ink-subtle)">Here because your coach uses STROKE? Ask them to send your parent link from the roster, you don't need to sign up for anything.</p>
+    <div class="split">
+      <a href="/signup?as=coach" class="split-copy rv">
+        <p class="eyebrow">For coaches</p>
+        <h2 class="sec-h">Parents ask.<br>Now they can just <em>look.</em></h2>
+        <p class="sec-sub">Send a parent a link from the roster and they get their own read-only view: recent times and personal bests, attendance, and how training's landing. No editing, no access to the rest of your squad's data.</p>
+        <span class="btn btn-primary" style="margin-top:22px">Give your parents this view</span>
+      </a>
+      <div class="calc-card card rv" style="padding:26px">
+        <div class="mock-top" style="margin-bottom:14px">
+          <span class="mock-tag">Parent view · read-only</span>
         </div>
+        <p class="mock-event">100m Freestyle</p>
+        <p class="mock-time num" style="font-size:40px">58.20</p>
+        <span class="mock-pb">Getting faster</span>
+        <div class="mock-divider"></div>
+        <p class="mock-set-lbl">This week</p>
+        <p class="mock-set-name">2 of 3 sessions attended</p>
+        <p class="mock-set-line num">Next: Sat AM squad practice</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE GRID -->
+<section class="sec">
+  <div class="inner center">
+    <p class="eyebrow rv">Also inside</p>
+    <h2 class="sec-h rv">Everything a squad needs.</h2>
+    <div class="feats">
+      <a href="/signup?as=coach" class="feat card tap rv d1"><span class="feat-k">01</span><span class="feat-title">Team analytics</span><span class="feat-desc">Squad-wide volume, attendance and points, not just one swimmer at a time.<span class="tap-arrow"></span></span></a>
+      <a href="/signup?as=coach" class="feat card tap rv d1"><span class="feat-k">02</span><span class="feat-title">AI assistant</span><span class="feat-desc">A plain-language read on the squad, in your coaching tone: encouraging, balanced or direct.<span class="tap-arrow"></span></span></a>
+      <a href="/signup?as=coach" class="feat card tap rv d2"><span class="feat-k">03</span><span class="feat-title">Multi-squad &amp; club support</span><span class="feat-desc">Run several squads, or a whole club, from the same dashboard.<span class="tap-arrow"></span></span></a>
+      <a href="/signup?as=coach" class="feat card tap rv d2"><span class="feat-k">04</span><span class="feat-title">Squad calendar</span><span class="feat-desc">Schedule practices and meets, AM or PM, with a set attached.<span class="tap-arrow"></span></span></a>
+      <a href="/signup?as=coach" class="feat card tap rv d3"><span class="feat-k">05</span><span class="feat-title">Announcements</span><span class="feat-desc">One place to post to the whole squad, no group chat needed.<span class="tap-arrow"></span></span></a>
+      <a href="/signup?as=coach" class="feat card tap rv d3"><span class="feat-k">06</span><span class="feat-title">Printable deck sheets</span><span class="feat-desc">Print any set from the library, ready for the pool wall.<span class="tap-arrow"></span></span></a>
     </div>
   </div>
 </section>
 
 <!-- WORLD AQUATICS POINTS -->
-<section class="lx-sec">
-  <div class="lx-inner">
-    <div class="lx-split lx-split--tight lreveal">
-      <div class="lx-calc-card" id="ptsCard">
-        <div class="lx-calc-num num" id="ptsCounter">0</div>
-        <div class="lx-calc-lbl">World Aquatics points</div>
-        <div class="lx-calc-body">
-          <div class="lx-calc-row">
-            <select class="lx-calc-select" id="miniPool" onchange="miniPopulate(); miniCalc()">
+<section class="sec sec--alt">
+  <div class="inner">
+    <div class="split">
+      <div class="calc-card card rv" id="ptsCard">
+        <div class="calc-num num" id="ptsCounter">0</div>
+        <div class="calc-lbl">World Aquatics points</div>
+        <div class="calc-body">
+          <div class="calc-row">
+            <select class="calc-select" id="miniPool" onchange="miniPopulate(); miniCalc()">
               <option value="LCM">Long course (50m)</option>
               <option value="SCM">Short course (25m)</option>
             </select>
-            <select class="lx-calc-select" id="miniGender" onchange="miniPopulate(); miniCalc()">
+            <select class="calc-select" id="miniGender" onchange="miniPopulate(); miniCalc()">
               <option value="men">Men</option>
               <option value="women">Women</option>
             </select>
           </div>
-          <select class="lx-calc-select lx-calc-full" id="miniEvent" onchange="miniCalc()"></select>
-          <div class="lx-calc-row">
-            <input type="number" class="lx-calc-input" id="miniMin" placeholder="Min" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
-            <span class="lx-calc-sep">:</span>
-            <input type="number" class="lx-calc-input" id="miniSec" placeholder="Sec" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
-            <span class="lx-calc-sep">.</span>
-            <input type="number" class="lx-calc-input" id="miniMs" placeholder="00" min="0" max="99" maxlength="2" inputmode="numeric" oninput="miniClamp(this,99); miniCalc()" onblur="miniPad(this)">
+          <select class="calc-select" id="miniEvent" onchange="miniCalc()"></select>
+          <div class="calc-row">
+            <input type="number" class="calc-input" id="miniMin" placeholder="Min" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
+            <span class="calc-sep">:</span>
+            <input type="number" class="calc-input" id="miniSec" placeholder="Sec" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); miniCalc()" onblur="miniPad(this)">
+            <span class="calc-sep">.</span>
+            <input type="number" class="calc-input" id="miniMs" placeholder="00" min="0" max="99" maxlength="2" inputmode="numeric" oninput="miniClamp(this,99); miniCalc()" onblur="miniPad(this)">
           </div>
         </div>
+        <p class="calc-note">Try it, no account needed. Points are estimates based on record-pace ratios.</p>
       </div>
-      <div>
-        <p class="lx-label">World Aquatics points</p>
-        <h2 class="lx-h">See exactly<br>where you <em>stand</em><br>globally.</h2>
-        <p class="lx-sub">Enter any time for any event and Stroke calculates your World Aquatics points on the spot, then tracks how they move over a season of training. Try it, no account needed.</p>
-        <a href="/signup" class="btn-solid btn-solid--alt" style="margin-top:22px">Track this over time</a>
-      </div>
+      <a href="/signup?as=coach" class="split-copy rv">
+        <p class="eyebrow">World Aquatics points</p>
+        <h2 class="sec-h">See exactly where every swimmer stands.</h2>
+        <p class="sec-sub">Every logged time scores to World Aquatics points automatically, so you can compare a sprinter and a distance swimmer on one scale, and watch the whole squad's points move over a season.</p>
+        <span class="btn btn-primary" style="margin-top:22px">Track this for your squad</span>
+      </a>
     </div>
   </div>
 </section>
 
-<!-- TIME CONVERTER -->
-<section class="lx-sec lx-sec--alt" id="converter">
-  <div class="lx-inner">
-    <div class="lx-split">
-      <div class="lreveal-l">
-        <p class="lx-label">Time converter</p>
-        <h2 class="lx-h">Short course.<br>Long course.<br><em>Same swimmer.</em></h2>
-        <p class="lx-sub">Trained all winter in a 25m pool and racing long course this summer? Get a rough long course equivalent for any short course time, or the other way around, based on the same pace ratios used in the points calculator.</p>
-      </div>
-      <div class="lx-calc-card lreveal-r" id="convCard">
-        <div class="lx-calc-res">
-          <div class="lx-calc-res-val num" id="convResult">—</div>
-          <div class="lx-calc-res-lbl" id="convResultLbl">Enter a time to convert</div>
-        </div>
-        <div class="lx-calc-body">
-          <div class="lx-calc-row">
-            <select class="lx-calc-select" id="convFrom" onchange="convPopulate(); convCalc()">
-              <option value="SCM">From: Short course (25m)</option>
-              <option value="LCM">From: Long course (50m)</option>
-            </select>
-            <select class="lx-calc-select" id="convGender" onchange="convPopulate(); convCalc()">
-              <option value="men">Men</option>
-              <option value="women">Women</option>
-            </select>
-          </div>
-          <select class="lx-calc-select lx-calc-full" id="convEvent" onchange="convCalc()"></select>
-          <div class="lx-calc-row">
-            <input type="number" class="lx-calc-input" id="convMin" placeholder="Min" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); convCalc()" onblur="miniPad(this)">
-            <span class="lx-calc-sep">:</span>
-            <input type="number" class="lx-calc-input" id="convSec" placeholder="Sec" min="0" max="59" maxlength="2" inputmode="numeric" oninput="miniClamp(this,59); convCalc()" onblur="miniPad(this)">
-            <span class="lx-calc-sep">.</span>
-            <input type="number" class="lx-calc-input" id="convMs" placeholder="00" min="0" max="99" maxlength="2" inputmode="numeric" oninput="miniClamp(this,99); convCalc()" onblur="miniPad(this)">
-          </div>
-        </div>
-        <p class="lx-calc-note">Estimate only, based on record-pace ratios between courses, not an official conversion.</p>
-      </div>
+<!-- SOLO -->
+<section class="sec" id="solo">
+  <div class="inner">
+    <div class="coach card rv">
+      <p class="eyebrow">For swimmers</p>
+      <h2 class="sec-h">Train on your own. Log every swim. Watch it add up.</h2>
+      <p class="sec-sub" style="margin:0 auto">Log your times and personal bests, get a training plan built around them, and chat with an AI coach on nutrition and dryland. No squad required.</p>
+      <a href="/signup" class="btn btn-primary" style="margin-top:22px;display:inline-flex">Start your own training</a>
+      <p class="coach-note">Free to create an account.</p>
     </div>
   </div>
 </section>
 
-<!-- MORE -->
-<section class="lx-sec">
-  <div class="lx-inner lx-inner--center">
-    <p class="lx-label lreveal">And that's not all</p>
-    <h2 class="lx-h lreveal">Everything a swimmer<br>actually reaches for.</h2>
-    <div class="lx-more">
-      <div class="lx-more-card lx-more-card--wide lreveal ld1"><span class="lx-more-num">01</span><p class="lx-feat-title">Personal bests</p><p class="lx-feat-desc">Every best time tracked automatically.</p></div>
-      <div class="lx-more-card lreveal ld1"><span class="lx-more-num">02</span><p class="lx-feat-title">AI training insights</p><p class="lx-feat-desc">Plain language, not a dashboard of charts.</p></div>
-      <div class="lx-more-card lreveal ld2"><span class="lx-more-num">03</span><p class="lx-feat-title">CSS calculator</p><p class="lx-feat-desc">Find your threshold pace & zones.</p></div>
-      <div class="lx-more-card lreveal ld2"><span class="lx-more-num">04</span><p class="lx-feat-title">Goals & training plans</p><p class="lx-feat-desc">Set a time, get the blocks to reach it.</p></div>
-      <div class="lx-more-card lreveal ld3"><span class="lx-more-num">05</span><p class="lx-feat-title">Split analysis</p><p class="lx-feat-desc">See exactly where time is going missing.</p></div>
-      <div class="lx-more-card lreveal ld3"><span class="lx-more-num">06</span><p class="lx-feat-title">Printable deck sheets</p><p class="lx-feat-desc">Any library set, print-ready for the pool.</p></div>
-    </div>
-  </div>
+<!-- FINAL CTA -->
+<section class="cta">
+  <a href="/signup?as=coach" class="rv" style="display:block">
+    <h2 class="cta-h">Start running your<br>squad today.</h2>
+    <p class="cta-sub">Free while we build with early coaches. No credit card.</p>
+    <span class="btn btn-primary">Start your squad free</span>
+  </a>
+  <p class="rv" style="margin-top:16px;font-size:14px"><a href="/signup" style="color:var(--ink-subtle);text-decoration:underline">Not a coach? Start training on your own &rarr;</a></p>
 </section>
 
-<!-- PRICING -->
-<section class="lx-sec lx-sec--alt" id="pricing">
-  <div class="lx-inner lx-inner--center">
-    <p class="lx-label lreveal">Pricing</p>
-    <h2 class="lx-h lreveal">Simple pricing.<br>No surprises.</h2>
-    <p class="lx-sub lreveal">Start free. Upgrade only if you want the smarter logging and analysis.</p>
-    <div class="lx-price">
-      <div class="lx-price-card lreveal ld1">
-        <p class="lx-price-tier">Free</p>
-        <p class="lx-price-val num">$0</p>
-        <p class="lx-price-per">forever</p>
-        <p class="lx-price-desc">Everything you need to log and track your swimming properly.</p>
-        <hr class="lx-price-divider">
-        <ul class="lx-price-feats">
-          <li>Manual swim logging</li>
-          <li>Saved templates & copy last session</li>
-          <li>Personal bests across every event</li>
-          <li>World Aquatics points & CSS calculators</li>
-          <li>Full set library — printable coach sheets</li>
-        </ul>
-        <a href="/signup" class="lx-price-btn">Get started free</a>
-      </div>
-      <div class="lx-price-card hot lreveal ld2">
-        <div class="lx-price-badge">Most popular</div>
-        <p class="lx-price-tier">Solo</p>
-        <p class="lx-price-val num">$12</p>
-        <p class="lx-price-per">per month</p>
-        <p class="lx-price-desc">Smart logging and analysis for swimmers serious about improving.</p>
-        <hr class="lx-price-divider">
-        <ul class="lx-price-feats">
-          <li>Everything in Free</li>
-          <li>Photo set scanner</li>
-          <li>Voice set logging</li>
-          <li>AI training insights</li>
-          <li>Goals & auto training plans</li>
-          <li>Split time analysis</li>
-        </ul>
-        <a href="/signup" class="lx-price-btn">Start Solo</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- COACH WAITLIST -->
-<section class="lx-sec" id="coaches">
-  <div class="lx-inner">
-    <div class="lx-coach-panel lreveal">
-      <p class="lx-label">For coaches</p>
-      <h2 class="lx-h">The coach side is<br>coming next.</h2>
-      <p class="lx-sub" style="margin:0 auto">A view of the whole squad's sets, times and points, built with feedback from actual coaches, not a guess at what they'd want.</p>
-      <form class="lx-coach-form">
-        <input type="email" class="lx-coach-input" placeholder="you@example.com" required>
-        <button type="submit" class="lx-coach-submit">Join waitlist</button>
-      </form>
-      <p class="lx-coach-note">No spam. One email, when it's ready.</p>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="lx-cta">
-  <div class="lx-cta-glow"></div>
-  <h2 class="lx-cta-h lreveal">Start logging<br>your swimming today.</h2>
-  <p class="lx-cta-sub lreveal">No credit card. No watch. Set up while you're still on deck.</p>
-  <div class="lreveal"><a href="/signup" class="btn-solid">Get started free</a></div>
-</section>
-
-<footer class="lx-footer">
+<footer class="footer">
   <div>
-    <p class="lx-footer-logo">Stroke</p>
-    <p class="lx-footer-sub">Built in New Zealand. For swimmers everywhere.</p>
+    <p class="footer-logo">STROKE</p>
+    <p class="footer-sub">Built in New Zealand. For coaches and swimmers everywhere.</p>
   </div>
-  <div class="lx-footer-links">
-    <a href="#log">How it works</a>
-    <a href="#library">Set library</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#coaches">Coaches</a>
-    <a href="/login">Log in</a>
+  <div class="footer-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#parents">Parent view</a>
+    <a href="#solo">For swimmers</a>
+    <a href="/login">Coach login</a>
     <a href="/privacy">Privacy</a>
   </div>
 </footer>
-
-</div>
 
 <script>
 const miniBaseTimes = {
@@ -429,36 +339,6 @@ function miniCalc(){
   if(points < 0) points = 0;
   counter.textContent = points;
 }
-function convPopulate(){
-  const from = document.getElementById('convFrom').value;
-  const gender = document.getElementById('convGender').value;
-  const events = Object.keys(miniBaseTimes[from][gender]);
-  const sel = document.getElementById('convEvent');
-  const prev = sel.value;
-  sel.innerHTML = events.map(e => `<option value="${e}">${e}</option>`).join('');
-  if(events.includes(prev)) sel.value = prev;
-}
-function convCalc(){
-  const from = document.getElementById('convFrom').value;
-  const to = from === 'SCM' ? 'LCM' : 'SCM';
-  const gender = document.getElementById('convGender').value;
-  const event = document.getElementById('convEvent').value;
-  const baseFrom = miniBaseTimes[from][gender][event];
-  const baseTo = miniBaseTimes[to][gender][event];
-  const result = document.getElementById('convResult');
-  const label = document.getElementById('convResultLbl');
-  if(!baseFrom || !baseTo) return;
-  const min = Math.min(parseInt(document.getElementById('convMin').value) || 0, 59);
-  const sec = Math.min(parseInt(document.getElementById('convSec').value) || 0, 59);
-  const ms = Math.min(parseInt(document.getElementById('convMs').value) || 0, 99);
-  const T = min*60 + sec + ms/100;
-  if(T <= 0){ result.textContent = '—'; label.textContent = 'Enter a time to convert'; return; }
-  const converted = T * (baseTo / baseFrom);
-  const outMin = Math.floor(converted / 60);
-  const outSec = (converted - outMin*60).toFixed(2).padStart(5,'0');
-  result.textContent = outMin > 0 ? `${outMin}:${outSec}` : outSec;
-  label.textContent = `≈ ${to === 'LCM' ? 'Long course (50m)' : 'Short course (25m)'} equivalent`;
-}
 
 (function(){
 const navToggle=document.getElementById('navToggle');
@@ -477,34 +357,21 @@ mobileMenu.querySelectorAll('a').forEach(a=>a.addEventListener('click',function(
 const io=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')});
 },{threshold:.12});
-document.querySelectorAll('.lreveal,.lreveal-l,.lreveal-r').forEach(el=>io.observe(el));
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
 
 const ptsIo=new IntersectionObserver(entries=>{
   entries.forEach(e=>{ if(e.isIntersecting){
     miniPopulate();
+    const evSel = document.getElementById('miniEvent');
+    if([...evSel.options].some(o=>o.value==='100 Freestyle')) evSel.value = '100 Freestyle';
     document.getElementById('miniMin').value = 0;
     document.getElementById('miniSec').value = 52;
     document.getElementById('miniMs').value = 34;
     miniCalc();
+    ptsIo.disconnect();
   }});
 },{threshold:.3});
 const pc=document.getElementById('ptsCard');if(pc)ptsIo.observe(pc);
-
-const convIo=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{ if(e.isIntersecting){
-    convPopulate();
-    document.getElementById('convMin').value = 1;
-    document.getElementById('convSec').value = 0;
-    document.getElementById('convMs').value = 0;
-    convCalc();
-  }});
-},{threshold:.3});
-const cc=document.getElementById('convCard');if(cc)convIo.observe(cc);
-
-document.querySelector('.lx-coach-form').addEventListener('submit',function(e){
-  e.preventDefault();
-  this.innerHTML='<p class="lx-coach-done">You\'re on the list.</p>';
-});
 })();
 </script>
 

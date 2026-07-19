@@ -13,6 +13,7 @@ NEW_COLUMNS = {
         ("login_locked_until", "DATETIME"),
         ("solo_paid", "BOOLEAN DEFAULT 0"),
         ("solo_paid_at", "DATETIME"),
+        ("is_minor", "BOOLEAN DEFAULT 0"),
     ],
     'swim': [
         ("tag", "VARCHAR(10) DEFAULT 'practice'"),
@@ -35,6 +36,7 @@ NEW_COLUMNS = {
     'session': [
         ("source", "VARCHAR(20) DEFAULT 'self'"),
         ("squad_event_id", "INTEGER"),
+        ("planned_session_id", "INTEGER"),
     ],
     'athlete_profile': [
         ("coaching_tone", "VARCHAR(20) DEFAULT 'balanced'"),

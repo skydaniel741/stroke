@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="chlorine">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invite a parent — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
+<style>
+[data-skin="chlorine"] .pi-nav{ display:flex; align-items:center; gap:14px; padding:20px 24px; }
+[data-skin="chlorine"] .pi-nav-back{ display:flex; align-items:center; gap:6px; font-weight:700; font-size:14px; color:var(--muted); }
+[data-skin="chlorine"] .pi-nav-back:hover{ color:var(--sig); }
+[data-skin="chlorine"] .pi-nav-logo{ font-weight:800; letter-spacing:.05em; font-size:18px; margin-left:auto; color:var(--ink); }
+[data-skin="chlorine"] .pi-wrap{ max-width:680px; margin:0 auto; padding:12px 24px 90px; }
+[data-skin="chlorine"] .pi-h1{ font-size:30px; font-weight:800; letter-spacing:-.02em; margin-bottom:6px; }
+[data-skin="chlorine"] .pi-sub{ color:var(--muted); font-size:14.5px; margin-bottom:26px; line-height:1.6; }
+[data-skin="chlorine"] .pi-link-row{ display:flex; align-items:center; gap:12px; padding:16px 18px; border-radius:var(--r-md); background:var(--panel); border:1px solid var(--line); margin-bottom:12px; }
+[data-skin="chlorine"] .pi-link-info{ flex:1; min-width:0; }
+[data-skin="chlorine"] .pi-link-url{ font-size:13px; color:var(--sig); font-weight:600; word-break:break-all; }
+[data-skin="chlorine"] .pi-link-meta{ font-size:12.5px; color:var(--faint); margin-top:4px; }
+[data-skin="chlorine"] .pi-badge{ font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:3px 10px; border-radius:var(--r-pill); white-space:nowrap; }
+[data-skin="chlorine"] .pi-badge.pending{ color:var(--warn); background:var(--warn-dim); }
+[data-skin="chlorine"] .pi-badge.active{ color:var(--pb); background:var(--pb-dim); }
+[data-skin="chlorine"] .pi-badge.revoked{ color:var(--faint); background:var(--raised); }
+[data-skin="chlorine"] .pi-revoke{ font-size:12.5px; font-weight:700; color:var(--err); white-space:nowrap; }
+[data-skin="chlorine"] .pi-empty{ color:var(--muted); font-size:14px; padding:20px 0; }
+</style>
+</head>
+<body>
+
+<nav class="pi-nav">
+  <a href="/dashboard" class="pi-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <span class="pi-nav-logo">STROKE</span>
+</nav>
+
+<div class="pi-wrap">
+  <h1 class="pi-h1">Invite a parent</h1>
+  <p class="pi-sub">Generate a link and send it to a parent or guardian. They'll get a read-only view of your times, personal bests, attendance and how training is landing — no editing, no access to the rest of your account.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <form method="POST" style="margin-bottom:26px">
+    <button type="submit" class="cx-cta" style="border:none">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Generate invite link
+    </button>
+  </form>
+
+  {% if links %}
+    {% for link in links %}
+    <div class="pi-link-row">
+      <div class="pi-link-info">
+        {% if link.status == 'active' %}
+          <div class="pi-link-url">Linked to {{ link.parent.username if link.parent else 'a parent account' }}</div>
+        {% else %}
+          <div class="pi-link-url">{{ request.url_root.rstrip('/') }}/parent/join/{{ link.invite_token }}</div>
+        {% endif %}
+        <div class="pi-link-meta">Created {{ link.created_at.strftime('%d %b %Y') }}{% if link.claimed_at %} · linked {{ link.claimed_at.strftime('%d %b %Y') }}{% endif %}</div>
+      </div>
+      <span class="pi-badge {{ link.status }}">{{ link.status }}</span>
+      {% if link.status != 'revoked' %}
+      <form method="POST" action="/parent/invite/{{ link.id }}/revoke">
+        <button type="submit" class="pi-revoke">Revoke</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="pi-empty">No invites yet — generate one above to get started.</p>
+  {% endif %}
+</div>
+
+</body>
+</html>

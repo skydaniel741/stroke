@@ -17,36 +17,36 @@
         page CSS and inline <style> (0,1,0), so no !important needed.
 
    Colour roles (see chlorine.css):
-     --sig teal   interactive + your data      --pb green  improvement
-     --coach cyan the AI coach                 --warn amber caution
-     --err rose   error/destructive
+     --sig blue   interactive + your data      --pb green  improvement
+     --coach light blue the AI coach           --warn amber caution
+     --err coral  error/destructive
    ============================================================ */
 
 /* ---------- 1. PALETTE TOKENS (self-contained) ---------- */
 [data-skin="chlorine"]{
   /* chlorine base */
-  --base:#0b0f0e; --panel:#121917; --panel-2:#0e1413; --raised:#1a2320;
-  --ink:#e9f5f0; --muted:#93aaa2; --faint:#63756e;
-  --sig:#1fe0ae; --sig-ink:#04120d; --sig-dim:rgba(31,224,174,.14); --sig-line:rgba(31,224,174,.40);
+  --base:#080b14; --panel:#111c30; --panel-2:#0d1524; --raised:#16263f;
+  --ink:#eaf1fb; --muted:#92a4bd; --faint:#5e6d84;
+  --sig:#2f7be0; --sig-ink:#04101c; --sig-dim:rgba(47,123,224,.14); --sig-line:rgba(47,123,224,.40);
   --pb:#5cff9e; --pb-dim:rgba(92,255,158,.14);
-  --coach:#4fd6e6; --coach-dim:rgba(79,214,230,.15);
+  --coach:#7cc4ff; --coach-dim:rgba(124,196,255,.15);
   --warn:#ffc233; --warn-dim:rgba(255,194,51,.14);
-  --err:#ff556b; --err-dim:rgba(255,85,107,.14);
+  --err:#ff6f61; --err-dim:rgba(255,111,97,.14);
 
   /* remap legacy main.css tokens -> chlorine */
-  --paper:#0b0f0e; --paper-warm:#0e1413;
-  --surface:#121917; --surface-2:#1a2320; --surface-3:#1a2320;
-  --ink-soft:#93aaa2; --ink-faint:#63756e;
-  --line:rgba(126,168,156,.15); --line-soft:rgba(126,168,156,.09);
-  --blue:#1fe0ae; --blue-600:#5cff9e; --blue-tint:rgba(31,224,174,.14);
-  --lav:#4fd6e6; --lav-600:#3bbccb; --lav-tint:rgba(79,214,230,.14);
+  --paper:#080b14; --paper-warm:#0d1524;
+  --surface:#111c30; --surface-2:#16263f; --surface-3:#16263f;
+  --ink-soft:#92a4bd; --ink-faint:#5e6d84;
+  --line:rgba(140,165,200,.15); --line-soft:rgba(140,165,200,.09);
+  --blue:#2f7be0; --blue-600:#5cff9e; --blue-tint:rgba(47,123,224,.14);
+  --lav:#7cc4ff; --lav-600:#5fa8e6; --lav-tint:rgba(124,196,255,.14);
   --peach:#ffc233; --peach-600:#e0a521; --peach-tint:rgba(255,194,51,.14);
   --mint:#5cff9e; --mint-600:#3bd07a; --mint-tint:rgba(92,255,158,.14);
   --butter:#ffc233; --butter-tint:rgba(255,194,51,.14);
-  --accent:#1fe0ae; --accent-600:#5cff9e; --accent-soft:rgba(31,224,174,.40); --accent-tint:rgba(31,224,174,.12);
+  --accent:#2f7be0; --accent-600:#5cff9e; --accent-soft:rgba(47,123,224,.40); --accent-tint:rgba(47,123,224,.12);
   --good:#5cff9e; --good-tint:rgba(92,255,158,.14);
   --warn-tint:rgba(255,194,51,.14);
-  --bad:#ff556b; --bad-tint:rgba(255,85,107,.14);
+  --bad:#ff6f61; --bad-tint:rgba(255,111,97,.14);
 }
 
 /* ---------- canvas ---------- */

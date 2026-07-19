@@ -20,8 +20,8 @@
         </div>
         <div class="cx-auth-statement">
             <div class="cx-auth-tag"><span class="rule"></span>Free forever</div>
-            <h2 style="margin-top:14px">The last logbook you'll leave <em>on the deck.</em></h2>
-            <p>Log a swim in five seconds, wet fingers and all. Then watch a whole season of times, splits and points stack up in one place.</p>
+            <h2 style="margin-top:14px" id="authHeadline">The last logbook you'll leave <em>on the deck.</em></h2>
+            <p id="authSub">Log a swim in five seconds, wet fingers and all. Then watch a whole season of times, splits and points stack up in one place.</p>
         </div>
         <div class="cx-auth-tag" style="color:var(--faint)">No credit card needed</div>
     </aside>
@@ -54,6 +54,11 @@
                         </button>
                     </div>
                 </div>
+                <label class="cx-remember" style="margin-bottom:20px">
+                    <input type="checkbox" name="as_coach" id="asCoach" value="1">
+                    <span class="cx-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                    <span class="cx-remember-lbl">I'm a coach setting up a squad</span>
+                </label>
                 <button type="submit" class="cx-btn-primary">Create account</button>
             </form>
 
@@ -64,6 +69,14 @@
 </div>
 
 <script>
+    (function(){
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('as') === 'coach') {
+            document.getElementById('asCoach').checked = true;
+            document.getElementById('authHeadline').innerHTML = 'Run your squad without the <em>notebook.</em>';
+            document.getElementById('authSub').textContent = 'Roster, attendance, sets and times in one place — take attendance and it logs the set for everyone present.';
+        }
+    })();
     const pwInput = document.getElementById('passwordInput');
     const pwToggle = document.getElementById('pwToggle');
     const eyeOpen = document.getElementById('eyeOpen');

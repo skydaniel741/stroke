@@ -1,12 +1,18 @@
 /* ============================================================
    COACH SECTION SHELL
    Sidebar + header shell shared by every coach-facing page.
+   Rethemed onto the CHLORINE light-variant tokens (2026) so the
+   coach surface matches coach_pro.html and the swimmer app:
+     navy ink/shell  #0c1626
+     sig blue accent #1f63c9  (white ink on it)
+     cool base       #eef2fb
+     light line      #dce3f0
    ============================================================ */
 
 .coach-shell {
   display: flex;
   min-height: 100vh;
-  background: #f4f6fd;
+  background: #eef2fb;
 }
 
 /* ---------- MOBILE TOPBAR ---------- */
@@ -17,14 +23,14 @@
 .coach-menu-btn {
   width: 38px;
   height: 38px;
-  border: 1px solid #e4e8f4;
+  border: 1px solid #dce3f0;
   border-radius: 10px;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #2c2942;
+  color: #0c1626;
   flex-shrink: 0;
 }
 
@@ -32,11 +38,11 @@
   font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 20px;
   letter-spacing: -0.01em;
-  color: #2c2942;
+  color: #0c1626;
 }
 
 .coach-topbar-logo span {
-  color: #6f7fe0;
+  color: #1f63c9;
 }
 
 .coach-sidebar-backdrop {
@@ -47,7 +53,7 @@
 .coach-sidebar {
   width: 264px;
   flex-shrink: 0;
-  background: #2c2942;
+  background: #0c1626;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -60,7 +66,7 @@
 
 .coach-sidebar-head {
   padding: 26px 22px 20px;
-  border-bottom: 2px solid #37344c;
+  border-bottom: 1px solid #223052;
 }
 
 .coach-logo {
@@ -68,7 +74,7 @@
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #c8d5f6;
+  color: #9ec2f2;
   text-decoration: none;
   display: block;
 }
@@ -79,7 +85,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #8b87a3;
+  color: #6e7d99;
   margin-top: 4px;
 }
 
@@ -99,7 +105,7 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6a6683;
+  color: #566484;
   margin: 0;
 }
 
@@ -109,7 +115,7 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  color: #cfcfcf;
+  color: #aeb9cd;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -133,7 +139,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #595571;
+  background: #48577a;
   flex-shrink: 0;
   margin-left: 3px;
   transition: background 0.15s;
@@ -146,23 +152,23 @@
 }
 
 .coach-nav-link:hover {
-  background: #1e1e1e;
+  background: #16213a;
   color: #ffffff;
 }
 
 .coach-nav-link.active {
-  background: #c8d5f6;
-  color: #2c2942;
+  background: #1f63c9;
+  color: #ffffff;
 }
 
 .coach-nav-link.active .coach-nav-dot {
-  background: #2c2942;
+  background: #ffffff;
 }
 
 .coach-subnav {
   margin: 2px 0 10px 25px;
   padding-left: 12px;
-  border-left: 2px solid #37344c;
+  border-left: 1px solid #223052;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -173,7 +179,7 @@
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #9a96b0;
+  color: #8391ab;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
@@ -183,13 +189,13 @@
 }
 
 .coach-subnav-link.active {
-  background: #2a2a38;
-  color: #c8d5f6;
+  background: #17223c;
+  color: #9ec2f2;
 }
 
 .coach-sidebar-foot {
   padding: 16px;
-  border-top: 2px solid #37344c;
+  border-top: 1px solid #223052;
 }
 
 .coach-user {
@@ -203,8 +209,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #c8d5f6;
-  color: #2c2942;
+  background: #1f63c9;
+  color: #ffffff;
   font-family: 'Schibsted Grotesk', sans-serif;
   font-size: 16px;
   font-weight: 700;
@@ -232,7 +238,7 @@
 .coach-user-tag {
   font-size: 10px;
   font-weight: 700;
-  color: #6f7fe0;
+  color: #7cc4ff;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -243,7 +249,7 @@
   gap: 8px;
   font-size: 12px;
   font-weight: 700;
-  color: #9a96b0;
+  color: #8391ab;
   text-decoration: none;
   padding: 8px 4px;
   transition: color 0.15s;
@@ -260,11 +266,11 @@
 }
 
 .coach-logout-link {
-  color: #e08a8a;
+  color: #e88a80;
 }
 
 .coach-logout-link:hover {
-  color: #ef7d6a;
+  color: #ff6f61;
 }
 
 /* ---------- MAIN AREA ---------- */
@@ -289,7 +295,7 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6f7fe0;
+  color: #1f63c9;
   margin: 0 0 6px;
 }
 
@@ -298,13 +304,13 @@
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #2c2942;
+  color: #0c1626;
   margin: 0;
 }
 
 .coach-header-sub {
   font-size: 13px;
-  color: #6a6683;
+  color: #56637d;
   margin: 6px 0 0;
 }
 
@@ -328,10 +334,10 @@
   align-items: center;
   gap: 8px;
   padding: 11px 18px;
-  border: 1px solid #e4e8f4;
+  border: 1px solid #dce3f0;
   border-radius: 10px;
   background: #ffffff;
-  color: #2c2942;
+  color: #0c1626;
   font-size: 12.5px;
   font-weight: 800;
   text-transform: uppercase;
@@ -343,11 +349,13 @@
 
 .coach-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 26px rgba(58,66,120,.10);
+  box-shadow: 0 10px 26px rgba(12,22,38,.12);
 }
 
 .coach-btn-primary {
-  background: #c8d5f6;
+  background: #1f63c9;
+  border-color: #1f63c9;
+  color: #ffffff;
 }
 
 .coach-card-link {
@@ -355,19 +363,19 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  border: 1px solid #e4e8f4;
+  border: 1px solid #dce3f0;
   border-radius: 16px;
   padding: 18px 20px;
   margin-bottom: 12px;
   text-decoration: none;
-  color: #2c2942;
+  color: #0c1626;
   background: #ffffff;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .coach-card-link:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 26px rgba(58,66,120,.10);
+  box-shadow: 0 10px 26px rgba(12,22,38,.12);
 }
 
 .coach-card-name {
@@ -377,7 +385,7 @@
 
 .coach-card-meta {
   font-size: 12px;
-  color: #8b87a3;
+  color: #7986a0;
   margin-top: 4px;
 }
 
@@ -394,7 +402,7 @@
     gap: 14px;
     padding: 14px 18px;
     background: #ffffff;
-    border-bottom: 1px solid #e4e8f4;
+    border-bottom: 1px solid #dce3f0;
     position: sticky;
     top: 0;
     z-index: 500;
@@ -422,7 +430,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(17,17,17,0.45);
+    background: rgba(8,11,20,0.55);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease;

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="chlorine">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ ps.title }} — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+  .pl-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .pl-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--ink);text-decoration:none;}
+  .pl-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:var(--muted);text-decoration:none;}
+  .pl-nav-logout:hover{color:var(--ink);}
+  .pl-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:var(--ink);text-decoration:none;}
+  .pl-wrap{max-width:680px;margin:0 auto;padding:16px 20px 90px;}
+  .pl-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--sig);margin-bottom:8px;}
+  .pl-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:28px;letter-spacing:-0.01em;margin:0 0 6px;color:var(--ink);}
+  .pl-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:18px;}
+  .pl-status{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:var(--r-pill);}
+  .pl-status.planned{background:var(--sig-dim);color:var(--sig);}
+  .pl-status.completed{background:var(--pb-dim);color:var(--pb);}
+  .pl-status.missed{background:var(--raised);color:var(--faint);}
+  .pl-status.skipped{background:var(--raised);color:var(--faint);}
+
+  .pl-section{margin-bottom:16px;}
+  .pl-section-name{font-family:'Schibsted Grotesk',sans-serif;font-size:15px;font-weight:700;margin:0 0 8px;color:var(--ink);}
+  .pl-blocks{display:flex;flex-direction:column;gap:6px;}
+  .pl-block{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:13px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);}
+  .pl-block-txt{font-weight:700;color:var(--ink);}
+  .pl-block-note{display:block;font-weight:500;color:var(--muted);font-size:12px;margin-top:2px;line-height:1.4;}
+  .pl-block-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+  .pl-block-rest{font-size:11.5px;font-weight:800;color:var(--sig);white-space:nowrap;}
+  .pl-zone-chip{font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:var(--r-pill);}
+  .pl-zone-chip.recovery{background:var(--panel-2);color:var(--muted);border:1px solid var(--line-soft);}
+  .pl-zone-chip.endurance{background:var(--sig-dim);color:var(--sig);}
+  .pl-zone-chip.tempo{background:rgba(31,224,174,.26);color:var(--ink);}
+  .pl-zone-chip.threshold{background:var(--sig);color:var(--sig-ink);}
+  .pl-zone-chip.vo2max{background:var(--coach-dim);color:var(--coach);}
+  .pl-zone-chip.max{background:var(--warn-dim);color:var(--warn);}
+
+  .pl-total{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--ink);padding:12px 4px 0;border-top:1px solid var(--line);margin-top:18px;}
+
+  .pl-actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;}
+  .pl-btn{padding:12px 18px;border:1px solid var(--line);border-radius:var(--r-sm);font-weight:700;font-size:13px;text-decoration:none;color:var(--ink);background:var(--panel);font-family:inherit;cursor:pointer;}
+  .pl-btn:hover{border-color:var(--sig-line);}
+  .pl-btn-primary{background:var(--sig);color:var(--sig-ink);border-color:var(--sig);}
+  .pl-btn-primary:hover{filter:brightness(1.08);}
+</style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_pages.css') }}">
+</head>
+<body>
+
+<nav class="pl-nav">
+  <a href="/solo/plan" class="pl-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Your plan
+  </a>
+  <a href="/logout" class="pl-nav-logout">Log out</a>
+  <a href="/" class="pl-nav-logo">STROKE</a>
+</nav>
+
+{% set stroke_names = {'FR':'Free','BK':'Back','BR':'Breast','FL':'Fly','IM':'IM'} %}
+
+<div class="pl-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <p class="pl-eyebrow">Week {{ ps.week_index + 1 }} · {{ ps.phase|capitalize }}{{ ' · deload' if ps.is_deload }}</p>
+  <h1 class="pl-h1">{{ ps.title }}</h1>
+  <div class="pl-meta">
+    <span>{{ weekday_names[ps.scheduled_date.weekday()] }} {{ ps.scheduled_date.strftime('%d %b') }}</span>
+    <span>·</span>
+    <span class="num">{{ '{:,}'.format(ps.target_meters or 0) }}m</span>
+    <span class="pl-status {{ ps.status }}">{{ ps.status }}</span>
+  </div>
+
+  {% for sec in sections %}
+  <div class="pl-section">
+    <h2 class="pl-section-name">{{ sec.name }}</h2>
+    <div class="pl-blocks">
+      {% for b in sec.blocks %}
+      <div class="pl-block">
+        <div>
+          <span class="pl-block-txt num">
+            {% if b.round_reps and b.round_reps > 1 %}{{ b.round_reps }}x rounds of {% endif %}{{ b.reps }}x{{ b.dist }}
+            {{ b.modifier if b.modifier else stroke_names.get(b.stroke, b.stroke) }}
+          </span>
+          {% if b.note %}<span class="pl-block-note">{{ b.note }}</span>{% endif %}
+        </div>
+        <div class="pl-block-right">
+          {% if b.rest %}
+          <span class="pl-block-rest num">{{ 'on' if b.rest_type == 'interval' else 'rest' }} {{ b.rest }}</span>
+          {% endif %}
+          {% if b.zone %}<span class="pl-zone-chip {{ b.zone }}">{{ b.zone }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="pl-total num"><span>Total</span><span>{{ '{:,}'.format(ps.total_distance()) }}m</span></div>
+
+  <div class="pl-actions">
+    {% if ps.status in ('planned', 'missed') %}
+    <form method="POST" action="/solo/plan/session/{{ ps.id }}/complete" style="display:inline">
+      <button type="submit" class="pl-btn pl-btn-primary">Mark as done</button>
+    </form>
+    {% endif %}
+    <a class="pl-btn" href="/log">Log this session</a>
+  </div>
+</div>
+
+</body>
+</html>

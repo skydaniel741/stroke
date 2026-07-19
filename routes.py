@@ -102,7 +102,8 @@ def signup():
             flash('That username is taken.', 'error')
             return redirect(url_for('main.signup'))
 
-        user = User(email=email, username=username)
+        as_coach = bool(request.form.get('as_coach'))
+        user = User(email=email, username=username, role='coach' if as_coach else 'swimmer')
         user.set_password(password)
         code = user.generate_verify_code()
         db.session.add(user)
@@ -153,6 +154,10 @@ def verify():
             db.session.commit()
             login_user(user)
             flash('Email verified. Welcome to STROKE!', 'success')
+            if user.role == 'coach':
+                return redirect(url_for('coach.coach_dashboard'))
+            if user.role == 'parent':
+                return redirect(url_for('parent.parent_dashboard'))
             return redirect(url_for('main.dashboard'))
         else:
             user.verify_attempts = (user.verify_attempts or 0) + 1
@@ -213,6 +218,8 @@ def login():
                 return redirect(url_for('main.admin_dashboard'))
             if user.role == 'coach':
                 return redirect(url_for('coach.coach_dashboard'))
+            if user.role == 'parent':
+                return redirect(url_for('parent.parent_dashboard'))
             return redirect(url_for('main.dashboard'))
         else:
             user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
@@ -304,6 +311,8 @@ def oauth_callback(provider):
         return redirect(url_for('main.admin_dashboard'))
     if user.role == 'coach':
         return redirect(url_for('coach.coach_dashboard'))
+    if user.role == 'parent':
+        return redirect(url_for('parent.parent_dashboard'))
     return redirect(url_for('main.dashboard'))
 
 
@@ -320,9 +329,11 @@ def dashboard():
     from models import Swim, Session, Announcement, SquadMembership, AthleteProfile, SquadEvent, Squad
     from datetime import timedelta
 
-    # Coaches live on the coach side — keep coach accounts there (admins keep full access).
+    # Coaches and parents live on their own side — keep them there (admins keep full access).
     if current_user.role == 'coach' and not current_user.is_admin:
         return redirect(url_for('coach.coach_dashboard'))
+    if current_user.role == 'parent' and not current_user.is_admin:
+        return redirect(url_for('parent.parent_dashboard'))
 
     needs_ai_onboarding = False
     todays_program = None
@@ -600,7 +611,16 @@ def log():
             db.session.add(session)
             db.session.commit()
             athlete_model.update_athlete_state(current_user.id)
-            flash('Session logged!', 'success')
+            # If this session lands on (or next to) a training-plan day, tick
+            # that plan session off. Best effort -- logging must never break.
+            try:
+                import plan_logic
+                if plan_logic.link_completed(current_user.id, session):
+                    flash('Session logged — plan workout ticked off!', 'success')
+                else:
+                    flash('Session logged!', 'success')
+            except Exception:
+                flash('Session logged!', 'success')
 
         return redirect(url_for('main.dashboard'))
 

@@ -653,6 +653,31 @@ function cpRenderAI() {
     </div>`;
 }
 
+/* Family cell: lets a coach flag a swimmer as a minor and generate a
+   read-only parent-view invite link for them -- no account needed on the
+   swimmer's side for the coach to do this, but the invite itself only
+   works once the swimmer has a STROKE account (userId set). */
+function cpFamilyCell(swimmer) {
+  if (!swimmer.membershipId || !swimmer.userId) {
+    return '<span class="text-slate-300 text-[10px] italic">Invite swimmer first</span>';
+  }
+  const minorBadge = `
+    <button data-action="cp-toggle-minor" data-membership-id="${swimmer.membershipId}"
+      class="text-[9px] font-semibold px-1.5 py-0.5 rounded border transition ${swimmer.isMinor ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'}"
+      title="${swimmer.isMinor ? 'Marked as a minor — click to unmark' : 'Mark as a minor'}">${swimmer.isMinor ? 'Minor' : 'Mark minor'}</button>`;
+
+  let parentBit;
+  if (swimmer.parentStatus === 'active') {
+    parentBit = `<span class="text-[10px] text-emerald-600 font-medium">Parent: ${cpEsc(swimmer.parentName || '')}</span>`;
+  } else if (swimmer.parentStatus === 'pending') {
+    parentBit = `<button data-action="cp-invite-parent" data-membership-id="${swimmer.membershipId}" class="text-[10px] text-amber-600 hover:text-amber-800 font-medium underline decoration-dotted" title="Pending — click to generate a fresh link">Invite pending</button>`;
+  } else {
+    parentBit = `<button data-action="cp-invite-parent" data-membership-id="${swimmer.membershipId}" class="text-[10px] text-brand-600 hover:text-brand-800 font-medium">+ Invite parent</button>`;
+  }
+
+  return `<div class="flex flex-col items-start gap-1">${minorBadge}${parentBit}</div>`;
+}
+
 /* ================= TAB 2: ROSTER MANAGER (real squads/memberships) ================= */
 
 function cpRenderRoster() {
@@ -738,6 +763,7 @@ function cpRenderRoster() {
         <td class="px-4 py-3.5 text-center font-mono text-slate-600">${(swimmer.totalDistance || 0).toLocaleString()}m</td>
         <td class="px-4 py-3.5 text-center">${swimmer.attendanceRate == null ? '<span class="text-slate-300">—</span>' : `<span class="font-mono font-bold ${swimmer.attendanceRate >= 80 ? 'text-emerald-600' : swimmer.attendanceRate >= 50 ? 'text-amber-600' : 'text-rose-600'}">${swimmer.attendanceRate}%</span>`}</td>
         <td class="px-4 py-3.5 text-slate-500">${swimmer.lastActive || '—'}</td>
+        <td class="px-4 py-3.5">${cpFamilyCell(swimmer)}</td>
         <td class="px-4 py-3.5 text-center">
           <div class="flex items-center justify-center gap-3">
             <select data-action="cp-reassign-squad" data-membership-id="${swimmer.membershipId}" class="text-[10px] bg-slate-100 border-none hover:bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-medium focus:outline-hidden">
@@ -794,6 +820,7 @@ function cpRenderRoster() {
                   <th class="px-4 py-3 font-semibold text-center">Distance</th>
                   <th class="px-4 py-3 font-semibold text-center">Attendance</th>
                   <th class="px-4 py-3 font-semibold">Last Active</th>
+                  <th class="px-4 py-3 font-semibold">Family</th>
                   <th class="px-4 py-3 font-semibold text-center">Reassign / Remove</th>
                 </tr>
               </thead>
@@ -1426,6 +1453,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const id = el.dataset.membershipId;
       await cpApi(`/coach/pro/api/memberships/${id}/remove`, { method: 'POST' });
       await cpRefresh();
+    } else if (action === 'cp-toggle-minor') {
+      const id = el.dataset.membershipId;
+      await cpApi(`/coach/pro/api/memberships/${id}/toggle-minor`, { method: 'POST' });
+      await cpRefresh();
+    } else if (action === 'cp-invite-parent') {
+      const id = el.dataset.membershipId;
+      const data = await cpApi(`/coach/pro/api/memberships/${id}/invite-parent`, { method: 'POST' });
+      await cpRefresh();
+      if (data && data.inviteUrl) {
+        const fullUrl = window.location.origin + data.inviteUrl;
+        try { await navigator.clipboard.writeText(fullUrl); alert('Parent invite link copied — paste it into an email or text:\n\n' + fullUrl); }
+        catch (e) { prompt('Parent invite link — copy and send it to the parent:', fullUrl); }
+      }
     }
 
     // Builder

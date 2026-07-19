@@ -1,36 +1,36 @@
 /* ============================================================
    CHLORINE — STROKE redesign system (2026)
-   A near-black "timing console" identity: acid teal-green on a
+   A near-black "timing console" identity: blue + coral on a
    cool near-black base, with a light-ground variant for daytime.
    Self-contained: only pages with <html data-skin="chlorine">
    pick this up, so legacy/coach pages are untouched.
 
    Colour is semantic, never decorative:
-     --sig   teal   = interactive + your live data
+     --sig   blue   = interactive + your live data
      --pb    green  = personal best / improvement / rare neg split
-     --coach cyan   = the AI coach's voice
+     --coach light blue = the AI coach's voice
      --warn  amber  = caution (never a normal positive split)
-     --err   rose   = error / destructive
+     --err   coral  = error / destructive
    Single typeface: Schibsted Grotesk. No emoji — Lucide icons only.
    ============================================================ */
 
 /* ---------- DARK (default) ---------- */
 [data-skin="chlorine"]{
-  --base:#0b0f0e;
-  --panel:#121917;
-  --panel-2:#0e1413;
-  --raised:#1a2320;
-  --line:rgba(126,168,156,.15);
-  --line-soft:rgba(126,168,156,.09);
-  --ink:#e9f5f0;
-  --muted:#93aaa2;
-  --faint:#63756e;
+  --base:#080b14;
+  --panel:#111c30;
+  --panel-2:#0d1524;
+  --raised:#16263f;
+  --line:rgba(140,165,200,.15);
+  --line-soft:rgba(140,165,200,.09);
+  --ink:#eaf1fb;
+  --muted:#92a4bd;
+  --faint:#5e6d84;
 
-  --sig:#1fe0ae;      --sig-ink:#04120d;  --sig-dim:rgba(31,224,174,.14); --sig-line:rgba(31,224,174,.40);
+  --sig:#2f7be0;      --sig-ink:#04101c;  --sig-dim:rgba(47,123,224,.14); --sig-line:rgba(47,123,224,.40);
   --pb:#5cff9e;       --pb-dim:rgba(92,255,158,.14);
-  --coach:#4fd6e6;    --coach-dim:rgba(79,214,230,.15);
+  --coach:#7cc4ff;    --coach-dim:rgba(124,196,255,.15);
   --warn:#ffc233;     --warn-dim:rgba(255,194,51,.14);
-  --err:#ff556b;      --err-dim:rgba(255,85,107,.14);
+  --err:#ff6f61;      --err-dim:rgba(255,111,97,.14);
 
   --r-sm:10px; --r-md:16px; --r-lg:22px; --r-pill:999px;
   --rail-w:72px;
@@ -39,21 +39,21 @@
 
 /* ---------- LIGHT variant (toggle) ---------- */
 [data-skin="chlorine"][data-theme="light"]{
-  --base:#eef4f1;
+  --base:#eef2fb;
   --panel:#ffffff;
-  --panel-2:#f5f9f7;
-  --raised:#e6efeb;
-  --line:rgba(16,54,44,.13);
-  --line-soft:rgba(16,54,44,.07);
-  --ink:#0e1a16;
-  --muted:#465c54;
-  --faint:#7b8f88;
+  --panel-2:#f4f7fd;
+  --raised:#e4ebf7;
+  --line:rgba(30,52,90,.13);
+  --line-soft:rgba(30,52,90,.07);
+  --ink:#0c1626;
+  --muted:#48576e;
+  --faint:#7986a0;
 
-  --sig:#079e78;      --sig-ink:#ffffff;  --sig-dim:rgba(7,158,120,.12); --sig-line:rgba(7,158,120,.34);
+  --sig:#1f63c9;      --sig-ink:#ffffff;  --sig-dim:rgba(31,99,201,.12); --sig-line:rgba(31,99,201,.34);
   --pb:#0aa855;       --pb-dim:rgba(10,168,85,.12);
-  --coach:#0c93ac;    --coach-dim:rgba(12,147,172,.12);
+  --coach:#2f86d6;    --coach-dim:rgba(47,134,214,.12);
   --warn:#b9790a;     --warn-dim:rgba(185,121,10,.13);
-  --err:#d92a46;      --err-dim:rgba(217,42,70,.10);
+  --err:#e0483d;      --err-dim:rgba(224,72,61,.10);
 }
 
 /* ---------- reset / base ---------- */
@@ -105,7 +105,7 @@ html[data-skin="chlorine"]{ overflow-x:clip; }
 [data-skin="chlorine"] .cx-brand{
   width:40px; height:40px; border-radius:12px; display:grid; place-items:center; margin-bottom:10px;
   background:linear-gradient(150deg,var(--sig),var(--coach)); color:var(--sig-ink);
-  box-shadow:0 6px 18px rgba(31,224,174,.28);
+  box-shadow:0 6px 18px rgba(47,123,224,.28);
 }
 [data-skin="chlorine"] .cx-brand svg{ width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; }
 
@@ -175,9 +175,9 @@ html[data-skin="chlorine"]{ overflow-x:clip; }
 [data-skin="chlorine"] .cx-cta{
   display:inline-flex; align-items:center; gap:9px; padding:12px 18px; border-radius:var(--r-pill);
   background:var(--sig); color:var(--sig-ink); font-weight:750; font-size:14.5px;
-  box-shadow:0 8px 22px rgba(31,224,174,.26); transition:transform .15s, box-shadow .15s;
+  box-shadow:0 8px 22px rgba(47,123,224,.26); transition:transform .15s, box-shadow .15s;
 }
-[data-skin="chlorine"] .cx-cta:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(31,224,174,.34); }
+[data-skin="chlorine"] .cx-cta:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(47,123,224,.34); }
 [data-skin="chlorine"] .cx-cta svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
 
 /* ---------- alerts / banners ---------- */
@@ -366,8 +366,8 @@ html[data-skin="chlorine"]{ overflow-x:clip; }
 [data-skin="chlorine"] .cx-auth-brand{
   position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between;
   padding:clamp(28px,4vw,56px);
-  background:radial-gradient(700px 500px at 20% 0%, rgba(31,224,174,.16), transparent 60%),
-             radial-gradient(600px 500px at 90% 100%, rgba(79,214,230,.14), transparent 60%),
+  background:radial-gradient(700px 500px at 20% 0%, rgba(47,123,224,.16), transparent 60%),
+             radial-gradient(600px 500px at 90% 100%, rgba(124,196,255,.14), transparent 60%),
              var(--panel-2);
   border-right:1px solid var(--line);
 }

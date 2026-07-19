@@ -1037,3 +1037,217 @@ def leaderboard():
         rows=rows,
         opted_in=current_user.share_leaderboard,
     )
+
+
+# ===========================================================================
+# Training plans: multi-week, event-targeted, CSS-paced (see plan_logic.py).
+# Deterministic and separate from the AI weekly program at /solo/program.
+# ===========================================================================
+
+PLAN_EVENTS = [
+    '50m Freestyle', '100m Freestyle', '200m Freestyle', '400m Freestyle',
+    '800m Freestyle', '1500m Freestyle',
+    '50m Backstroke', '100m Backstroke', '200m Backstroke',
+    '50m Breaststroke', '100m Breaststroke', '200m Breaststroke',
+    '50m Butterfly', '100m Butterfly', '200m Butterfly',
+    '200m Individual Medley', '400m Individual Medley',
+]
+
+WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+
+def _active_plan():
+    from models import TrainingPlan
+    return TrainingPlan.query.filter_by(user_id=current_user.id, status='active').first()
+
+
+@solo.route('/plan')
+@login_required
+@solo_required
+def plan():
+    from datetime import date
+    import plan_logic
+    from models import PlannedSession, CssRecord
+    from swim_logic import fmt_time
+
+    tp = _active_plan()
+    if not tp:
+        return redirect(url_for('solo.plan_setup'))
+
+    plan_logic.sweep_missed(tp)
+
+    sessions = (PlannedSession.query.filter_by(plan_id=tp.id)
+                .order_by(PlannedSession.scheduled_date).all())
+    by_week = {}
+    for s in sessions:
+        by_week.setdefault(s.week_index, []).append(s)
+
+    today = date.today()
+    current_week = max(0, min((today - tp.start_date).days // 7, tp.weeks - 1))
+
+    css_rec = tp.css_record
+    zone_rows = []
+    if css_rec:
+        z = plan_logic.zones(css_rec.css_per_100)
+        for zone in ('recovery', 'endurance', 'tempo', 'threshold', 'vo2max'):
+            zone_rows.append({'zone': zone, 'pace': fmt_time(z[zone])})
+
+    weeks_left = None
+    if tp.race_date:
+        weeks_left = max(0, (tp.race_date - today).days // 7)
+
+    done = sum(1 for s in sessions if s.status == 'completed')
+
+    return render_template(
+        'solo_plan.html',
+        plan=tp, by_week=by_week, current_week=current_week, today=today,
+        phase_map=tp.get_phase_map(), css_rec=css_rec, zone_rows=zone_rows,
+        weeks_left=weeks_left, done_count=done, total_count=len(sessions),
+        weekday_names=WEEKDAY_NAMES,
+    )
+
+
+@solo.route('/plan/setup', methods=['GET', 'POST'])
+@login_required
+@solo_required
+def plan_setup():
+    from datetime import date, datetime as dt
+    import plan_logic
+    from models import AthleteProfile, Goal
+    from swim_logic import fmt_time
+    from validation import clean_int, clean_time
+
+    profile = AthleteProfile.query.filter_by(user_id=current_user.id).first()
+
+    if request.method == 'POST':
+        goal_event = request.form.get('goal_event') if request.form.get('goal_event') in PLAN_EVENTS else None
+        pool = request.form.get('pool') if request.form.get('pool') in ('25m', '50m') else '25m'
+        sessions_per_week = clean_int(request.form.get('sessions_per_week'), lo=1, hi=7) or 3
+        preferred_days = [d for d in (clean_int(x, lo=0, hi=6) for x in request.form.getlist('days'))
+                          if d is not None]
+
+        race_date = None
+        raw_date = (request.form.get('race_date') or '').strip()
+        if raw_date:
+            try:
+                race_date = dt.strptime(raw_date, '%Y-%m-%d').date()
+            except ValueError:
+                race_date = None
+            if race_date and race_date <= date.today():
+                flash('That race date is in the past — pick a future date or leave it blank.', 'error')
+                return redirect(url_for('solo.plan_setup'))
+
+        target_norm, _secs = clean_time(request.form.get('target_time'), key='goal_seconds')
+
+        try:
+            plan_logic.build_plan(
+                current_user.id, profile,
+                goal_event=goal_event, pool=pool, race_date=race_date,
+                target_time=target_norm, sessions_per_week=sessions_per_week,
+                preferred_days=preferred_days,
+            )
+        except ValueError as e:
+            flash(str(e), 'error')
+            return redirect(url_for('solo.plan_setup'))
+
+        flash('Your training plan is ready.', 'success')
+        return redirect(url_for('solo.plan'))
+
+    # GET: show what we already know so the form starts pre-filled.
+    s400, s200 = plan_logic.find_time_trials(current_user.id)
+    css_preview = None
+    if s400 and s200:
+        css = plan_logic.compute_css(s400.time_in_seconds(), s200.time_in_seconds())
+        if css:
+            css_preview = {'t400': s400.time, 't200': s200.time, 'css': fmt_time(css)}
+
+    latest_goal = (Goal.query.filter_by(user_id=current_user.id)
+                   .order_by(Goal.created_at.desc()).first())
+    existing = _active_plan()
+
+    return render_template(
+        'solo_plan_setup.html',
+        profile=profile, events=PLAN_EVENTS, css_preview=css_preview,
+        latest_goal=latest_goal, existing_plan=existing,
+        weekday_names=WEEKDAY_NAMES, today=date.today(),
+    )
+
+
+@solo.route('/plan/session/<int:ps_id>')
+@login_required
+@solo_required
+def plan_session(ps_id):
+    from models import PlannedSession
+    ps = PlannedSession.query.get_or_404(ps_id)
+    if ps.user_id != current_user.id:
+        abort(404)
+
+    blocks = ps.get_blocks()
+    sections = []
+    for b in blocks:
+        if not sections or sections[-1]['name'] != (b.get('section') or 'Main set'):
+            sections.append({'name': b.get('section') or 'Main set', 'blocks': []})
+        sections[-1]['blocks'].append(b)
+
+    return render_template('solo_plan_session.html', ps=ps, sections=sections,
+                           weekday_names=WEEKDAY_NAMES)
+
+
+@solo.route('/plan/session/<int:ps_id>/complete', methods=['POST'])
+@login_required
+@solo_required
+def plan_session_complete(ps_id):
+    from app import db
+    from models import PlannedSession
+    ps = PlannedSession.query.get_or_404(ps_id)
+    if ps.user_id != current_user.id:
+        abort(404)
+    if ps.status in ('planned', 'missed'):
+        ps.status = 'completed'
+        ps.completed_at = datetime.utcnow()
+        db.session.commit()
+        flash('Nice work — session ticked off.', 'success')
+    return redirect(url_for('solo.plan'))
+
+
+@solo.route('/plan/css', methods=['POST'])
+@login_required
+@solo_required
+def plan_css():
+    from app import db
+    import plan_logic
+    from models import CssRecord
+    from validation import clean_time
+
+    _norm400, t400 = clean_time(request.form.get('t400'))
+    _norm200, t200 = clean_time(request.form.get('t200'))
+    css = plan_logic.compute_css(t400, t200)
+    if css is None:
+        flash("Those times don't work as a CSS test pair — check the 400 and 200 and try again.", 'error')
+        return redirect(url_for('solo.plan'))
+
+    tp = _active_plan()
+    rec = CssRecord(user_id=current_user.id, t400_seconds=t400, t200_seconds=t200,
+                    css_per_100=css, source='manual', pool=(tp.pool if tp else '25m'))
+    db.session.add(rec)
+    db.session.commit()
+
+    if tp:
+        n = plan_logic.rebuild_future_sessions(tp, rec)
+        flash(f'CSS updated — pace targets refreshed for {n} upcoming sessions.', 'success')
+    else:
+        flash('CSS saved.', 'success')
+    return redirect(url_for('solo.plan'))
+
+
+@solo.route('/plan/abandon', methods=['POST'])
+@login_required
+@solo_required
+def plan_abandon():
+    from app import db
+    tp = _active_plan()
+    if tp:
+        tp.status = 'abandoned'
+        db.session.commit()
+        flash('Plan closed. Build a new one whenever you are ready.', 'success')
+    return redirect(url_for('solo.plan_setup'))

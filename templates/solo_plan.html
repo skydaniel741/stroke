@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="chlorine">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your plan — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+  .pl-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .pl-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--ink);text-decoration:none;}
+  .pl-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:var(--muted);text-decoration:none;}
+  .pl-nav-logout:hover{color:var(--ink);}
+  .pl-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:var(--ink);text-decoration:none;}
+  .pl-wrap{max-width:860px;margin:0 auto;padding:16px 20px 90px;}
+  .pl-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--sig);margin-bottom:8px;}
+  .pl-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;letter-spacing:-0.01em;margin:0 0 12px;color:var(--ink);}
+  .pl-section-label{font-family:'Schibsted Grotesk',sans-serif;font-size:18px;letter-spacing:-0.01em;margin:26px 0 12px;color:var(--ink);}
+
+  .pl-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+  .pl-stat{border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;background:var(--panel);}
+  .pl-stat-num{font-size:22px;font-weight:800;line-height:1.1;color:var(--ink);}
+  .pl-stat-lbl{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:2px;}
+
+  /* phase bar */
+  .pl-phasebar{display:flex;gap:3px;margin-bottom:6px;}
+  .pl-phase-seg{flex:1;height:26px;border-radius:6px;position:relative;display:flex;align-items:center;justify-content:center;}
+  .pl-phase-seg.base{background:var(--sig-dim);}
+  .pl-phase-seg.build{background:rgba(31,224,174,.34);}
+  .pl-phase-seg.taper{background:var(--warn-dim);}
+  .pl-phase-seg.deload::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--ink);opacity:.6;}
+  .pl-phase-seg.current{outline:2px solid var(--sig);outline-offset:1px;z-index:1;}
+  .pl-phase-seg span{font-size:9px;font-weight:800;color:var(--ink);opacity:.7;}
+  .pl-phase-legend{display:flex;gap:14px;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:22px;flex-wrap:wrap;}
+  .pl-phase-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;font-style:normal;}
+
+  /* CSS zone card */
+  .pl-css-card{border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel);padding:16px 18px;margin-bottom:8px;}
+  .pl-css-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .pl-css-pace{font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:800;color:var(--sig);}
+  .pl-css-pace span{font-size:13px;font-weight:700;color:var(--muted);}
+  .pl-css-src{font-size:11px;font-weight:700;color:var(--faint);}
+  .pl-zones{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+  @media(max-width:640px){.pl-zones{grid-template-columns:repeat(2,1fr);}}
+  .pl-zone{border-radius:var(--r-sm);padding:8px 6px;text-align:center;border:1px solid var(--line-soft);}
+  .pl-zone-name{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;opacity:.8;}
+  .pl-zone-pace{font-size:14px;font-weight:800;margin-top:2px;}
+  .pl-zone.recovery{background:var(--panel-2);color:var(--muted);}
+  .pl-zone.endurance{background:var(--sig-dim);color:var(--ink);}
+  .pl-zone.tempo{background:rgba(31,224,174,.26);color:var(--ink);}
+  .pl-zone.threshold{background:var(--sig);color:var(--sig-ink);border-color:var(--sig);}
+  .pl-zone.vo2max{background:var(--coach-dim);color:var(--coach);}
+  .pl-css-note{font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.5;}
+
+  .pl-css-form{display:flex;gap:8px;align-items:flex-end;margin:12px 0 22px;flex-wrap:wrap;}
+  .pl-css-form label{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:4px;}
+  .pl-css-form input{width:110px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--panel);color:var(--ink);}
+  .pl-css-form input:focus{outline:none;border-color:var(--sig);}
+  .pl-css-form input::placeholder{color:var(--faint);}
+  .pl-css-form button{padding:10px 15px;border:none;border-radius:var(--r-sm);background:var(--sig);color:var(--sig-ink);font-weight:800;font-size:12.5px;font-family:inherit;cursor:pointer;}
+  .pl-css-form button:hover{filter:brightness(1.08);}
+
+  /* this week day cards */
+  .pl-cal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:8px;}
+  .pl-day{border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel);padding:12px;display:flex;flex-direction:column;gap:5px;text-decoration:none;color:inherit;transition:transform .13s,border-color .13s;}
+  .pl-day:hover{transform:translateY(-2px);border-color:var(--sig);}
+  .pl-day.today{border-color:var(--sig);}
+  .pl-day-date{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);}
+  .pl-day-title{font-family:'Schibsted Grotesk',sans-serif;font-size:14.5px;font-weight:700;line-height:1.25;color:var(--ink);}
+  .pl-day-meta{font-size:11px;font-weight:700;color:var(--sig);}
+  .pl-status{align-self:flex-start;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:var(--r-pill);}
+  .pl-status.planned{background:var(--sig-dim);color:var(--sig);}
+  .pl-status.completed{background:var(--pb-dim);color:var(--pb);}
+  .pl-status.missed{background:var(--raised);color:var(--faint);}
+  .pl-status.skipped{background:var(--raised);color:var(--faint);}
+
+  /* week accordion */
+  .pl-week{border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel);margin-bottom:8px;overflow:hidden;}
+  .pl-week summary{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;list-style:none;font-size:13px;font-weight:700;color:var(--ink);}
+  .pl-week summary::-webkit-details-marker{display:none;}
+  .pl-week summary:hover{background:var(--panel-2);}
+  .pl-week-tag{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:var(--r-pill);background:var(--sig-dim);color:var(--sig);}
+  .pl-week-tag.taper{background:var(--warn-dim);color:var(--warn);}
+  .pl-week-tag.deload{background:var(--raised);color:var(--muted);}
+  .pl-week-tag.test{background:var(--coach-dim);color:var(--coach);}
+  .pl-week-dots{margin-left:auto;display:flex;gap:4px;}
+  .pl-dot{width:8px;height:8px;border-radius:50%;background:var(--raised);}
+  .pl-dot.completed{background:var(--pb);}
+  .pl-dot.missed{background:var(--faint);}
+  .pl-week-body{border-top:1px solid var(--line-soft);padding:6px 16px 12px;}
+  .pl-week-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line-soft);font-size:12.5px;text-decoration:none;color:var(--ink);}
+  .pl-week-row:hover .pl-week-row-title{color:var(--sig);}
+  .pl-week-row:last-child{border-bottom:none;}
+  .pl-week-row-date{width:64px;flex-shrink:0;font-weight:800;color:var(--faint);font-size:11px;}
+  .pl-week-row-title{font-weight:700;}
+  .pl-week-row-m{margin-left:auto;font-size:11px;font-weight:700;color:var(--sig);white-space:nowrap;}
+
+  .pl-actions{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;}
+  .pl-btn{padding:12px 18px;border:1px solid var(--line);border-radius:var(--r-sm);font-weight:700;font-size:13px;text-decoration:none;color:var(--ink);background:var(--panel);font-family:inherit;cursor:pointer;}
+  .pl-btn:hover{border-color:var(--sig-line);}
+</style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_pages.css') }}">
+</head>
+<body>
+
+<nav class="pl-nav">
+  <a href="/dashboard" class="pl-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/logout" class="pl-nav-logout">Log out</a>
+  <a href="/" class="pl-nav-logo">STROKE</a>
+</nav>
+
+<div class="pl-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <p class="pl-eyebrow">Training plan</p>
+  <h1 class="pl-h1">{{ plan.goal_event or 'Get faster' }}{% if plan.target_time %} · {{ plan.target_time }}{% endif %}</h1>
+
+  <div class="pl-stats">
+    <div class="pl-stat">
+      <div class="pl-stat-num num">{% if weeks_left is not none %}{{ weeks_left }}{% else %}{{ plan.weeks - current_week }}{% endif %}</div>
+      <div class="pl-stat-lbl">{% if weeks_left is not none %}Weeks to race day{% else %}Weeks left in block{% endif %}</div>
+    </div>
+    <div class="pl-stat"><div class="pl-stat-num num">{{ done_count }}/{{ total_count }}</div><div class="pl-stat-lbl">Sessions done</div></div>
+    <div class="pl-stat"><div class="pl-stat-num num">{{ plan.sessions_per_week }}</div><div class="pl-stat-lbl">Swims / week</div></div>
+  </div>
+
+  <div class="pl-phasebar">
+    {% for w in phase_map %}
+    <div class="pl-phase-seg {{ w.phase }} {{ 'deload' if w.deload }} {{ 'current' if loop.index0 == current_week }}"><span class="num">{{ loop.index }}</span></div>
+    {% endfor %}
+  </div>
+  <div class="pl-phase-legend">
+    <span><i style="background:var(--sig-dim)"></i>Base</span>
+    <span><i style="background:rgba(31,224,174,.34)"></i>Build</span>
+    {% if plan.race_date %}<span><i style="background:var(--warn-dim)"></i>Taper</span>{% endif %}
+    <span><i style="background:var(--ink);border-radius:50%;opacity:.6"></i>Deload week</span>
+  </div>
+
+  {% if css_rec %}
+  <div class="pl-css-card">
+    <div class="pl-css-head">
+      <div>
+        <div class="pl-css-pace num">{{ zone_rows[3].pace }} <span>/ 100m CSS</span></div>
+      </div>
+      <span class="pl-css-src">
+        {% if css_rec.source == 'estimated' %}Estimated — your week 1 test will sharpen this
+        {% elif css_rec.source == 'manual' %}From your entered 400 / 200
+        {% else %}Measured from your logged 400 / 200{% endif %}
+      </span>
+    </div>
+    <div class="pl-zones">
+      {% for z in zone_rows %}
+      <div class="pl-zone {{ z.zone }}">
+        <div class="pl-zone-name">{{ z.zone }}</div>
+        <div class="pl-zone-pace num">{{ z.pace }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="pl-css-note">Every target time and send-off in this plan is built from these paces. Swim a fresh 400 + 200 test and enter the times below to retune upcoming sessions.</p>
+  </div>
+  <form class="pl-css-form" method="POST" action="/solo/plan/css">
+    <div><label for="t400">400 time</label><input type="text" id="t400" name="t400" inputmode="decimal" placeholder="5:52.0"></div>
+    <div><label for="t200">200 time</label><input type="text" id="t200" name="t200" inputmode="decimal" placeholder="2:48.0"></div>
+    <button type="submit">Update CSS</button>
+  </form>
+  {% endif %}
+
+  <div class="pl-section-label">This week <span style="font-size:12px;color:var(--faint);font-weight:700">· week {{ current_week + 1 }} of {{ plan.weeks }} · {{ phase_map[current_week].phase|capitalize }}{{ ' · deload' if phase_map[current_week].deload }}</span></div>
+  <div class="pl-cal-grid">
+    {% for s in by_week.get(current_week, []) %}
+    <a class="pl-day {{ 'today' if s.scheduled_date == today }}" href="/solo/plan/session/{{ s.id }}">
+      <span class="pl-day-date">{{ weekday_names[s.scheduled_date.weekday()][:3] }} {{ s.scheduled_date.day }}</span>
+      <span class="pl-day-title">{{ s.title }}</span>
+      <span class="pl-day-meta num">{{ '{:,}'.format(s.target_meters or 0) }}m</span>
+      <span class="pl-status {{ s.status }}">{{ s.status }}</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="pl-section-label">All weeks</div>
+  {% for w in range(plan.weeks) %}
+  <details class="pl-week" {{ 'open' if w == current_week }}>
+    <summary>
+      Week {{ w + 1 }}
+      <span class="pl-week-tag {{ phase_map[w].phase }}">{{ phase_map[w].phase }}</span>
+      {% if phase_map[w].deload %}<span class="pl-week-tag deload">deload</span>{% endif %}
+      {% if by_week.get(w) and by_week[w]|selectattr('slot', 'equalto', 'css_test')|list %}<span class="pl-week-tag test">CSS test</span>{% endif %}
+      <span class="pl-week-dots">
+        {% for s in by_week.get(w, []) %}<span class="pl-dot {{ s.status }}"></span>{% endfor %}
+      </span>
+    </summary>
+    <div class="pl-week-body">
+      {% for s in by_week.get(w, []) %}
+      <a class="pl-week-row" href="/solo/plan/session/{{ s.id }}">
+        <span class="pl-week-row-date num">{{ weekday_names[s.scheduled_date.weekday()][:3] }} {{ s.scheduled_date.strftime('%d %b') }}</span>
+        <span class="pl-week-row-title">{{ s.title }}</span>
+        <span class="pl-status {{ s.status }}" style="margin-left:6px">{{ s.status }}</span>
+        <span class="pl-week-row-m num">{{ '{:,}'.format(s.target_meters or 0) }}m</span>
+      </a>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+
+  <div class="pl-actions">
+    <a class="pl-btn" href="/solo/plan/setup">Rebuild plan</a>
+    <form method="POST" action="/solo/plan/abandon" onsubmit="return confirm('Close this plan? Your logged sessions stay.');" style="display:inline">
+      <button type="submit" class="pl-btn">Close plan</button>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

@@ -13,6 +13,10 @@ or an injury modification says to):
    moments in a swim race; dryland is where that power gets built, the pool
    can't build it directly.
 
+A fourth category, **arms (elbow flexion/extension)**, is optional accessory
+work — add it when a session has time beyond the three mandatory categories,
+don't let it crowd out cuff/core/plyo work.
+
 **⚠ FLAGGED FOR VERIFICATION** throughout this file: exact set/rep/tempo
 prescriptions for cuff and plyo work are a reasonable S&C starting point, not
 a validated protocol. Check against current AustSwim / ASCA guidance before
@@ -120,6 +124,40 @@ a reasonable starting cap for most swimmers, given the pool itself already
 provides high total lower-body and shoulder loading. Don't stack plyo on the
 same day as the hardest water session of the week unless the combined-load
 check in [load-management.md](load-management.md) clears it.
+
+## 4. Arms (elbow flexion/extension) — optional accessory
+
+Rationale: the upper-arm/forearm bones are the levers the arm muscles pull
+on. Two muscle groups matter — **elbow extensors** (triceps brachii,
+assisted by the anconeus) straighten the arm; **elbow flexors** (biceps
+brachii and brachialis, assisted by the brachioradialis) bend it. In
+freestyle, backstroke, and butterfly the elbow bends 30-90° through the catch
+(flexors) then straightens through the second half of the pull (extensors).
+Breaststroke runs the opposite order: extended early in the pull, flexors
+bend the elbow through the insweep, extensors straighten it again for
+recovery.
+
+Because extensors do more work than flexors across all four strokes, split
+roughly **2 triceps exercises for every 1 biceps exercise**, and place these
+single-joint isolation moves near the **end** of a session so a small muscle
+group isn't pre-fatigued before compound lifts. Before any exercise here, cue
+setting the shoulder blades back and down (not shrugged up — swimmers
+already tend to have overdeveloped upper traps) and bracing the core.
+
+**⚠ VERIFY exact prescriptions below** — general S&C consensus for hypertrophy/
+strength-endurance rep ranges, not a cited swim-specific protocol:
+
+| Exercise | Sets × reps | Equipment | Notes |
+|---|---|---|---|
+| Barbell bicep curl | 3 × 8-12 | Barbell | Baseline elbow-flexion strength builder; don't lean back to cheat the curl |
+| Dumbbell bicep curl | 2-3 × 10-12 each arm | Dumbbells | Rotate the wrist to palm-in at the top — mirrors the forearm turn late in the breaststroke pull; alternating arms surfaces left/right imbalances |
+| Concentration curl | 2-3 × 10-12 each arm | Dumbbell + bench | Elbow braced against inner thigh isolates the flexors cleanly; use if curls are turning into a swinging mess |
+| Tate press | 2-3 × 10-12 | Dumbbells + bench | Targets the lateral triceps head specifically, under-hit by basic pressing; keep the dumbbells touching, don't let them drop onto the chest |
+| Medicine ball chest pass | 3 × 6-8 | Med ball (2.5-5 kg) + partner or wall | Explosive, not slow/controlled — builds power; catch-and-redirect mirrors absorbing momentum on open turns in fly/breaststroke |
+| Standing double-arm triceps pushdown | 3 × 10-15 | Cable machine | Mirrors the final part of the underwater pull off the start and wall turns (especially breaststroke); keep the torso upright, elbows pinned to sides |
+| Dumbbell kickback | 2-3 × 10-12 each arm | Dumbbell + bench | Drives the last 90° of extension — the range that finishes propulsion in freestyle, fly, and backstroke; pause at full extension, keep head in line with spine |
+| Close-grip push-up | 2-3 × 8-15 | Bodyweight | Pool-deck friendly; closed-chain shoulder loading recruits more stabilizers than open-chain moves; drop to knees if a straight-body line can't be held; skip for younger swimmers still building shoulder strength or anyone with shoulder pain history (don't drop below neutral shoulder height) |
+| Close-grip bench press | 3 × 8-10 | Barbell + bench | Loadable alternative to close-grip push-up for swimmers not yet strong enough for good push-up form, or advanced swimmers whose triceps outgrew bodyweight work; let elbows flare ~45°; widen grip if wrist pain occurs; those with shoulder pain/history shouldn't let elbows dip below bench level |
 
 ## Conflicting-goals note
 

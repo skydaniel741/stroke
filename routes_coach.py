@@ -55,7 +55,7 @@ def coach_pro():
 @coach_required
 def coach_pro_state():
     from app import db
-    from models import Squad, SquadMembership, User, Swim, Session, SavedSet, CoachAssignment, AttendanceRecord, SquadEvent, Announcement
+    from models import Squad, SquadMembership, User, Swim, Session, SavedSet, CoachAssignment, AttendanceRecord, SquadEvent, Announcement, ParentLink
     from sqlalchemy import or_
 
     squads = db.session.query(Squad).filter_by(coach_id=current_user.id).order_by(Squad.created_at.asc()).all()
@@ -111,10 +111,16 @@ def coach_pro_state():
     now = datetime.utcnow()
     this_week_start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
 
+    parent_links_by_swimmer = {}
+    if swimmer_ids:
+        for l in db.session.query(ParentLink).filter(ParentLink.swimmer_id.in_(swimmer_ids), ParentLink.status != 'revoked').order_by(ParentLink.created_at.desc()).all():
+            parent_links_by_swimmer.setdefault(l.swimmer_id, l)  # most recent non-revoked link wins
+
     def swimmer_payload(m):
         u = users_by_id.get(m.user_id)
         swims = swims_by_user.get(m.user_id, [])
         sessions = sessions_by_user.get(m.user_id, [])
+        parent_link = parent_links_by_swimmer.get(m.user_id)
 
         weekly_volume = []
         for i in range(7, -1, -1):
@@ -173,6 +179,10 @@ def coach_pro_state():
             'lastActive': last_active,
             'attendanceRate': attendance_rate(m),
             'weeklyVolume': weekly_volume,
+            'isMinor': bool(u and u.is_minor),
+            'parentStatus': parent_link.status if parent_link else 'none',
+            'parentName': parent_link.parent.username if (parent_link and parent_link.status == 'active') else None,
+            'parentInviteUrl': f'/parent/join/{parent_link.invite_token}' if (parent_link and parent_link.status == 'pending') else None,
         }
 
     swimmers_payload = [swimmer_payload(m) for m in memberships]
@@ -431,6 +441,53 @@ def coach_pro_invite(squad_id):
     db.session.add(membership)
     db.session.commit()
     return {'ok': True, 'membershipId': membership.id}
+
+
+@coach.route('/pro/api/memberships/<int:membership_id>/toggle-minor', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_toggle_minor(membership_id):
+    from app import db
+    from models import SquadMembership
+
+    m = db.session.query(SquadMembership).get(membership_id)
+    if not m or not m.user_id:
+        abort(404)
+    _squad_or_404(m.squad_id)
+    m.swimmer.is_minor = not m.swimmer.is_minor
+    db.session.commit()
+    return {'ok': True, 'isMinor': m.swimmer.is_minor}
+
+
+@coach.route('/pro/api/memberships/<int:membership_id>/invite-parent', methods=['POST'])
+@login_required
+@coach_required
+def coach_pro_invite_parent(membership_id):
+    """Coach-initiated parent link (see routes_parent.py) -- the coach already
+    knows exactly which swimmer this is for, so the parent lands connected
+    the moment they sign up at /parent/join/<token>, no separate claim step."""
+    from app import db
+    from models import SquadMembership, ParentLink
+
+    m = db.session.query(SquadMembership).get(membership_id)
+    if not m:
+        abort(404)
+    _squad_or_404(m.squad_id)
+    if not m.user_id:
+        return {'ok': False, 'error': "This swimmer doesn't have a STROKE account yet — invite them first."}, 400
+
+    existing_pending = (
+        db.session.query(ParentLink)
+        .filter_by(swimmer_id=m.user_id, status='pending')
+        .first()
+    )
+    if existing_pending:
+        return {'ok': True, 'inviteUrl': f'/parent/join/{existing_pending.invite_token}'}
+
+    token = secrets.token_urlsafe(24)
+    db.session.add(ParentLink(swimmer_id=m.user_id, invite_token=token, status='pending'))
+    db.session.commit()
+    return {'ok': True, 'inviteUrl': f'/parent/join/{token}'}
 
 
 @coach.route('/pro/api/memberships/<int:membership_id>/reassign', methods=['POST'])

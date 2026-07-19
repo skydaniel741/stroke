@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="chlorine">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build your plan — STROKE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+  .pl-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;}
+  .pl-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--ink);text-decoration:none;}
+  .pl-nav-logout{margin-left:auto;font-weight:700;font-size:13px;color:var(--muted);text-decoration:none;}
+  .pl-nav-logout:hover{color:var(--ink);}
+  .pl-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:18px;color:var(--ink);text-decoration:none;}
+  .pl-wrap{max-width:640px;margin:0 auto;padding:16px 20px 90px;}
+  .pl-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--sig);margin-bottom:8px;}
+  .pl-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;letter-spacing:-0.01em;margin:0 0 8px;color:var(--ink);}
+  .pl-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:22px;}
+
+  .pl-callout{background:var(--sig-dim);border:1px solid var(--sig-line);border-radius:var(--r-md);padding:14px 16px;margin-bottom:20px;font-size:13px;color:var(--ink);line-height:1.55;}
+  .pl-callout b{color:var(--sig);}
+  .pl-callout-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--sig);color:var(--sig-ink);padding:2px 8px;border-radius:var(--r-pill);margin-right:6px;}
+  .pl-callout--warn{background:var(--warn-dim);border-color:var(--warn);}
+  .pl-callout--warn b,.pl-callout--warn a{color:var(--warn);}
+
+  .pl-field{margin-bottom:18px;}
+  .pl-label{display:block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .pl-hint{font-size:12px;color:var(--faint);margin-top:5px;line-height:1.45;}
+  .pl-input,.pl-select{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:14px;font-family:inherit;background:var(--panel);color:var(--ink);}
+  .pl-input:focus,.pl-select:focus{outline:none;border-color:var(--sig);}
+  .pl-input::placeholder{color:var(--faint);}
+  .pl-select option{background:var(--panel);color:var(--ink);}
+  input[type="date"].pl-input{color-scheme:dark;}
+
+  .pl-choice-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .pl-choice{position:relative;}
+  .pl-choice input{position:absolute;opacity:0;pointer-events:none;}
+  .pl-choice span{display:inline-block;padding:9px 14px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;background:var(--panel);transition:all .12s;}
+  .pl-choice span:hover{border-color:var(--sig-line);color:var(--ink);}
+  .pl-choice input:checked + span{border-color:var(--sig);background:var(--sig);color:var(--sig-ink);}
+
+  .pl-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .pl-days .pl-choice span{display:block;text-align:center;padding:10px 2px;font-size:12px;}
+
+  .pl-submit{width:100%;box-sizing:border-box;margin-top:8px;padding:14px 18px;border:none;border-radius:var(--r-sm);background:var(--sig);color:var(--sig-ink);font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;}
+  .pl-submit:hover{filter:brightness(1.08);}
+</style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine_pages.css') }}">
+</head>
+<body>
+
+<nav class="pl-nav">
+  <a href="/dashboard" class="pl-nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <a href="/logout" class="pl-nav-logout">Log out</a>
+  <a href="/" class="pl-nav-logo">STROKE</a>
+</nav>
+
+<div class="pl-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <p class="pl-eyebrow">Training plan</p>
+  <h1 class="pl-h1">Build your plan</h1>
+  <p class="pl-sub">A structured, multi-week plan built around your pace: base, build and taper phases, deload weeks, and a target time on every rep. Answer a few questions and it writes itself.</p>
+
+  {% if existing_plan %}
+  <div class="pl-callout pl-callout--warn">
+    You already have an active plan ({{ existing_plan.goal_event or 'general fitness' }}, week-by-week at <a href="/solo/plan"><b>your plan page</b></a>). Building a new one replaces it.
+  </div>
+  {% endif %}
+
+  {% if css_preview %}
+  <div class="pl-callout">
+    <span class="pl-callout-badge">Pace found</span>
+    We found your recent <b>400 free ({{ css_preview.t400 }})</b> and <b>200 free ({{ css_preview.t200 }})</b>.
+    Your CSS pace comes out at <b>{{ css_preview.css }} per 100m</b> — every session target will be built from it.
+  </div>
+  {% else %}
+  <div class="pl-callout">
+    <span class="pl-callout-badge">Week 1</span>
+    No recent 400 + 200 freestyle swims on file, so week 1 includes a short <b>CSS test</b>. Your plan starts with estimated paces and sharpens up as soon as the test lands.
+  </div>
+  {% endif %}
+
+  <form method="POST" action="/solo/plan/setup">
+    <div class="pl-field">
+      <label class="pl-label" for="goal_event">Goal event</label>
+      <select class="pl-select" id="goal_event" name="goal_event">
+        <option value="">No specific event — just get faster</option>
+        {% for ev in events %}
+        <option value="{{ ev }}" {{ 'selected' if latest_goal and latest_goal.event == ev }}>{{ ev }}</option>
+        {% endfor %}
+      </select>
+      <p class="pl-hint">Pick the race you are training for, or leave it open for an 8 week fitness block ending in a benchmark swim.</p>
+    </div>
+
+    <div class="pl-field">
+      <label class="pl-label">Pool</label>
+      <div class="pl-choice-row">
+        <label class="pl-choice"><input type="radio" name="pool" value="25m" checked><span>25m</span></label>
+        <label class="pl-choice"><input type="radio" name="pool" value="50m"><span>50m</span></label>
+      </div>
+    </div>
+
+    <div class="pl-field">
+      <label class="pl-label" for="race_date">Race date <span style="text-transform:none;font-weight:600;color:var(--faint)">(optional)</span></label>
+      <input class="pl-input" type="date" id="race_date" name="race_date" min="{{ today.isoformat() }}"
+             value="{{ latest_goal.target_date.isoformat() if latest_goal and latest_goal.target_date and latest_goal.target_date > today else '' }}">
+      <p class="pl-hint">Needs to be at least 4 weeks out. The plan phases and taper are built backwards from this date.</p>
+    </div>
+
+    <div class="pl-field">
+      <label class="pl-label" for="target_time">Target time <span style="text-transform:none;font-weight:600;color:var(--faint)">(optional)</span></label>
+      <input class="pl-input" type="text" id="target_time" name="target_time" inputmode="decimal"
+             placeholder="e.g. 1:02.50" value="{{ latest_goal.target_time if latest_goal else '' }}">
+    </div>
+
+    <div class="pl-field">
+      <label class="pl-label">Swims per week</label>
+      <div class="pl-choice-row">
+        {% for n in range(2, 7) %}
+        <label class="pl-choice"><input type="radio" name="sessions_per_week" value="{{ n }}"
+          {{ 'checked' if (profile and profile.training_days_per_week == n) or (not profile and n == 3) or (profile and not profile.training_days_per_week and n == 3) }}><span>{{ n }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="pl-field">
+      <label class="pl-label">Preferred days</label>
+      <div class="pl-days">
+        {% for name in weekday_names %}
+        <label class="pl-choice"><input type="checkbox" name="days" value="{{ loop.index0 }}"><span>{{ name[:3] }}</span></label>
+        {% endfor %}
+      </div>
+      <p class="pl-hint">Pick as many as your swims per week. Leave blank and the plan spreads them sensibly (Mon / Wed / Fri / Sun).</p>
+    </div>
+
+    <button type="submit" class="pl-submit">Build my plan</button>
+  </form>
+</div>
+
+</body>
+</html>
