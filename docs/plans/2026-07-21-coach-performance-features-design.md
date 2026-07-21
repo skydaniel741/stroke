@@ -34,14 +34,28 @@ The payoff: imported races immediately feed every Tier 0 feature. Tier 1 and Tie
 
 Manual per-race stroke entry (stroke count, tempo, turn times). On record as a known future option with the adoption-risk caveat, explicitly out of scope so it does not creep into v1.
 
+## Recovery / readiness (BUILT alongside Tier 0)
+
+A **Readiness & Load** panel in the Athlete Hub, framed as training-load
+management, not medical or injury advice (the legal-veto guard). It fuses two
+signals the athlete model already computes:
+
+- **ACWR** (acute:chronic workload ratio) → load status: detraining / in range / ramping / spiking, on a bar centred at the swimmer's own 1.0x normal.
+- **Check-in trend** (energy / fatigue / sleep, last 14 days vs the prior 14) when the swimmer self-reports; a graceful "load only" fallback when they don't (most coached squad swimmers won't).
+
+These combine into one verdict — Ease off / Room to build / Good to push — plus
+a plain coach recommendation. Thresholds mirror `athlete_model.classify_trend`
+so the coach view and the solo trend engine never disagree. Pure client-side
+synthesis of `swimmer_payload.athleteState`; no backend or DB change.
+
 ## What was built in this pass
 
 - `pacing.py` — canonical split analysis: `parse_secs`, `fmt_secs`, `event_distance`, `classify_fade` (the calibrated thresholds), `analyze_splits`, `analyze_swims`. Single source of truth for the split-science rule.
 - `routes_solo.py` — the solo analytics split block refactored onto `pacing.py` (behavior preserved, swimmer-voice notes intact).
 - `routes_coach.py` — `swimmer_payload` now returns `pacingAnalyses` (coach voice) per swimmer.
-- `static/js/coach_pro.js` — `cpPacingPanel` renders the Race Pacing panel in the Athlete Hub.
+- `static/js/coach_pro.js` — `cpPacingPanel` (Race Pacing) and `cpReadinessPanel` (Readiness & Load) in the Athlete Hub.
 
-Verified end-to-end: analyzer unit tests pass, solo analytics unchanged, coach panel renders real races (well-paced 1% fade and big-fade 10.7% classified correctly).
+Verified end-to-end: analyzer unit tests pass, solo analytics unchanged, coach pacing panel renders real races (well-paced 1% fade and big-fade 10.7% classified correctly), readiness panel renders all branches (detraining/room-to-build, spiking+fatigued/ease-off, in-range/good-to-push).
 
 ## Follow-ups
 
