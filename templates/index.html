@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stroke_landing.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stroke_pages.css') }}">
 </head>
 <body class="sl">
 
@@ -16,10 +17,11 @@
   <a href="#top" class="nav-logo">STROKE</a>
   <div class="nav-links">
     <a href="#how">How it works</a>
-    <a href="#features">Features</a>
-    <a href="#parents">Parent view</a>
-    <a href="#solo">For swimmers</a>
-    <a href="/login" class="nav-coach">Coach login</a>
+    <a href="/for/coaches">For coaches</a>
+    <a href="/for/parents">For parents</a>
+    <a href="/for/swimmers">For swimmers</a>
+    <a href="/faq">FAQ</a>
+    <a href="/login" class="nav-coach">Log in</a>
     <a href="/signup?as=coach" class="nav-cta">Start your squad free</a>
   </div>
   <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
@@ -28,10 +30,11 @@
 </nav>
 <div class="mobile-menu" id="mobileMenu">
   <a href="#how">How it works</a>
-  <a href="#features">Features</a>
-  <a href="#parents">Parent view</a>
-  <a href="#solo">For swimmers</a>
-  <a href="/login">Coach login</a>
+  <a href="/for/coaches">For coaches</a>
+  <a href="/for/parents">For parents</a>
+  <a href="/for/swimmers">For swimmers</a>
+  <a href="/faq">FAQ</a>
+  <a href="/login">Log in</a>
   <a href="/signup?as=coach">Start your squad free</a>
 </div>
 
@@ -39,7 +42,6 @@
 <section class="hero" id="top">
   <div class="hero-grid">
     <div class="hero-content">
-      <div class="hero-pill rv"><span class="dot"></span>For swim coaches, parents and swimmers</div>
       <a href="/signup?as=coach" class="hero-headline rv" aria-label="Start your squad free">
         <h1>Run your whole swim squad <span class="u">from one screen.</span></h1>
         <p class="hero-sub">Roll call logs the set. A photo of the results board files every swimmer's time. Parents get their own view. Swimmers training solo get their own plan.</p>
@@ -49,9 +51,9 @@
         <a href="#how" class="btn btn-ghost">See how it works</a>
       </div>
       <div class="persona-row rv">
-        <a href="/signup?as=coach" class="persona-pill">I'm a coach &rarr;</a>
-        <a href="#parents" class="persona-pill">I'm a parent &rarr;</a>
-        <a href="/signup" class="persona-pill">I'm a swimmer &rarr;</a>
+        <a href="/for/coaches" class="persona-pill">I'm a coach &rarr;</a>
+        <a href="/for/parents" class="persona-pill">I'm a parent &rarr;</a>
+        <a href="/for/swimmers" class="persona-pill">I'm a swimmer &rarr;</a>
       </div>
     </div>
 
@@ -99,7 +101,7 @@
     <h2 class="sec-h rv">Three steps. Whole squad.</h2>
     <p class="sec-sub rv">Mark the roll, scan the board, watch the squad move. The admin disappears into the workout.</p>
     <div class="steps">
-      <a href="/signup?as=coach" class="step card tap rv d1">
+      <a href="/features/attendance" class="step card tap rv d1">
         <span class="step-num">1</span>
         <span class="step-body">
           <span class="step-title">Take attendance</span>
@@ -107,7 +109,7 @@
           <span class="step-go">Set up attendance &rarr;</span>
         </span>
       </a>
-      <a href="/signup?as=coach" class="step card tap rv d2">
+      <a href="/features/results-scanner" class="step card tap rv d2">
         <span class="step-num">2</span>
         <span class="step-body">
           <span class="step-title">Scan the results board</span>
@@ -115,7 +117,7 @@
           <span class="step-go">See the scanner &rarr;</span>
         </span>
       </a>
-      <a href="/signup?as=coach" class="step card tap rv d3">
+      <a href="/features/team-analytics" class="step card tap rv d3">
         <span class="step-num">3</span>
         <span class="step-body">
           <span class="step-title">See the whole squad move</span>
@@ -134,7 +136,7 @@
     <h2 class="sec-h rv">Everything you already do, just faster.</h2>
     <p class="sec-sub rv">Not a generic team app bolted onto swimming. Built around roll call, test sets and session planning the way a squad actually runs.</p>
     <div class="log3">
-      <a href="/signup?as=coach" class="log3-card card tap rv d1">
+      <a href="/features/attendance" class="log3-card card tap rv d1">
         <span class="log3-k">01</span>
         <span class="log3-icon">
           <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
@@ -142,7 +144,7 @@
         <span class="log3-title">Roster &amp; attendance</span>
         <span class="log3-desc">Invite a swimmer by email or import a CSV. Mark the roll and the day's set auto-logs for everyone present.<span class="tap-arrow"></span></span>
       </a>
-      <a href="/signup?as=coach" class="log3-card card tap rv d2">
+      <a href="/features/session-builder" class="log3-card card tap rv d2">
         <span class="log3-k">02</span>
         <span class="log3-icon">
           <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -150,7 +152,7 @@
         <span class="log3-title">Session builder</span>
         <span class="log3-desc">Build a set once, save it to the library, and assign it to a squad or a single swimmer with a due date.<span class="tap-arrow"></span></span>
       </a>
-      <a href="/signup?as=coach" class="log3-card card tap rv d3">
+      <a href="/features/results-scanner" class="log3-card card tap rv d3">
         <span class="log3-k">03</span>
         <span class="log3-icon">
           <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
@@ -164,7 +166,7 @@
 
 <!-- STAT MOMENT -->
 <section class="statmoment">
-  <a href="/signup?as=coach" class="statmoment-block rv">
+  <a href="/features/attendance" class="statmoment-block rv">
     <p class="eyebrow">The whole point</p>
     <h2 class="statmoment-h">
       <span class="statmoment-big num">1</span>
@@ -179,7 +181,7 @@
   <div class="inner">
     <p class="parent-arrived-note center" style="max-width:52ch;margin:0 auto 28px;font-size:14px;color:var(--ink-subtle)">Here because your coach uses STROKE? Ask them to send your parent link from the roster, you don't need to sign up for anything.</p>
     <div class="split">
-      <a href="/signup?as=coach" class="split-copy rv">
+      <a href="/features/parent-view" class="split-copy rv">
         <p class="eyebrow">For coaches</p>
         <h2 class="sec-h">Parents ask.<br>Now they can just <em>look.</em></h2>
         <p class="sec-sub">Send a parent a link from the roster and they get their own read-only view: recent times and personal bests, attendance, and how training's landing. No editing, no access to the rest of your squad's data.</p>
@@ -207,12 +209,12 @@
     <p class="eyebrow rv">Also inside</p>
     <h2 class="sec-h rv">Everything a squad needs.</h2>
     <div class="feats">
-      <a href="/signup?as=coach" class="feat card tap rv d1"><span class="feat-k">01</span><span class="feat-title">Team analytics</span><span class="feat-desc">Squad-wide volume, attendance and points, not just one swimmer at a time.<span class="tap-arrow"></span></span></a>
-      <a href="/signup?as=coach" class="feat card tap rv d1"><span class="feat-k">02</span><span class="feat-title">AI assistant</span><span class="feat-desc">A plain-language read on the squad, in your coaching tone: encouraging, balanced or direct.<span class="tap-arrow"></span></span></a>
-      <a href="/signup?as=coach" class="feat card tap rv d2"><span class="feat-k">03</span><span class="feat-title">Multi-squad &amp; club support</span><span class="feat-desc">Run several squads, or a whole club, from the same dashboard.<span class="tap-arrow"></span></span></a>
-      <a href="/signup?as=coach" class="feat card tap rv d2"><span class="feat-k">04</span><span class="feat-title">Squad calendar</span><span class="feat-desc">Schedule practices and meets, AM or PM, with a set attached.<span class="tap-arrow"></span></span></a>
-      <a href="/signup?as=coach" class="feat card tap rv d3"><span class="feat-k">05</span><span class="feat-title">Announcements</span><span class="feat-desc">One place to post to the whole squad, no group chat needed.<span class="tap-arrow"></span></span></a>
-      <a href="/signup?as=coach" class="feat card tap rv d3"><span class="feat-k">06</span><span class="feat-title">Printable deck sheets</span><span class="feat-desc">Print any set from the library, ready for the pool wall.<span class="tap-arrow"></span></span></a>
+      <a href="/features/team-analytics" class="feat card tap rv d1"><span class="feat-k">01</span><span class="feat-title">Team analytics</span><span class="feat-desc">Squad-wide volume, attendance and points, not just one swimmer at a time.<span class="tap-arrow"></span></span></a>
+      <a href="/features/team-analytics" class="feat card tap rv d1"><span class="feat-k">02</span><span class="feat-title">AI assistant</span><span class="feat-desc">A plain-language read on the squad, in your coaching tone: encouraging, balanced or direct.<span class="tap-arrow"></span></span></a>
+      <a href="/features/squad-calendar" class="feat card tap rv d2"><span class="feat-k">03</span><span class="feat-title">Multi-squad &amp; club support</span><span class="feat-desc">Run several squads, or a whole club, from the same dashboard.<span class="tap-arrow"></span></span></a>
+      <a href="/features/squad-calendar" class="feat card tap rv d2"><span class="feat-k">04</span><span class="feat-title">Squad calendar</span><span class="feat-desc">Schedule practices and meets, AM or PM, with a set attached.<span class="tap-arrow"></span></span></a>
+      <a href="/features/announcements" class="feat card tap rv d3"><span class="feat-k">05</span><span class="feat-title">Announcements</span><span class="feat-desc">One place to post to the whole squad, no group chat needed.<span class="tap-arrow"></span></span></a>
+      <a href="/features/session-builder" class="feat card tap rv d3"><span class="feat-k">06</span><span class="feat-title">Printable deck sheets</span><span class="feat-desc">Print any set from the library, ready for the pool wall.<span class="tap-arrow"></span></span></a>
     </div>
   </div>
 </section>
@@ -246,7 +248,7 @@
         </div>
         <p class="calc-note">Try it, no account needed. Points are estimates based on record-pace ratios.</p>
       </div>
-      <a href="/signup?as=coach" class="split-copy rv">
+      <a href="/features/wa-points" class="split-copy rv">
         <p class="eyebrow">World Aquatics points</p>
         <h2 class="sec-h">See exactly where every swimmer stands.</h2>
         <p class="sec-sub">Every logged time scores to World Aquatics points automatically, so you can compare a sprinter and a distance swimmer on one scale, and watch the whole squad's points move over a season.</p>
@@ -285,14 +287,12 @@
     <p class="footer-sub">Built in New Zealand. For coaches and swimmers everywhere.</p>
   </div>
   <div class="footer-links">
-    <a href="#how">How it works</a>
-    <a href="#features">Features</a>
-    <a href="#parents">Parent view</a>
-    <a href="#solo">For swimmers</a>
-    <a href="/login">Coach login</a>
-    <a href="/privacy">Privacy</a>
+    {% for label, href in footer_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
+    <a href="/login">Log in</a>
   </div>
 </footer>
+
+{% include '_cookie_banner.html' %}
 
 <script>
 const miniBaseTimes = {

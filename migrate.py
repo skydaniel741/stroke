@@ -28,6 +28,7 @@ NEW_COLUMNS = {
     ],
     'squad': [
         ("color", "VARCHAR(20) DEFAULT 'blue'"),
+        ("season_plan_json", "TEXT"),
     ],
     'squad_event': [
         ("slot", "VARCHAR(10) DEFAULT ''"),
@@ -64,6 +65,19 @@ NEW_COLUMNS = {
 }
 
 
+# Indexes added after initial release, for columns on tables that already
+# exist. Unlike NEW_COLUMNS these don't need dialect translation --
+# `CREATE INDEX IF NOT EXISTS` works as-is on both SQLite (3.8+) and Postgres --
+# so they're applied unconditionally rather than via ALTER TABLE.
+NEW_INDEXES = [
+    ('ix_swim_user_id', 'swim', ['user_id']),
+    ('ix_swim_logged_at', 'swim', ['logged_at']),
+    ('ix_session_user_id', 'session', ['user_id']),
+    ('ix_session_logged_at', 'session', ['logged_at']),
+    ('ix_attendance_record_swimmer_id', 'attendance_record', ['swimmer_id']),
+]
+
+
 def _dialect_col_def(col_def, dialect_name):
     """NEW_COLUMNS defs are written in SQLite syntax; translate the bits
     Postgres doesn't accept."""
@@ -91,4 +105,11 @@ def run_migrations(db):
                 if col_name not in current_cols:
                     col_def = _dialect_col_def(col_def, dialect_name)
                     conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{col_name}" {col_def}'))
+
+        for index_name, table, cols in NEW_INDEXES:
+            if table not in existing_tables:
+                continue  # table will be created fresh by db.create_all(), index added on next startup
+            col_list = ', '.join(f'"{c}"' for c in cols)
+            conn.execute(text(f'CREATE INDEX IF NOT EXISTS "{index_name}" ON "{table}" ({col_list})'))
+
         conn.commit()

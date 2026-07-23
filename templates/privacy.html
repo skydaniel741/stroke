@@ -1,97 +1,210 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Privacy Policy — STROKE</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<style>
-  body{font-family:'Schibsted Grotesk',sans-serif;color:#2c2942;}
-  .pv-nav{display:flex;align-items:center;gap:14px;padding:20px 24px;border-bottom:1px solid #e9edf7;}
-  .pv-nav-back{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#2c2942;text-decoration:none;}
-  .pv-nav-logo{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin-left:auto;color:#2c2942;text-decoration:none;}
-  .pv-wrap{max-width:720px;margin:0 auto;padding:40px 24px 100px;}
-  .pv-eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6f7fe0;margin-bottom:8px;}
-  .pv-h1{font-family:'Schibsted Grotesk',sans-serif;font-size:38px;margin:0 0 8px;}
-  .pv-updated{color:#8b87a3;font-size:13px;margin-bottom:32px;}
-  .pv-h2{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;margin:32px 0 10px;}
-  .pv-wrap p, .pv-wrap li{font-size:14px;line-height:1.7;color:#403c58;}
-  .pv-wrap ul{padding-left:20px;margin:8px 0;}
-  .pv-wrap a{color:#5474d4;font-weight:600;}
-  .pv-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;}
-  .pv-table th{text-align:left;background:#f0f4fd;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#8b87a3;}
-  .pv-table td{padding:8px 10px;border-bottom:1px solid #eef2fc;vertical-align:top;}
-  .pv-note{background:#e9eefc;border:1px solid #c8d5f6;border-radius:10px;padding:14px 16px;font-size:13px;margin:16px 0;}
-</style>
-</head>
-<body>
+{% extends 'public_base.html' %}
 
-<nav class="pv-nav">
-  <a href="/" class="pv-nav-back">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-    Home
-  </a>
-  <a href="/" class="pv-nav-logo">STROKE</a>
-</nav>
+{% block title %}Privacy Policy — STROKE{% endblock %}
+{% block description %}What personal information STROKE collects, why, who it is shared with, and the rights you have over it under the New Zealand Privacy Act 2020.{% endblock %}
 
-<div class="pv-wrap">
-  <p class="pv-eyebrow">Legal</p>
-  <h1 class="pv-h1">Privacy Policy</h1>
-  <p class="pv-updated">Last updated: {{ updated_date or '6 July 2026' }}</p>
+{% block content %}
+<header class="phead">
+  <div class="phead-inner">
+    <nav class="crumb rv"><a href="/">Home</a> <span>/</span> <span>Privacy Policy</span></nav>
+    <p class="eyebrow rv">Legal</p>
+    <h1 class="rv">Privacy Policy</h1>
+    <p class="prose-updated rv">Last updated: {{ updated_date }}</p>
+    <p class="phead-lede rv">Plain version: we collect what the app needs to work, your coach sees your training data, parents see only their own child, we never sell anything, and you can ask for a copy or a deletion at any time.</p>
+    <div class="prose-toc rv">
+      <a href="#who">Who we are</a>
+      <a href="#collect">What we collect</a>
+      <a href="#why">Why we use it</a>
+      <a href="#sees">Who sees what</a>
+      <a href="#share">Who we share with</a>
+      <a href="#ai">AI features</a>
+      <a href="#children">Children</a>
+      <a href="#keep">How long we keep it</a>
+      <a href="#security">Security</a>
+      <a href="#rights">Your rights</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+</header>
 
-  <p>Stroke ("we", "us") provides a swim training log at this website. This policy explains what personal data we collect, why, and how you can control it. It applies to every account tier (Free, Solo, Coach).</p>
+<article class="prose">
 
-  <h2 class="pv-h2">1. What we collect</h2>
-  <table class="pv-table">
-    <thead><tr><th>Category</th><th>Examples</th></tr></thead>
+  <h2 id="who">1. Who we are</h2>
+  <p>STROKE ("we", "us") is a swim squad and training platform operated from New Zealand. This policy explains what personal information we collect, why we collect it, who can see it, and what you can do about it. It applies to every account type: coach, swimmer (free and Solo) and parent.</p>
+  <p>Because we operate from New Zealand, we handle personal information in line with the <strong>Privacy Act 2020</strong> and its thirteen information privacy principles. Where a user is in the United Kingdom or the European Economic Area, we also handle their personal data consistently with the <strong>UK GDPR / EU GDPR</strong>, including the rights set out in section 10 below.</p>
+
+  <h2 id="collect">2. What we collect</h2>
+  <p>We collect information in three ways: what you give us when you create an account and use the app, what your coach or your swimmer enters about you, and a small amount of technical information needed to keep you signed in and the service running.</p>
+  <table class="ptable">
+    <thead><tr><th>Category</th><th>What it is</th><th>Why we need it</th></tr></thead>
     <tbody>
-      <tr><td>Account details</td><td>Username, email address, password (stored as a salted hash — we never see or store your plain-text password)</td></tr>
-      <tr><td>Social sign-in</td><td>If you use Google or Apple sign-in, we receive your email and display name from that provider</td></tr>
-      <tr><td>Training data</td><td>Swim times, events, splits, session sets, goals, notes you enter</td></tr>
-      <tr><td>Coach/squad data</td><td>Squad and club names, roster membership, lane group, coach's private notes about a swimmer, injury/availability status</td></tr>
-      <tr><td>Guardian consent data</td><td>Where a squad requires parental consent for a minor swimmer, the guardian's name and email address</td></tr>
-      <tr><td>Technical data</td><td>A session cookie that keeps you signed in. We don't use advertising or cross-site tracking cookies</td></tr>
+      <tr>
+        <td>Account details</td>
+        <td>Username, email address, role (coach, swimmer or parent), and your password stored only as a bcrypt hash</td>
+        <td>To create and secure your account and let you sign in</td>
+      </tr>
+      <tr>
+        <td>Social sign-in</td>
+        <td>If you sign in with Google or Apple, the email address and display name that provider gives us</td>
+        <td>To authenticate you without a separate password</td>
+      </tr>
+      <tr>
+        <td>Training data</td>
+        <td>Swim times, events, course (25m/50m), splits, sessions, sets, personal bests, goals, training notes and check-ins you enter</td>
+        <td>This is the product: it is what your log, analytics and plans are built from</td>
+      </tr>
+      <tr>
+        <td>Squad data</td>
+        <td>Club and squad names, roster membership, lane or training group, attendance records, calendar entries</td>
+        <td>To run a squad: rosters, attendance, scheduling</td>
+      </tr>
+      <tr>
+        <td>Coach-entered data</td>
+        <td>A coach's private notes about a swimmer, and injury or availability status flags</td>
+        <td>To let a coach keep working notes on their own squad</td>
+      </tr>
+      <tr>
+        <td>Parent link data</td>
+        <td>A parent's name and email address, and the record of which swimmer they are linked to</td>
+        <td>To give a parent read-only access to their own swimmer</td>
+      </tr>
+      <tr>
+        <td>Guardian consent</td>
+        <td>Where a squad requires parental consent for a minor, the guardian's name, email and the fact consent was given</td>
+        <td>To show that consent was obtained before a minor's account was activated</td>
+      </tr>
+      <tr>
+        <td>Uploaded images</td>
+        <td>Photographs of a results board or whiteboard that a coach uploads for the scanner</td>
+        <td>To read the times off the board and file them against the right swimmers</td>
+      </tr>
+      <tr>
+        <td>Technical data</td>
+        <td>A session cookie, a "remember me" cookie if you choose it, server logs, and failed-login counts used for lockout</td>
+        <td>To keep you signed in, keep the service running and defend against brute-force attacks</td>
+      </tr>
     </tbody>
   </table>
+  <p>We do not collect payment card details ourselves. We do not collect location data, contacts, or anything from your device beyond what a normal website receives.</p>
 
-  <h2 class="pv-h2">2. How we use it</h2>
+  <h2 id="why">3. Why we use it</h2>
   <ul>
-    <li>To operate your account — logging in, saving your swims, showing your stats and history</li>
-    <li>To power features you opt into — the leaderboard (only for users who explicitly opt in), coach rosters, printed reports</li>
-    <li>To send you account emails — email verification codes and, if you're part of a squad, your coach's announcements</li>
-    <li>We do not sell your data, and we do not use it for third-party advertising</li>
+    <li><strong>To run your account</strong> — signing you in, saving your swims, showing your history, personal bests and points.</li>
+    <li><strong>To run features you or your coach use</strong> — attendance, sets, squad analytics, generated training plans, the results-board scanner, the parent view, printed reports.</li>
+    <li><strong>To send account email</strong> — verification codes, password-related email, and, if you are in a squad, your coach's announcements.</li>
+    <li><strong>To keep the service secure</strong> — detecting abuse, rate-limiting sign-in attempts, keeping an admin audit log of administrative actions.</li>
+  </ul>
+  <p>We do not use your information for advertising, we do not sell it, and we do not share it with data brokers. There is no advertising in STROKE.</p>
+
+  <h2 id="sees">4. Who can see what, inside STROKE</h2>
+  <p>This is the part people actually want to know, so it is stated exactly rather than generally. These boundaries are enforced in the code that builds each page, not by hiding things in the interface.</p>
+  <table class="ptable">
+    <thead><tr><th>Role</th><th>Can see</th><th>Cannot see</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Your coach</td>
+        <td>Your training data, times, attendance and sessions within their squad, plus their own notes and status flags about you</td>
+        <td>Your password, and any swimmer who is not a member of one of their squads</td>
+      </tr>
+      <tr>
+        <td>A linked parent</td>
+        <td>Read-only: their own swimmer's times, personal bests, improvement trend, recent attendance, upcoming squad events, and a coach-approved weekly summary where one exists</td>
+        <td>Any other swimmer, the coach's private notes, injury/availability flags, and any editing capability at all</td>
+      </tr>
+      <tr>
+        <td>Other swimmers</td>
+        <td>Nothing, unless you explicitly opt in to the public leaderboard, in which case opted-in users see your name and times for that event</td>
+        <td>Your log, your sessions, your notes, your attendance</td>
+      </tr>
+      <tr>
+        <td>Another club's coach</td>
+        <td>Nothing</td>
+        <td>Everything</td>
+      </tr>
+      <tr>
+        <td>STROKE staff</td>
+        <td>Administrators can access account records where necessary to operate, support or secure the service. Administrative actions are written to an audit log</td>
+        <td>Your password, which exists only as a hash</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <p>The leaderboard is opt-in and off by default. Nothing you log becomes visible to other swimmers unless you turn it on.</p>
+  </div>
+
+  <h2 id="share">5. Who we share it with outside STROKE</h2>
+  <p>We use a small number of service providers, each for one job:</p>
+  <ul>
+    <li><strong>Our hosting and database provider</strong> — to run the application and store its data.</li>
+    <li><strong>Resend</strong> — to deliver account email such as verification codes.</li>
+    <li><strong>Anthropic</strong> — to power the AI features described in section 6, when you or your coach use one.</li>
+    <li><strong>Google / Apple</strong> — only if you choose to sign in with one of them, and only to authenticate you.</li>
+  </ul>
+  <p>Some of these providers process data outside New Zealand. Where personal information is sent overseas, we only use providers who are required to protect it to a standard comparable to the Privacy Act 2020, as required by information privacy principle 12.</p>
+  <p>We will also disclose information if we are legally required to, or where it is necessary to prevent a serious threat to someone's safety. We will not disclose it for any other reason, and we do not sell it to anyone.</p>
+
+  <h2 id="ai">6. AI features</h2>
+  <p>Several features use a large language model provided by Anthropic: the squad and swimmer summaries, the training plan generator, the results-board scanner, the nutrition and dryland coach chat, and the coach-reviewed parent digest.</p>
+  <ul>
+    <li>Only the data needed for that request is sent — for example, the times and sessions being summarised, or the photo of the results board.</li>
+    <li>The provider processes it to answer that request. <strong>Your data is not used to train the provider's models.</strong></li>
+    <li>AI output is a starting point, not a verdict. Training, nutrition and dryland guidance from STROKE is general information and is not medical, physiotherapy or dietetic advice.</li>
+    <li>A parent digest is generated as a draft and is only visible to a parent after a coach has reviewed and approved it.</li>
   </ul>
 
-  <h2 class="pv-h2">3. Who we share it with</h2>
+  <h2 id="children">7. Children and young swimmers</h2>
+  <p>Swimming is a sport with a lot of young athletes, so this matters more here than in most software.</p>
   <ul>
-    <li><strong>Resend</strong> — our email provider, used only to deliver verification codes to your inbox</li>
-    <li><strong>Google / Apple</strong> — only if you choose to sign in with one of those providers, to authenticate you</li>
-    <li><strong>Your coach</strong> — if you join a squad, your coach can see your training data, notes they write about you, and any status flags they set. They cannot see your account password</li>
-    <li><strong>Other swimmers</strong> — only if you explicitly opt in to the leaderboard, other opted-in users can see your name and times for a given event</li>
+    <li>Where a squad requires it, a coach can mark a squad invite as needing guardian consent. In that case the swimmer's account is not activated until a parent or guardian confirms consent and provides their name and email.</li>
+    <li>A parent or guardian can ask us at any time to show them what we hold about their child, correct it, or delete it, and we will act on that promptly.</li>
+    <li>A young swimmer's data is never made public by default. The leaderboard requires an explicit opt-in.</li>
+    <li>If you believe we hold information about a child that should not be there, contact us using section 11 and we will remove it.</li>
   </ul>
-  <p>We do not share your data with any other third party.</p>
 
-  <h2 class="pv-h2">4. Children's privacy</h2>
-  <p>Stroke's Coach tier lets a coach mark a squad invite as requiring parental consent for a minor swimmer. In that case, the swimmer's account is not activated until a parent or guardian confirms consent and provides their name and email address. That consent record is stored so we can show it was given.</p>
-  <div class="pv-note">If you are a parent or guardian and have questions about a minor's account, or want it removed, contact us using the details in section 7 — we'll act on that promptly.</div>
+  <h2 id="keep">8. How long we keep it</h2>
+  <ul>
+    <li><strong>While your account is active</strong> — we keep your account and training data so your history is there season after season.</li>
+    <li><strong>If you delete your account</strong> — we delete your personal information, other than a minimal record we are required to keep for security or legal reasons, such as an entry in the administrative audit log.</li>
+    <li><strong>Results-board photographs</strong> — kept only as long as needed to process and confirm the times read from them.</li>
+    <li><strong>Server logs</strong> — kept for a short period for security and debugging, then discarded.</li>
+  </ul>
+  <p>If you leave a squad, your own training record stays with your account. It belongs to you, not to the club.</p>
 
-  <h2 class="pv-h2">5. How long we keep it</h2>
-  <p>We keep your data for as long as your account is active. If you delete your account, we delete your personal data, except where we need to keep a minimal record (like an admin audit log entry) for security or legal reasons.</p>
+  <h2 id="security">9. How we protect it</h2>
+  <p>The full detail is on the <a href="/data-safety">data safety page</a>. In summary: passwords are hashed with bcrypt and never stored in readable form; access is scoped by account role and checked on the server for every request, not just hidden in the interface; sign-in attempts are rate-limited and accounts lock temporarily after repeated failures; and traffic is encrypted in transit. No system is perfectly secure, but we take reasonable steps, and if a privacy breach occurs that is likely to cause serious harm we will notify the Office of the Privacy Commissioner and affected people, as the Privacy Act 2020 requires.</p>
 
-  <h2 class="pv-h2">6. Security</h2>
-  <p>Passwords are hashed with bcrypt before storage. Access to admin tools and coach-only data is restricted by account role. No method of storage is 100% secure, but we take reasonable steps to protect your information.</p>
+  <h2 id="rights">10. Your rights</h2>
+  <p>Under the Privacy Act 2020 you have the right to <strong>access</strong> the personal information we hold about you and to ask us to <strong>correct</strong> it if it is wrong. Where the GDPR applies to you, you also have rights to erasure, restriction, portability, and to object to certain processing.</p>
+  <p>In practice, you can ask us to:</p>
+  <ul>
+    <li>Tell you what we hold about you, and give you a copy</li>
+    <li>Correct anything inaccurate</li>
+    <li>Delete your account and the personal information in it</li>
+    <li>Revoke a parent's access to a swimmer (you can also do this yourself, immediately, from the app)</li>
+  </ul>
+  <p>Email <a href="mailto:privacy@stroke.app">privacy@stroke.app</a>. We will respond within 20 working days, which is the timeframe the Privacy Act sets. There is no charge for a reasonable request.</p>
+  <p>If you are not satisfied with how we have handled a privacy issue, you can complain to the New Zealand Office of the Privacy Commissioner at <a href="https://www.privacy.org.nz" rel="noopener">privacy.org.nz</a>. If the GDPR applies to you, you may complain to your local supervisory authority.</p>
 
-  <h2 class="pv-h2">7. Your rights</h2>
-  <p>You can ask us to access, correct, export, or delete your personal data at any time. To do so, email <a href="mailto:privacy@stroke.app">privacy@stroke.app</a> or use the account settings once available.</p>
+  <h2 id="changes">11. Changes to this policy</h2>
+  <p>If we make a material change, we will update the date at the top of this page and, where the change matters to you, tell you in the app or by email. Continuing to use STROKE after a change means the updated policy applies.</p>
 
-  <h2 class="pv-h2">8. Changes to this policy</h2>
-  <p>If we make material changes to this policy, we'll update the date above and, where appropriate, let you know in-app.</p>
+  <h2 id="contact">12. Contact</h2>
+  <p>Privacy questions, access requests and complaints: <a href="mailto:privacy@stroke.app">privacy@stroke.app</a>.</p>
+  <p>Anything else: <a href="mailto:hello@stroke.app">hello@stroke.app</a>.</p>
 
-  <h2 class="pv-h2">9. Contact</h2>
-  <p>Questions about this policy or your data can be sent to <a href="mailto:privacy@stroke.app">privacy@stroke.app</a>.</p>
-</div>
+</article>
 
-</body>
-</html>
+<section class="related">
+  <p class="related-h">Also worth reading</p>
+  <div class="related-grid">
+    <a href="/data-safety" class="related-card card tap rv">
+      <span class="related-title">How we keep your data safe</span>
+      <span class="related-desc">The specific technical measures, and exactly who can see whose data.<span class="tap-arrow"></span></span>
+    </a>
+    <a href="/cookies" class="related-card card tap rv">
+      <span class="related-title">Cookie policy</span>
+      <span class="related-desc">The complete list of cookies we set. It is short.<span class="tap-arrow"></span></span>
+    </a>
+  </div>
+</section>
+{% endblock %}

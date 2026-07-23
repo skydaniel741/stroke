@@ -254,6 +254,21 @@ def _seed_sessions(db, Session, user_id, spec):
     db.session.commit()
 
 
+def _mk_squad(db, Squad, coach_id, name='Senior Squad'):
+    import secrets as _secrets
+    squad = Squad(name=name, coach_id=coach_id, invite_code=_secrets.token_hex(6))
+    db.session.add(squad)
+    db.session.commit()
+    return squad
+
+
+def _mk_membership(db, SquadMembership, squad_id, user_id, status='active'):
+    m = SquadMembership(squad_id=squad_id, user_id=user_id, status=status)
+    db.session.add(m)
+    db.session.commit()
+    return m
+
+
 def test_athlete_model(app):
     from app import db
     from models import User, Swim, Session, CheckIn, AthleteProfile, WeeklyReport
@@ -271,7 +286,7 @@ def test_athlete_model(app):
         check('state persisted + computed', state is not None and state['total_logs'] == 13)
         check('improver classified improving', state['trend'] == 'improving', state['trend_reason'])
         check('event trend captured', state['events']['100m Freestyle']['direction'] == 'improving')
-        check('PB tracked', state['pbs']['100m Freestyle']['time'] == '1:14.20')
+        check('PB tracked', state['pbs']['100m Freestyle|25']['time'] == '1:14.20')
 
         # --- regressing swimmer: times going up ---
         u2 = _mk_user(db, User, 'slipper@test.com')
@@ -347,7 +362,88 @@ def test_athlete_model(app):
 
 
 # ===========================================================================
-# 7. HTTP layer: invalid input never crashes or corrupts data
+# 7. Coach routes: IDOR guard + PB pool-conflation regression checks
+# ===========================================================================
+
+def test_coach_routes(app):
+    """Regression guard for two bugs found and fixed this session: (1) a coach
+    could tag notes/status onto ANY user id under their own squad_id, without
+    that user actually being a member of the squad (IDOR); (2) personal-best
+    computation keyed by event only, so a 50m-pool time could silently
+    overwrite (or lose to) an unrelated 25m-pool PB for the same event."""
+    from app import db
+    from models import User, Squad, SquadMembership, Swim, CoachNote, StatusFlag
+
+    with app.app_context():
+        coach = _mk_user(db, User, 'coach1@test.com')
+        coach.role = 'coach'
+        member = _mk_user(db, User, 'member1@test.com')
+        outsider = _mk_user(db, User, 'outsider1@test.com')
+        squad = _mk_squad(db, Squad, coach.id)
+        _mk_membership(db, SquadMembership, squad.id, member.id)
+        coach_id, squad_id, member_id, outsider_id = coach.id, squad.id, member.id, outsider.id
+
+    client = app.test_client()
+    client.post('/login', data={'email': 'coach1@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+
+    # --- IDOR: swimmer_id not a member of squad_id must 404, not succeed ---
+    r = client.post(f'/coach/squad/{squad_id}/swimmer/{outsider_id}/note',
+                    data={'note': 'should never be stored'})
+    check('IDOR: note on non-member 404s', r.status_code == 404, r.status_code)
+    with app.app_context():
+        check('IDOR: no note row created for non-member',
+              db.session.query(CoachNote).filter_by(squad_id=squad_id, swimmer_id=outsider_id).count() == 0)
+
+    r = client.post(f'/coach/squad/{squad_id}/swimmer/{outsider_id}/status',
+                    data={'status': 'injured', 'note': 'should never be stored'})
+    check('IDOR: status on non-member 404s', r.status_code == 404, r.status_code)
+    with app.app_context():
+        check('IDOR: no status row created for non-member',
+              db.session.query(StatusFlag).filter_by(squad_id=squad_id, swimmer_id=outsider_id).count() == 0)
+
+    # --- positive case: an actual member still works (fix isn't over-broad) ---
+    r = client.post(f'/coach/squad/{squad_id}/swimmer/{member_id}/note',
+                    data={'note': 'real note'}, follow_redirects=True)
+    check('note on real member succeeds', r.status_code == 200)
+    with app.app_context():
+        check('note row created for real member',
+              db.session.query(CoachNote).filter_by(squad_id=squad_id, swimmer_id=member_id).count() == 1)
+
+    # --- dead route stays deleted ---
+    r = client.get(f'/coach/squad/{squad_id}/swimmer/{member_id}')
+    check('deleted squad_swimmer_profile route is gone', r.status_code == 404, r.status_code)
+
+    # --- PB pool-conflation: same event at both 25m and 50m must NOT collide ---
+    with app.app_context():
+        db.session.add(Swim(user_id=member_id, event='100m Freestyle', pool='25m', stroke='FR',
+                            time='58.00', logged_at=datetime.utcnow() - timedelta(days=5)))
+        db.session.add(Swim(user_id=member_id, event='100m Freestyle', pool='50m', stroke='FR',
+                            time='1:02.00', logged_at=datetime.utcnow() - timedelta(days=3)))
+        db.session.commit()
+
+        from routes_coach import _best_by_event_pool
+        swims = db.session.query(Swim).filter_by(user_id=member_id).all()
+        best = _best_by_event_pool(swims)
+        check('25m PB kept separately from 50m',
+              best.get(('100m Freestyle', '25'), {}).get('time') == '58.00',
+              best.get(('100m Freestyle', '25')))
+        check('50m PB kept separately from 25m',
+              best.get(('100m Freestyle', '50'), {}).get('time') == '1:02.00',
+              best.get(('100m Freestyle', '50')))
+
+    # --- same fix in athlete_model.recompute_state's pbs dict ---
+    with app.app_context():
+        import athlete_model
+        state = athlete_model.update_athlete_state(member_id)
+        check('athlete_model pbs keeps 25m/50m separate',
+              state['pbs'].get('100m Freestyle|25', {}).get('time') == '58.00'
+              and state['pbs'].get('100m Freestyle|50', {}).get('time') == '1:02.00',
+              state['pbs'])
+
+
+# ===========================================================================
+# 8. HTTP layer: invalid input never crashes or corrupts data
 # ===========================================================================
 
 def test_http(app):
@@ -596,6 +692,501 @@ def test_training_plan(app):
 
 
 # ===========================================================================
+# 10. Research agent: source hardening, scout filtering, pipeline idempotency,
+#     and route access control
+# ===========================================================================
+
+def _load_run_research():
+    """Import scripts/run_research.py as a module (it isn't a package)."""
+    import importlib.util
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts', 'run_research.py')
+    spec = importlib.util.spec_from_file_location('run_research', path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+class _FakeSource:
+    """Stand-in for a real source: returns canned items, no network."""
+    name = 'faketest'
+
+    def __init__(self, items):
+        self._items = items
+
+    def fetch(self, since_days=10):
+        return [dict(it) for it in self._items]
+
+
+def test_research_sources():
+    from sources import EuropePMCSource
+
+    # --- URL scheme hardening: only http(s) survives (stored-XSS guard) ---
+    check('https url kept', EuropePMCSource._safe_url('https://europepmc.org/x') == 'https://europepmc.org/x')
+    check('javascript: url dropped', EuropePMCSource._safe_url('javascript:alert(1)') == '')
+    check('data: url dropped', EuropePMCSource._safe_url('data:text/html,<script>') == '')
+    check('empty url stays empty', EuropePMCSource._safe_url('') == '')
+    check('overlong url dropped', EuropePMCSource._safe_url('https://x/' + 'a' * 600) == '')
+
+    # --- _to_item maps onto the contract and namespaces external_id ---
+    src = EuropePMCSource()
+    item = src._to_item({
+        'source': 'MED', 'id': '123', 'doi': '10.1/x',
+        'title': 'Stroke mechanics', 'authorString': 'A B',
+        'abstractText': 'text', 'firstPublicationDate': '2026-01-02',
+    })
+    check('external_id namespaced', item['external_id'] == 'europepmc:MED:123', item['external_id'])
+    check('item url is europepmc article', item['url'] == 'https://europepmc.org/article/MED/123', item['url'])
+    check('item keys match contract',
+          set(item.keys()) == {'source', 'external_id', 'title', 'authors', 'abstract', 'url', 'published_date'})
+    # An item with no source/id is unusable and dropped.
+    check('item without ids dropped', src._to_item({'title': 'x'}) is None)
+
+    # --- _http_get_json refuses non-https outright (SSRF hardening), no network ---
+    from sources import _http_get_json
+    check('non-https GET refused', _http_get_json('http://169.254.169.254/latest/meta-data/') is None)
+    check('ftp GET refused', _http_get_json('ftp://example.com/x') is None)
+
+
+def test_research_scout_filter():
+    import scout
+    items = [
+        {'external_id': 'a', 'relevance_score': 9.0},
+        {'external_id': 'b', 'relevance_score': 2.0},
+        {'external_id': 'c', 'relevance_score': 6.0},
+        {'external_id': 'd'},  # unscored -> treated as 0
+    ]
+    kept = scout.survivors(items, threshold=6.0)
+    check('survivors keeps >= threshold only', [i['external_id'] for i in kept] == ['a', 'c'],
+          [i['external_id'] for i in kept])
+    check('survivors sorted best-first', kept[0]['external_id'] == 'a')
+
+
+def test_research_pipeline(app):
+    """Full runner with sources/AI stubbed: it stores items, links a brief,
+    is idempotent across a second run, and the DB blocks two briefs per week."""
+    from app import db
+    import sources, scout, synthesize
+    from models import ResearchBrief, ResearchItem
+    rr = _load_run_research()
+
+    good = {'source': 'faketest', 'external_id': 'faketest:GOOD:1', 'title': 'GOOD swim study',
+            'authors': 'X', 'abstract': 'relevant', 'url': 'https://europepmc.org/article/MED/1',
+            'published_date': '2026-01-01'}
+    bad = {'source': 'faketest', 'external_id': 'faketest:BAD:1', 'title': 'BAD dolphin study',
+           'authors': 'Y', 'abstract': 'irrelevant', 'url': 'https://europepmc.org/article/MED/2',
+           'published_date': '2026-01-01'}
+
+    def fake_score(items, api_key, model=None, batch_size=None):
+        for it in items:
+            it['relevance_score'] = 8.0 if 'GOOD' in it['title'] else 1.0
+            it['topics'] = ['technique']
+        return items
+
+    def fake_synth(items, api_key, model):
+        return {'ok': True, 'title': 'Test brief', 'summary': 'A summary.',
+                'coaching_takeaways': ['Do the thing.']}
+
+    orig_sources, orig_score, orig_synth = sources.ALL_SOURCES, scout.score_items, synthesize.synthesize_brief
+    sources.ALL_SOURCES = [_FakeSource([good, bad])]
+    scout.score_items = fake_score
+    synthesize.synthesize_brief = fake_synth
+    try:
+        with app.app_context():
+            r1 = rr.run_weekly_research(db, api_key='k', model='m')
+            check('first run wrote a brief', r1.get('ok') and r1.get('brief_id'), r1)
+            check('first run kept only the survivor', r1.get('kept') == 1, r1)
+            check('both fetched items stored (novelty record)',
+                  db.session.query(ResearchItem).count() == 2)
+            check('only the survivor is linked to the brief',
+                  db.session.query(ResearchItem).filter(ResearchItem.brief_id.isnot(None)).count() == 1)
+            check('bad item stored but unlinked (will not re-score next week)',
+                  db.session.query(ResearchItem).filter_by(external_id='faketest:BAD:1').first().brief_id is None)
+
+            # Second run, same week: idempotent short-circuit, no dupes.
+            r2 = rr.run_weekly_research(db, api_key='k', model='m')
+            check('second run skipped (idempotent)', r2.get('skipped') is True, r2)
+            check('still exactly one brief', db.session.query(ResearchBrief).count() == 1)
+            check('still exactly two items (no dupes)', db.session.query(ResearchItem).count() == 2)
+
+            # DB-level backstop: two briefs for one week is rejected.
+            from sqlalchemy.exc import IntegrityError
+            wk = db.session.query(ResearchBrief).first().week_of
+            db.session.add(ResearchBrief(week_of=wk, title='dupe', item_count=0))
+            raised = False
+            try:
+                db.session.commit()
+            except IntegrityError:
+                raised = True
+                db.session.rollback()
+            check('uq_research_brief_week blocks a second brief for the week', raised)
+    finally:
+        sources.ALL_SOURCES, scout.score_items, synthesize.synthesize_brief = orig_sources, orig_score, orig_synth
+
+
+def test_research_routes(app):
+    """/research and /research/<id> are coach-gated and render for a coach."""
+    from app import db
+    from models import User, ResearchBrief
+    import json as _json
+
+    with app.app_context():
+        coach = _mk_user(db, User, 'researchcoach@test.com')
+        coach.role = 'coach'
+        swimmer = _mk_user(db, User, 'researchswimmer@test.com')  # role stays 'swimmer'
+        db.session.commit()
+        from datetime import date as _date
+        brief = ResearchBrief(week_of=_date(2026, 2, 2), title='Feb brief',
+                              summary='Line one.\nLine two.',
+                              coaching_takeaways=_json.dumps(['Cue one.']), item_count=0)
+        db.session.add(brief)
+        db.session.commit()
+        brief_id = brief.id
+
+    client = app.test_client()
+
+    # Anonymous is not served the page (login redirect or 403), never 200.
+    r = client.get('/research')
+    check('anon cannot view research list', r.status_code != 200, r.status_code)
+
+    # A logged-in non-coach swimmer is forbidden.
+    client.post('/login', data={'email': 'researchswimmer@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+    r = client.get('/research')
+    check('non-coach forbidden from research list', r.status_code == 403, r.status_code)
+    r = client.get(f'/research/{brief_id}')
+    check('non-coach forbidden from a brief', r.status_code == 403, r.status_code)
+    client.get('/logout')
+
+    # A coach sees the list and the brief.
+    client.post('/login', data={'email': 'researchcoach@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+    r = client.get('/research')
+    check('coach sees research list', r.status_code == 200, r.status_code)
+    check('list shows the brief title', b'Feb brief' in r.data)
+    r = client.get(f'/research/{brief_id}')
+    check('coach sees the brief', r.status_code == 200, r.status_code)
+    check('brief renders a takeaway', b'Cue one.' in r.data)
+    # A missing brief 404s rather than 500s.
+    r = client.get('/research/99999')
+    check('missing brief 404s', r.status_code == 404, r.status_code)
+
+
+# ===========================================================================
+# 11. Club event import: Squarespace source parsing, competition classifier,
+#     and the idempotent auto-import route
+# ===========================================================================
+
+def _fake_squarespace_payload():
+    """A canned Squarespace ?format=json body with a multi-day championship, a
+    single-day meet, and two non-competition entries (AGM, awards)."""
+    from zoneinfo import ZoneInfo
+    tz = ZoneInfo('Pacific/Auckland')
+
+    def ms(y, m, d):
+        return int(datetime(y, m, d, 10, 0, tzinfo=tz).timestamp() * 1000)
+
+    return {'upcoming': [
+        {'id': 'a1', 'title': 'South Island Long Course Championships',
+         'startDate': ms(2026, 3, 13), 'endDate': ms(2026, 3, 15),
+         'location': {'addressTitle': 'Parakiore Rec. Centre'}, 'fullUrl': '/events/si-lc-champs'},
+        {'id': 'a2', 'title': 'Temuka Best Time Meet',
+         'startDate': ms(2026, 1, 10), 'endDate': None,
+         'location': {'addressTitle': 'Temuka Pool'}, 'fullUrl': '/events/temuka'},
+        {'id': 'a3', 'title': 'Annual General Meeting',
+         'startDate': ms(2026, 8, 23), 'endDate': None,
+         'location': {'addressTitle': 'Wharenui Sports Centre'}, 'fullUrl': '/events/agm'},
+        {'id': 'a4', 'title': 'Annual Awards',
+         'startDate': ms(2026, 11, 21), 'endDate': None,
+         'location': {'addressTitle': 'Addington Raceway'}, 'fullUrl': '/events/awards'},
+    ], 'past': []}
+
+
+def test_event_source_parsing():
+    import events_sources
+    from events_sources import SquarespaceEventsSource
+    from datetime import date
+
+    orig = events_sources._http_get_json
+    events_sources._http_get_json = lambda url: _fake_squarespace_payload()
+    try:
+        events = SquarespaceEventsSource().fetch()
+    finally:
+        events_sources._http_get_json = orig
+
+    check('all upcoming events parsed', len(events) == 4, len(events))
+    champs = next((e for e in events if e['title'].startswith('South Island')), None)
+    check('external_id namespaced', champs and champs['external_id'] == 'scwc:a1', champs and champs['external_id'])
+    check('start date converted to NZ local', champs and champs['start_date'] == date(2026, 3, 13),
+          champs and champs['start_date'])
+    check('multi-day end date kept', champs and champs['end_date'] == date(2026, 3, 15),
+          champs and champs['end_date'])
+    check('location extracted', champs and champs['location'] == 'Parakiore Rec. Centre')
+    check('event url is absolute https', champs and champs['url'] == 'https://wearescwc.org/events/si-lc-champs',
+          champs and champs['url'])
+
+    # A record with no id/title/date is dropped.
+    events_sources._http_get_json = lambda url: {'upcoming': [{'title': 'no id or date'}]}
+    try:
+        check('unusable record dropped', SquarespaceEventsSource().fetch() == [])
+    finally:
+        events_sources._http_get_json = orig
+
+
+def test_event_classifier_heuristic():
+    from ai_utils import classify_swim_events
+    events = [
+        {'title': 'South Island Long Course Championships'},
+        {'title': 'Temuka Best Time Meet'},
+        {'title': 'Annual General Meeting'},
+        {'title': 'Annual Awards'},
+        {'title': 'Junior Development Camp'},
+    ]
+    # api_key=None -> heuristic path (no network).
+    verdicts = classify_swim_events(events, api_key=None, model=None)
+    check('championship kept', verdicts[0] is True)
+    check('best time meet kept', verdicts[1] is True)
+    check('AGM excluded', verdicts[2] is False)
+    check('awards excluded', verdicts[3] is False)
+    check('camp excluded', verdicts[4] is False)
+
+
+def test_event_import_route(app):
+    """The import route is coach-gated, imports only competitions, and is
+    idempotent (a second import adds nothing)."""
+    from app import db
+    import events_sources
+    from models import User, Squad, SquadEvent
+    from datetime import date
+
+    with app.app_context():
+        coach = _mk_user(db, User, 'evcoach@test.com')
+        coach.role = 'coach'
+        swimmer = _mk_user(db, User, 'evswimmer@test.com')
+        db.session.commit()
+        squad = _mk_squad(db, Squad, coach.id, name='Import Squad')
+        squad_id = squad.id
+
+    # AI off in tests -> classifier uses the heuristic; stub the network fetch.
+    orig = events_sources._http_get_json
+    events_sources._http_get_json = lambda url: _fake_squarespace_payload()
+    try:
+        client = app.test_client()
+
+        # Non-coach is forbidden.
+        client.post('/login', data={'email': 'evswimmer@test.com', 'password': 'test1234'},
+                    follow_redirects=True)
+        r = client.post(f'/coach/squad/{squad_id}/calendar/import-scwc')
+        check('non-coach cannot import events', r.status_code == 403, r.status_code)
+        client.get('/logout')
+
+        # Coach imports: only the 2 competitions land, AGM + awards are skipped.
+        client.post('/login', data={'email': 'evcoach@test.com', 'password': 'test1234'},
+                    follow_redirects=True)
+        r = client.post(f'/coach/squad/{squad_id}/calendar/import-scwc', follow_redirects=True)
+        check('import request ok', r.status_code == 200, r.status_code)
+        with app.app_context():
+            rows = db.session.query(SquadEvent).filter_by(squad_id=squad_id).all()
+            titles = sorted(e.title for e in rows)
+            check('exactly 2 competitions imported', len(rows) == 2, titles)
+            check('AGM not imported', all('General Meeting' not in t for t in titles), titles)
+            check('awards not imported', all('Awards' not in t for t in titles), titles)
+            champs = next((e for e in rows if e.title.startswith('South Island')), None)
+            check('imported as a meet', champs and champs.event_type == 'meet')
+            check('start date correct', champs and champs.event_date == date(2026, 3, 13),
+                  champs and champs.event_date)
+            check('multi-day range in notes', champs and '13' in (champs.notes or '') and 'Mar' in (champs.notes or ''),
+                  champs and champs.notes)
+            check('provenance in notes', champs and 'SCWC' in (champs.notes or ''))
+
+        # Second import is idempotent -- no duplicates.
+        client.post(f'/coach/squad/{squad_id}/calendar/import-scwc', follow_redirects=True)
+        with app.app_context():
+            check('re-import creates no duplicates',
+                  db.session.query(SquadEvent).filter_by(squad_id=squad_id).count() == 2)
+    finally:
+        events_sources._http_get_json = orig
+
+
+# ===========================================================================
+# 15. Role isolation: a parent sees one swimmer, a swimmer sees only itself
+# ===========================================================================
+
+def test_role_isolation(app):
+    """The promises on /privacy, /data-safety and /for/parents, as tests.
+
+    Every claim we make publicly about who can see whose data is asserted
+    here against the real HTTP layer, so the marketing copy cannot drift away
+    from the code. Specifically:
+      - a parent reaches only the swimmer(s) they are linked to, and asking
+        for another swimmer's id does not widen that;
+      - a revoked link cuts access immediately;
+      - a swimmer cannot open the parent or coach areas at all;
+      - the parent view never renders coach-private notes or status flags;
+      - one swimmer's log is not reachable from another swimmer's account.
+    """
+    from app import db
+    from models import (User, Swim, Squad, SquadMembership, ParentLink,
+                        CoachNote, StatusFlag)
+    import secrets as _secrets
+
+    with app.app_context():
+        coach = _mk_user(db, User, 'isocoach@test.com')
+        coach.role = 'coach'
+        mine = _mk_user(db, User, 'isomine@test.com')       # the linked swimmer
+        theirs = _mk_user(db, User, 'isotheirs@test.com')   # someone else's kid
+        parent = _mk_user(db, User, 'isoparent@test.com')
+        parent.role = 'parent'
+        db.session.commit()
+
+        squad = _mk_squad(db, Squad, coach.id, name='Isolation Squad')
+        _mk_membership(db, SquadMembership, squad.id, mine.id)
+        _mk_membership(db, SquadMembership, squad.id, theirs.id)
+
+        # Distinctive times so we can grep the rendered HTML for a leak.
+        db.session.add(Swim(user_id=mine.id, event='100m Freestyle', pool='25m',
+                            stroke='FR', time='59.11', logged_at=datetime.utcnow()))
+        db.session.add(Swim(user_id=theirs.id, event='200m Butterfly', pool='50m',
+                            stroke='FL', time='2:34.77', logged_at=datetime.utcnow()))
+
+        # Coach-private material that must never reach the parent view.
+        db.session.add(CoachNote(squad_id=squad.id, swimmer_id=mine.id, coach_id=coach.id,
+                                 note='PRIVATECOACHNOTE do not show parents'))
+        db.session.add(StatusFlag(squad_id=squad.id, swimmer_id=mine.id, updated_by=coach.id,
+                                  status='injured', note='SECRETSTATUSFLAG shoulder'))
+
+        link = ParentLink(swimmer_id=mine.id, parent_id=parent.id,
+                          invite_token=_secrets.token_urlsafe(24), status='active',
+                          claimed_at=datetime.utcnow())
+        db.session.add(link)
+        db.session.commit()
+        mine_id, theirs_id, link_id, squad_id = mine.id, theirs.id, link.id, squad.id
+
+    client = app.test_client()
+
+    # --- the parent ---
+    client.post('/login', data={'email': 'isoparent@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+
+    r = client.get('/parent/dashboard')
+    body = r.get_data(as_text=True)
+    check('parent dashboard loads', r.status_code == 200, r.status_code)
+    check('parent sees their own swimmer\'s time', '59.11' in body)
+    check('parent does NOT see another swimmer\'s time', '2:34.77' not in body)
+    check('parent does NOT see the coach\'s private note', 'PRIVATECOACHNOTE' not in body)
+    check('parent does NOT see the status flag', 'SECRETSTATUSFLAG' not in body)
+
+    # Asking for a swimmer they aren't linked to must not widen access: the
+    # dashboard resolves from the parent's OWN links, so an unknown id falls
+    # back to a swimmer they are already entitled to see.
+    r = client.get(f'/parent/dashboard?swimmer={theirs_id}')
+    body = r.get_data(as_text=True)
+    check('IDOR: parent asking for another swimmer gets no new data',
+          '2:34.77' not in body, 'other swimmer leaked')
+    check('IDOR: parent falls back to their own swimmer', '59.11' in body)
+
+    # A parent must not be able to reach the coach side at all.
+    for path in ('/coach/', f'/coach/squad/{squad_id}'):
+        r = client.get(path)
+        check(f'parent blocked from {path}', r.status_code in (302, 403, 404), r.status_code)
+
+    # --- revocation cuts access immediately ---
+    with app.app_context():
+        db.session.get(ParentLink, link_id).status = 'revoked'
+        db.session.commit()
+    r = client.get('/parent/dashboard')
+    check('revoked link: parent no longer sees the swimmer\'s time',
+          '59.11' not in r.get_data(as_text=True))
+    with app.app_context():
+        db.session.get(ParentLink, link_id).status = 'active'
+        db.session.commit()
+    client.get('/logout')
+
+    # --- the swimmer ---
+    client.post('/login', data={'email': 'isomine@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+
+    r = client.get('/parent/dashboard')
+    check('swimmer blocked from the parent dashboard', r.status_code in (302, 403), r.status_code)
+    r = client.get('/coach/')
+    check('swimmer blocked from the coach dashboard', r.status_code in (302, 403), r.status_code)
+
+    # A swimmer's own pages must not surface another swimmer's swims.
+    for path in ('/dashboard', '/history', '/personal-bests'):
+        r = client.get(path, follow_redirects=True)
+        check(f'{path} does not leak another swimmer\'s time',
+              '2:34.77' not in r.get_data(as_text=True), path)
+
+    # A swimmer cannot revoke a parent link that isn't theirs.
+    with app.app_context():
+        other_link = ParentLink(swimmer_id=theirs_id, invite_token=_secrets.token_urlsafe(24),
+                                status='pending')
+        db.session.add(other_link)
+        db.session.commit()
+        other_link_id = other_link.id
+    client.post(f'/parent/invite/{other_link_id}/revoke', follow_redirects=True)
+    with app.app_context():
+        check('swimmer cannot revoke another swimmer\'s parent link',
+              db.session.get(ParentLink, other_link_id).status == 'pending',
+              db.session.get(ParentLink, other_link_id).status)
+    client.get('/logout')
+
+    # --- an unauthenticated visitor gets nothing ---
+    anon = app.test_client()
+    for path in ('/parent/dashboard', '/coach/', '/dashboard'):
+        r = anon.get(path)
+        check(f'anonymous blocked from {path}', r.status_code in (302, 401, 403), r.status_code)
+
+
+# ===========================================================================
+# 16. Public pages: every marketing/legal route renders and links resolve
+# ===========================================================================
+
+def test_public_pages(app):
+    from marketing_content import FEATURES, AUDIENCES, FOOTER_LINKS
+
+    client = app.test_client()
+
+    static_paths = ['/', '/privacy', '/terms', '/cookies', '/data-safety', '/faq',
+                    '/login', '/login/coach', '/login/parent', '/signup']
+    for path in static_paths:
+        r = client.get(path)
+        check(f'{path} renders', r.status_code == 200, r.status_code)
+
+    for slug in FEATURES:
+        r = client.get(f'/features/{slug}')
+        check(f'/features/{slug} renders', r.status_code == 200, r.status_code)
+    for who in AUDIENCES:
+        r = client.get(f'/for/{who}')
+        check(f'/for/{who} renders', r.status_code == 200, r.status_code)
+
+    check('unknown feature slug 404s', client.get('/features/not-a-thing').status_code == 404)
+    check('unknown audience 404s', client.get('/for/nobody').status_code == 404)
+
+    # Every footer link must resolve -- a legal page nobody can reach is worse
+    # than no legal page, because it looks like one exists.
+    for label, href in FOOTER_LINKS:
+        check(f'footer link {label} resolves', client.get(href).status_code == 200, href)
+
+    # The landing page must offer the explainers, not just the signup form.
+    home = client.get('/').get_data(as_text=True)
+    check('landing links to the coach page', '/for/coaches' in home)
+    check('landing links to the parent page', '/for/parents' in home)
+    check('landing links to a feature deep-dive', '/features/session-builder' in home)
+    check('landing no longer shows the hero pill', 'hero-pill' not in home)
+    check('landing carries the cookie notice', 'cookiebar' in home)
+    check('landing links to terms', '/terms' in home)
+
+    # Parents must be told they cannot self-serve a signup.
+    signup = client.get('/signup').get_data(as_text=True)
+    check('signup explains the parent route', 'parent link' in signup.lower())
+
+    # The three login doors are cosmetic: all three post to the same endpoint.
+    for path in ('/login', '/login/coach', '/login/parent'):
+        body = client.get(path).get_data(as_text=True)
+        check(f'{path} posts to /login', 'action="/login"' in body, path)
+
+
+# ===========================================================================
 
 def main():
     print('Building test app (throwaway DB)...')
@@ -614,7 +1205,17 @@ def main():
         ('Input validation', test_validation, False),
         ('Athlete model + weekly reports', test_athlete_model, True),
         ('Training plans (CSS + generator)', test_training_plan, True),
+        ('Coach routes (IDOR + PB pool-conflation)', test_coach_routes, True),
         ('HTTP layer', test_http, True),
+        ('Research sources (URL/SSRF hardening)', test_research_sources, False),
+        ('Research scout filtering', test_research_scout_filter, False),
+        ('Research pipeline (idempotency)', test_research_pipeline, True),
+        ('Research routes (coach-gated)', test_research_routes, True),
+        ('Event source parsing (Squarespace)', test_event_source_parsing, False),
+        ('Event classifier (heuristic)', test_event_classifier_heuristic, False),
+        ('Event import route (idempotent)', test_event_import_route, True),
+        ('Role isolation (parent/swimmer/coach)', test_role_isolation, True),
+        ('Public marketing + legal pages', test_public_pages, True),
     ]
     for name, fn, needs_app in suites:
         print(f'\n== {name} ==')

@@ -1,0 +1,36 @@
+{# Cookie notice.
+
+   STROKE sets strictly-necessary cookies only: the session cookie that keeps
+   you signed in, and the longer-lived "remember me" cookie if you tick that
+   box. There are no advertising, analytics or cross-site tracking cookies, so
+   there is no consent to collect and nothing to toggle -- offering a fake
+   "manage preferences" panel for cookies we do not set would be worse than
+   saying plainly what we do. This is a notice with an acknowledgement, and it
+   stays dismissed via localStorage (not a cookie, so dismissing it does not
+   itself store anything on a per-site cookie basis).
+
+   If a tracking or analytics cookie is ever added, this must become a real
+   opt-in banner that blocks those cookies until consent is given. #}
+<div class="cookiebar" id="cookiebar" role="region" aria-label="Cookie notice">
+  <div class="cookiebar-copy">
+    <p class="cookiebar-t">We only use essential cookies.</p>
+    <p class="cookiebar-p">Just the cookie that keeps you signed in. No advertising, no analytics that follow you around the web, no data sold to anyone. <a href="/cookies">Read the cookie policy</a>.</p>
+  </div>
+  <div class="cookiebar-actions">
+    <button type="button" class="btn btn-primary" id="cookieOk">Got it</button>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY='stroke_cookie_notice_v1';
+  var bar=document.getElementById('cookiebar');
+  if(!bar) return;
+  var seen;
+  try{ seen=window.localStorage.getItem(KEY); }catch(e){ seen='1'; }
+  if(!seen) bar.classList.add('show');
+  document.getElementById('cookieOk').addEventListener('click',function(){
+    bar.classList.remove('show');
+    try{ window.localStorage.setItem(KEY,'1'); }catch(e){}
+  });
+})();
+</script>

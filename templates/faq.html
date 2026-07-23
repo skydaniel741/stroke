@@ -1,0 +1,40 @@
+{% extends 'public_base.html' %}
+
+{% block title %}Frequently asked questions — STROKE{% endblock %}
+{% block description %}How STROKE works for coaches, parents and swimmers: pricing, rosters, the results-board scanner, who can see whose data, and how we handle privacy and cookies.{% endblock %}
+
+{% block content %}
+<header class="phead">
+  <div class="phead-inner">
+    <nav class="crumb rv"><a href="/">Home</a> <span>/</span> <span>FAQ</span></nav>
+    <p class="eyebrow rv">Questions</p>
+    <h1 class="rv">Frequently asked questions.</h1>
+    <p class="phead-lede rv">Including the awkward ones about who can see what. If yours is not here, email <a href="mailto:hello@stroke.app" style="color:var(--primary-focus);text-decoration:underline">hello@stroke.app</a>.</p>
+    <div class="prose-toc rv">
+      {% for group in faq %}<a href="#{{ group.group|lower|replace(' ', '-')|replace(',', '') }}">{{ group.group }}</a>{% endfor %}
+    </div>
+  </div>
+</header>
+
+<div style="height:28px"></div>
+
+{% for group in faq %}
+<section class="faq-group" id="{{ group.group|lower|replace(' ', '-')|replace(',', '') }}">
+  <p class="faq-group-h">{{ group.group }}</p>
+  {% for q, a in group['items'] %}
+  <details class="faq-item">
+    <summary class="faq-q">{{ q }}</summary>
+    <p class="faq-a">{{ a }}</p>
+  </details>
+  {% endfor %}
+</section>
+{% endfor %}
+
+<section class="pcta">
+  <div class="pcta-inner card rv">
+    <h2 class="pcta-h">Still deciding?</h2>
+    <p class="pcta-sub">The coach tier is free while we build with early squads. No card, and you can delete everything on request.</p>
+    <a href="/signup?as=coach" class="btn btn-primary">Start your squad free</a>
+  </div>
+</section>
+{% endblock %}

@@ -13,16 +13,13 @@
       extend: {
         fontFamily: { sans: ['Schibsted Grotesk', 'ui-sans-serif', 'system-ui'] },
         colors: {
-          /* CHLORINE light variant — sig blue ramp (unifies coach with the app) */
+          /* Mint-green ramp matching the marketing landing page's accent
+             (stroke_landing.css --primary #16c98d) so the coach dashboard
+             reads as the same brand, not a separate blue system. */
           brand: {
-            50: '#eef4fd', 100: '#dbe8fb', 200: '#b8d0f6', 300: '#8fb3ef',
-            400: '#5b8fe6', 500: '#2f7be0', 600: '#1f63c9', 700: '#1a52a8',
-            800: '#174488', 900: '#14386e',
-          },
-          /* nudge slate toward chlorine's cool blue-grays + navy ink */
-          slate: {
-            50: '#eef2fb', 100: '#e4ebf7', 200: '#d5deee', 300: '#b9c6dc',
-            900: '#0c1626', 950: '#080b14',
+            50: '#eefaf5', 100: '#d7f5ea', 200: '#aeeed4', 300: '#7ee3ba',
+            400: '#3edba7', 500: '#16c98d', 600: '#0fa377', 700: '#0c8563',
+            800: '#0a6b51', 900: '#084f3d',
           },
         },
       },
@@ -32,7 +29,7 @@
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   .font-display { font-family: 'Schibsted Grotesk', sans-serif; letter-spacing: -0.01em; }
-  .cp-nav-active { background-color: #1f63c9; color: #ffffff; box-shadow: 0 1px 2px rgba(4,16,28,.35); }
+  .cp-nav-active { background-color: #16c98d; color: #03231a; box-shadow: 0 1px 2px rgba(4,16,28,.35); }
   .voice-btn.voice-recording { background:#ef7d6a !important; border-color:#ef7d6a !important; color:#fff !important; animation:voicePulse 1s infinite; }
   @keyframes voicePulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.5);} 50%{box-shadow:0 0 0 6px rgba(255,77,94,0);} }
   @media print {
@@ -62,7 +59,7 @@
   <aside class="w-64 bg-slate-900 flex flex-col border-r border-slate-800 shrink-0">
     <div class="p-6 border-b border-slate-800">
       <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 bg-[#1f63c9] rounded-lg flex items-center justify-center font-bold text-white shadow-sm">
+        <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center font-bold text-[#03231a] shadow-sm">
           <i data-lucide="waves" class="w-5 h-5"></i>
         </div>
         <span class="font-display text-lg text-white">Stroke Coach</span>
@@ -138,7 +135,7 @@
       </div>
       <div class="flex gap-3">
         <button data-action="cp-set-tab" data-tab="roster" class="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-2xs cursor-pointer transition-all">Manage Squad</button>
-        <button data-action="cp-set-tab" data-tab="builder" class="px-4 py-2 bg-[#1f63c9] hover:bg-[#174488] text-white rounded-lg text-xs font-semibold shadow-2xs cursor-pointer transition-all">+ Assign New Set</button>
+        <button data-action="cp-set-tab" data-tab="builder" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-[#03231a] rounded-lg text-xs font-semibold shadow-2xs cursor-pointer transition-all">+ Assign New Set</button>
       </div>
     </header>
 

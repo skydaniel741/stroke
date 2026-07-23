@@ -5,6 +5,17 @@
 {% block page_sub %}<p class="coach-header-sub">Schedule practices, meets and other squad events.</p>{% endblock %}
 
 {% block content %}
+  <div class="panel cal-import" style="margin-bottom:16px">
+    <div>
+      <div class="panel-label" style="margin-bottom:2px">Import club meets</div>
+      <p class="cal-import-sub">Pull the upcoming meets and championships straight from the SCWC calendar, no manual entry.</p>
+    </div>
+    <form method="POST" action="/coach/squad/{{ squad.id }}/calendar/import-scwc">
+      <input type="hidden" name="month" value="{{ current_month }}">
+      <button type="submit" class="cal-import-btn">Import SCWC meets</button>
+    </form>
+  </div>
+
   <div class="panel" style="margin-bottom:24px">
     <div class="panel-label">Add an event</div>
     <form class="cal-form" method="POST" action="/coach/squad/{{ squad.id }}/calendar/create">
@@ -68,6 +79,11 @@
 
 {% block extra_head %}
 <style>
+  .cal-import{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .cal-import-sub{font-size:12.5px;color:#7986a0;margin:0;max-width:460px;}
+  .cal-import-btn{padding:11px 20px;background:#1f63c9;border:1px solid #1f63c9;color:#fff;border-radius:10px;font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:0.03em;cursor:pointer;white-space:nowrap;transition:transform .15s,box-shadow .15s;}
+  .cal-import-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(31,99,201,.28);}
+
   .cal-form{display:flex;gap:10px;flex-wrap:wrap;}
   .cal-form input, .cal-form select{padding:10px 14px;border:1px solid #e4e8f4;border-radius:10px;font-size:13px;font-weight:600;}
   .cal-form button{padding:10px 18px;background:#c8d5f6;border:1px solid #e4e8f4;border-radius:10px;font-weight:800;text-transform:uppercase;font-size:12px;cursor:pointer;}

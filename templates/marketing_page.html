@@ -1,0 +1,72 @@
+{% extends 'public_base.html' %}
+{# Renders both /features/<slug> and /for/<audience> from marketing_content.py.
+   The only structural difference is that an audience page also lists the
+   feature cards belonging to it. #}
+
+{% block title %}{{ page.title }} — STROKE{% endblock %}
+{% block description %}{{ page.lede|truncate(180) }}{% endblock %}
+
+{% block content %}
+<header class="phead">
+  <div class="phead-inner">
+    <nav class="crumb rv"><a href="/">Home</a> <span>/</span> <span>{{ crumb }}</span></nav>
+    <p class="eyebrow rv">{{ page.eyebrow }}</p>
+    <h1 class="rv">{{ page.title }}</h1>
+    <p class="phead-lede rv">{{ page.lede }}</p>
+  </div>
+</header>
+
+{% if page.facts %}
+<div class="facts">
+  {% for k, v in page.facts %}
+  <div class="fact card rv d{{ loop.index if loop.index < 4 else 3 }}">
+    <span class="fact-k">{{ k }}</span>
+    <span class="fact-v">{{ v }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<article class="prose">
+  {% for s in page.sections %}
+  <h2 class="rv">{{ s.h }}</h2>
+  <p class="rv">{{ s.body }}</p>
+  {% endfor %}
+</article>
+
+{% if feature_cards %}
+<section class="related">
+  <p class="related-h">What is inside</p>
+  <div class="related-grid">
+    {% for slug, f in feature_cards %}
+    <a href="/features/{{ slug }}" class="related-card card tap rv">
+      <span class="related-title">{{ f.title }}</span>
+      <span class="related-desc">{{ f.lede|truncate(120) }}<span class="tap-arrow"></span></span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="pcta">
+  <div class="pcta-inner card rv">
+    <h2 class="pcta-h">{{ cta_heading }}</h2>
+    <p class="pcta-sub">{{ cta_sub }}</p>
+    <a href="{{ page.cta[1] }}" class="btn btn-primary">{{ page.cta[0] }}</a>
+  </div>
+</section>
+
+{% if related_cards %}
+<section class="related">
+  <p class="related-h">Related</p>
+  <div class="related-grid">
+    {% for slug, f in related_cards %}
+    <a href="/features/{{ slug }}" class="related-card card tap rv">
+      <span class="related-title">{{ f.title }}</span>
+      <span class="related-desc">{{ f.lede|truncate(120) }}<span class="tap-arrow"></span></span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

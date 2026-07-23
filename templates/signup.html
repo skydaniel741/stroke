@@ -1,93 +1,120 @@
-<!DOCTYPE html>
-<html lang="en" data-skin="chlorine">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign up — STROKE</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
-</head>
-<body>
-<div class="cx-auth">
+{% extends 'public_base.html' %}
 
-    <aside class="cx-auth-brand">
-        <div class="cx-auth-brand-top">
-            <a href="/" class="cx-brand" aria-label="STROKE home">
-                <svg viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/></svg>
-            </a>
-            <span class="cx-auth-wordmark">STROKE</span>
-        </div>
-        <div class="cx-auth-statement">
-            <div class="cx-auth-tag"><span class="rule"></span>Free forever</div>
-            <h2 style="margin-top:14px" id="authHeadline">The last logbook you'll leave <em>on the deck.</em></h2>
-            <p id="authSub">Log a swim in five seconds, wet fingers and all. Then watch a whole season of times, splits and points stack up in one place.</p>
-        </div>
-        <div class="cx-auth-tag" style="color:var(--faint)">No credit card needed</div>
-    </aside>
+{% block title %}Sign up — STROKE{% endblock %}
+{% block description %}Create a free STROKE account and start logging swims, or set up a squad as a coach.{% endblock %}
 
-    <main class="cx-auth-formside">
-        <div class="cx-auth-card">
-            <h1>Create your account</h1>
-            <p class="cx-auth-sub">Free forever. No credit card needed.</p>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endwith %}
-            <form method="POST" action="/signup">
-                <div class="cx-field">
-                    <label>Username</label>
-                    <input type="text" name="username" class="cx-input" placeholder="yourname" required>
-                </div>
-                <div class="cx-field">
-                    <label>Email</label>
-                    <input type="email" name="email" class="cx-input" placeholder="you@example.com" autocomplete="username" required>
-                </div>
-                <div class="cx-field">
-                    <label>Password</label>
-                    <div class="cx-pw-wrap">
-                        <input type="password" name="password" id="passwordInput" class="cx-input" placeholder="min 8 characters" autocomplete="new-password" required>
-                        <button type="button" class="cx-pw-toggle" id="pwToggle" aria-label="Show password">
-                            <svg id="eyeOpen" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            <svg id="eyeClosed" viewBox="0 0 24 24" class="hidden"><path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a18.5 18.5 0 015.06-5.94M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                        </button>
-                    </div>
-                </div>
-                <label class="cx-remember" style="margin-bottom:20px">
-                    <input type="checkbox" name="as_coach" id="asCoach" value="1">
-                    <span class="cx-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-                    <span class="cx-remember-lbl">I'm a coach setting up a squad</span>
-                </label>
-                <button type="submit" class="cx-btn-primary">Create account</button>
-            </form>
+{% block chrome %}{% endblock %}
+{% block footer %}{% endblock %}
 
-            <p class="cx-auth-switch">Already have an account? <a href="/login">Log in</a></p>
-            <p class="cx-auth-switch" style="margin-top:8px; font-size:13px; color:var(--faint)">By signing up, you agree to our <a href="/privacy">Privacy Policy</a>.</p>
+{% block content %}
+<div class="auth">
+
+  <aside class="auth-brand">
+    <div class="auth-brand-top">
+      <a href="/" class="auth-mark" aria-label="STROKE home">
+        <svg viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/></svg>
+      </a>
+      <span class="auth-wordmark">STROKE</span>
+    </div>
+    <div class="auth-statement">
+      <div class="auth-tag"><span class="rule"></span><span id="authTag">Free to start</span></div>
+      <h2 style="margin-top:14px" id="authHeadline">The last logbook you'll leave <em>on the deck.</em></h2>
+      <p id="authSub">Log a swim in five seconds, wet fingers and all. Then watch a whole season of times, splits and points stack up in one place.</p>
+      <div class="auth-points" id="authPoints">
+        <span class="auth-point">World Aquatics points on every time you log</span>
+        <span class="auth-point">Personal bests kept separately for 25m and 50m</span>
+        <span class="auth-point">Your record stays yours if you change squads</span>
+      </div>
+    </div>
+    <div class="auth-tag" style="color:var(--ink-tertiary)">No credit card needed</div>
+  </aside>
+
+  <main class="auth-formside">
+    <div class="auth-card">
+      <a href="/" class="auth-mobile-brand" aria-label="STROKE home">
+        <span class="auth-mark">
+          <svg viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/></svg>
+        </span>
+        <span class="auth-wordmark">STROKE</span>
+      </a>
+
+      <h1>Create your account</h1>
+      <p class="auth-sub" id="formSub">Free to create. No credit card needed.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <div class="alert alert-info" style="margin-bottom:18px">
+        <strong>Parents:</strong> you don't sign up here. Ask your swimmer's coach to send you a parent link — opening it creates your account and connects it to your swimmer. <a href="/for/parents" style="color:var(--primary-focus);text-decoration:underline">How the parent view works</a>.
+      </div>
+
+      <form method="POST" action="/signup">
+        <div class="field">
+          <label for="usernameInput">Name</label>
+          <input type="text" id="usernameInput" name="username" class="input" placeholder="yourname" autocomplete="nickname" required>
         </div>
-    </main>
+        <div class="field">
+          <label for="emailInput">Email</label>
+          <input type="email" id="emailInput" name="email" class="input" placeholder="you@example.com" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="passwordInput">Password</label>
+          <div class="pw-wrap">
+            <input type="password" name="password" id="passwordInput" class="input" placeholder="min 8 characters" autocomplete="new-password" required>
+            <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password">
+              <svg id="eyeOpen" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg id="eyeClosed" viewBox="0 0 24 24" class="hidden"><path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a18.5 18.5 0 015.06-5.94M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            </button>
+          </div>
+        </div>
+        <label class="remember" style="margin-bottom:20px">
+          <input type="checkbox" name="as_coach" id="asCoach" value="1">
+          <span class="check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+          <span>I'm a coach setting up a squad</span>
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Create account</button>
+      </form>
+
+      <p class="auth-switch">Already have an account? <a href="/login">Log in</a></p>
+      <p class="auth-legal">
+        By creating an account you agree to our <a href="/terms">Terms of Use</a> and <a href="/privacy">Privacy Policy</a>.
+        A coach account holds other people's data — the <a href="/terms#roles">extra responsibilities</a> are worth two minutes.
+      </p>
+    </div>
+  </main>
+
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-    (function(){
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('as') === 'coach') {
-            document.getElementById('asCoach').checked = true;
-            document.getElementById('authHeadline').innerHTML = 'Run your squad without the <em>notebook.</em>';
-            document.getElementById('authSub').textContent = 'Roster, attendance, sets and times in one place — take attendance and it logs the set for everyone present.';
-        }
-    })();
-    const pwInput = document.getElementById('passwordInput');
-    const pwToggle = document.getElementById('pwToggle');
-    const eyeOpen = document.getElementById('eyeOpen');
-    const eyeClosed = document.getElementById('eyeClosed');
-    pwToggle.addEventListener('click', function(){
-        const isPassword = pwInput.type === 'password';
-        pwInput.type = isPassword ? 'text' : 'password';
-        eyeOpen.classList.toggle('hidden', isPassword);
-        eyeClosed.classList.toggle('hidden', !isPassword);
-        pwToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
-    });
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  if(params.get('as')==='coach'){
+    document.getElementById('asCoach').checked=true;
+    document.getElementById('authTag').textContent='Free for early coaches';
+    document.getElementById('authHeadline').innerHTML='Run your squad without the <em>notebook.</em>';
+    document.getElementById('authSub').textContent='Roster, attendance, sets and times in one place. Take attendance and it logs the set for everyone present.';
+    document.getElementById('authPoints').innerHTML=
+      '<span class="auth-point">Attendance auto-logs the session</span>'+
+      '<span class="auth-point">Photograph the results board to file a whole test set</span>'+
+      '<span class="auth-point">Parents get a read-only view of their own swimmer</span>';
+    document.getElementById('formSub').textContent='Free while we build with early coaches. No card.';
+  }
+  var pwInput=document.getElementById('passwordInput');
+  var pwToggle=document.getElementById('pwToggle');
+  var eyeOpen=document.getElementById('eyeOpen');
+  var eyeClosed=document.getElementById('eyeClosed');
+  pwToggle.addEventListener('click',function(){
+    var isPassword=pwInput.type==='password';
+    pwInput.type=isPassword?'text':'password';
+    eyeOpen.classList.toggle('hidden',isPassword);
+    eyeClosed.classList.toggle('hidden',!isPassword);
+    pwToggle.setAttribute('aria-label',isPassword?'Hide password':'Show password');
+  });
+})();
 </script>
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AfterCall — every missed call, caught</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f1c2b; --navy2:#16283c; --hivis:#ffd60a; --white:#f6f7f4; --dim:#93a3b4; --line:#24384e; --red:#ff5340}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Barlow',sans-serif; background:var(--navy); color:var(--white); line-height:1.5}
+.stripe{height:10px; background:repeating-linear-gradient(-45deg, var(--hivis) 0 18px, var(--navy) 18px 36px)}
+.wrap{max-width:960px; margin:0 auto; padding:0 24px}
+header{display:flex; justify-content:space-between; align-items:center; padding:22px 0}
+.logo{font-family:'Archivo Black'; font-size:21px; letter-spacing:-.01em}
+.logo span{color:var(--hivis)}
+.pill{background:var(--hivis); color:var(--navy); font-weight:800; padding:11px 20px; border-radius:6px; text-decoration:none; font-size:15px}
+.hero{padding:64px 0 40px}
+.kicker{display:inline-block; background:var(--navy2); border:1px solid var(--line); color:var(--hivis);
+  font-weight:800; font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding:7px 14px; border-radius:4px; margin-bottom:22px}
+h1{font-family:'Archivo Black'; font-size:clamp(38px,6.5vw,64px); line-height:1.02; text-transform:uppercase; letter-spacing:-.015em}
+h1 em{font-style:normal; color:var(--hivis)}
+.sub{font-size:19px; color:var(--dim); max-width:600px; margin:22px 0 30px}
+.sub b{color:var(--white)}
+.cta{display:flex; gap:12px; flex-wrap:wrap}
+.cta .ghost{border:1.5px solid var(--line); color:var(--white); padding:11px 20px; border-radius:6px; text-decoration:none; font-weight:600; font-size:15px}
+.stats{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:54px 0}
+.stat{background:var(--navy2); border:1px solid var(--line); border-left:4px solid var(--hivis); padding:20px}
+.stat .n{font-family:'Archivo Black'; font-size:34px; color:var(--hivis)}
+.stat .d{color:var(--dim); font-size:14px; margin-top:6px}
+h2{font-family:'Archivo Black'; font-size:28px; text-transform:uppercase; margin:60px 0 20px}
+.steps{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+.step{background:var(--navy2); border:1px solid var(--line); padding:22px}
+.step .num{font-family:'Archivo Black'; color:var(--navy); background:var(--hivis); width:34px; height:34px;
+  display:flex; align-items:center; justify-content:center; border-radius:6px; margin-bottom:14px}
+.step h3{font-size:17px; font-weight:800; margin-bottom:8px}
+.step p{color:var(--dim); font-size:14.5px}
+.price{background:var(--navy2); border:2px solid var(--hivis); padding:30px; margin:20px 0 8px; display:flex;
+  justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap}
+.price .amt{font-family:'Archivo Black'; font-size:44px}
+.price .amt small{font-size:16px; font-family:'Barlow'; color:var(--dim)}
+.price ul{list-style:none; color:var(--dim); font-size:14.5px}
+.price li{margin:4px 0}
+.price li::before{content:"✔ "; color:var(--hivis)}
+footer{color:var(--dim); font-size:12.5px; padding:50px 0 30px; border-top:1px solid var(--line); margin-top:70px}
+@media(max-width:720px){.stats,.steps{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="stripe"></div>
+<div class="wrap">
+<header>
+  <div class="logo">AFTER<span>CALL</span></div>
+  <a class="pill" href="/demo">Hear it answer →</a>
+</header>
+
+<section class="hero">
+  <div class="kicker">After-hours AI receptionist · Built for NZ trades</div>
+  <h1>You're on the tools.<br>Your phone <em>still answers.</em></h1>
+  <p class="sub">Nearly <b>half of after-hours calls</b> to trade businesses go unanswered — and <b>80% of those callers never ring back</b>. They just call the next plumber on Google. AfterCall picks up 24/7, sorts emergencies from tyre-kickers, and texts you the job before the caller hangs up.</p>
+  <div class="cta">
+    <a class="pill" href="/demo">Try the live demo</a>
+    <a class="ghost" href="/dashboard">See the owner dashboard</a>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="n">35–45%</div><div class="d">of after-hours calls to trade & service businesses go unanswered</div></div>
+  <div class="stat"><div class="n">80%</div><div class="d">of missed callers never get a follow-up — the job goes to a competitor</div></div>
+  <div class="stat"><div class="n">$400+</div><div class="d">typical value of one recovered after-hours call-out. One job pays the month.</div></div>
+</div>
+
+<h2>How it works</h2>
+<div class="steps">
+  <div class="step"><div class="num">1</div><h3>Divert your phone</h3><p>Push one setting on your mobile: divert-when-busy and after 6pm. Takes two minutes, nothing to install.</p></div>
+  <div class="step"><div class="num">2</div><h3>AfterCall answers</h3><p>A natural voice answers as your business, triages the job, gives safety steps on emergencies, and captures name, number and address.</p></div>
+  <div class="step"><div class="num">3</div><h3>You get the text</h3><p>Emergencies hit your phone in seconds. Everything else lands in your morning summary with a one-line brief and rough job value.</p></div>
+</div>
+
+<h2>Pricing</h2>
+<div class="price">
+  <div>
+    <div class="amt">$299<small>/month · founding rate</small></div>
+    <div style="color:var(--dim); font-size:14px; margin-top:4px">14-day free trial · no contract · cancel anytime</div>
+  </div>
+  <ul>
+    <li>24/7 answering in your business name</li>
+    <li>Emergency escalation by instant text</li>
+    <li>Morning lead summary with job values</li>
+    <li>Set up for you in one day</li>
+  </ul>
+</div>
+
+<footer>PROTOTYPE — demo runs in the browser; phone-line version connects via Twilio/Vapi. AfterCall is a message-taking service, not an emergency service. Wellington, NZ.</footer>
+</div>
+</body>
+</html>

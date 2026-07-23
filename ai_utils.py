@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 import logging
 
 import anthropic
@@ -506,6 +507,137 @@ def extract_set_from_transcript(transcript, api_key, model):
 
 
 # ============================================================
+# ROSTER IMPORT: map a coach's exported CSV onto our schema
+# ============================================================
+# Coaches already have their swimmers in another platform (TeamUnify,
+# SwimTopia, Hy-Tek, a club spreadsheet). No two of those export the same
+# column headers, so a plain csv.DictReader that demands columns literally
+# named 'email'/'name' drops most real files on the floor. This asks Claude
+# to look at the headers + a few sample rows and tell us which column is
+# which. It only proposes a mapping -- the coach confirms every row in a
+# preview before anything is written (see routes_coach import preview/commit),
+# so the AI never silently lands minors' contact details in the DB.
+
+# Fields we can actually use on a SquadMembership today. dob is surfaced in the
+# preview for the coach to sanity-check identity, but there's no column to store
+# it on yet, so the commit step ignores it.
+ROSTER_TARGET_FIELDS = ('full_name', 'first_name', 'last_name', 'email', 'dob', 'group')
+
+ROSTER_MAP_TOOL_SCHEMA = {
+    "name": "map_roster_columns",
+    "description": (
+        "Report which column header in a coach's exported swimmer roster maps to each field we need. "
+        "For every field, return the EXACT header string from the file, or an empty string if no "
+        "column fits. Never invent a header that isn't in the provided list."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "full_name": {"type": "string", "description": "Header holding the swimmer's whole name in one cell (e.g. 'Athlete', 'Swimmer Name'). Empty if the name is split across first/last columns instead."},
+            "first_name": {"type": "string", "description": "Header for the given/first name, if the name is split into two columns. Empty if there's a single full-name column."},
+            "last_name": {"type": "string", "description": "Header for the family/last name, if split. Empty if there's a single full-name column."},
+            "email": {"type": "string", "description": "Header for the swimmer's (or guardian's) email address. Empty if none."},
+            "dob": {"type": "string", "description": "Header for date of birth / birthdate. Empty if none."},
+            "group": {"type": "string", "description": "Header for the training group, squad, lane, or level the swimmer belongs to. Empty if none."},
+        },
+        "required": list(ROSTER_TARGET_FIELDS),
+    },
+}
+
+ROSTER_MAP_PROMPT = (
+    "You are helping a swim coach import their roster from another piece of software into ours. "
+    "Below are the column headers from their exported CSV and a few sample rows. Decide which header "
+    "corresponds to each field we need, and call map_roster_columns with the exact header strings.\n"
+    "Rules:\n"
+    "- Use the EXACT header text as it appears in the list. If nothing fits a field, return an empty string.\n"
+    "- Prefer a single full-name column when one exists; only use first_name/last_name when the name is "
+    "genuinely split across two columns.\n"
+    "- A column like 'Group', 'Squad', 'Training Group', 'Level', or 'Lane' maps to group.\n"
+    "- If both a swimmer email and a parent/guardian email exist, prefer the swimmer's own email; "
+    "otherwise use whichever email is present.\n"
+    "- Ignore columns you don't need (times, USA-S id, gender, fees). Don't force them into a field."
+)
+
+
+def _heuristic_roster_map(headers):
+    """Best-effort header match with no AI, used when AI is off or the call
+    fails. Keeps import working (just less cleverly) rather than dead."""
+    mapping = {f: '' for f in ROSTER_TARGET_FIELDS}
+    for h in headers or []:
+        low = (h or '').strip().lower()
+        if not low:
+            continue
+        if not mapping['email'] and 'email' in low:
+            mapping['email'] = h
+        elif not mapping['full_name'] and low in ('name', 'full name', 'swimmer', 'athlete', 'swimmer name', 'athlete name'):
+            mapping['full_name'] = h
+        elif not mapping['first_name'] and low in ('first', 'first name', 'firstname', 'given name'):
+            mapping['first_name'] = h
+        elif not mapping['last_name'] and low in ('last', 'last name', 'lastname', 'surname', 'family name'):
+            mapping['last_name'] = h
+        elif not mapping['dob'] and (low in ('dob', 'd.o.b.') or 'birth' in low):
+            mapping['dob'] = h
+        elif not mapping['group'] and low in ('group', 'squad', 'training group', 'level', 'lane', 'lane group', 'team'):
+            mapping['group'] = h
+    return mapping
+
+
+def map_roster_columns(headers, sample_rows, api_key, model):
+    """Ask Claude which CSV column is which. Returns a dict keyed by
+    ROSTER_TARGET_FIELDS, each value the source header string (or '').
+    Never raises -- falls back to a heuristic match if AI is unavailable."""
+    headers = [h for h in (headers or []) if h and h.strip()]
+    if not headers:
+        return {f: '' for f in ROSTER_TARGET_FIELDS}
+
+    if not api_key:
+        return _heuristic_roster_map(headers)
+
+    # Keep the sample small and cheap -- a handful of rows is plenty to
+    # disambiguate headers, and we don't want to ship the whole file to the API.
+    sample = []
+    for row in (sample_rows or [])[:6]:
+        sample.append({h: str(row.get(h, ''))[:60] for h in headers})
+
+    prompt = (
+        f"{ROSTER_MAP_PROMPT}\n\n"
+        f"Column headers: {json.dumps(headers)}\n\n"
+        f"Sample rows: {json.dumps(sample, ensure_ascii=False)}"
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=512,
+            tools=[ROSTER_MAP_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "map_roster_columns"},
+            messages=[{"role": "user", "content": [{"type": "text", "text": prompt}]}],
+        )
+    except Exception:
+        logger.exception('map_roster_columns: API call failed, using heuristic')
+        return _heuristic_roster_map(headers)
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input:
+        return _heuristic_roster_map(headers)
+
+    data = tool_use.input
+    header_set = set(headers)
+    # Trust only headers that actually exist in the file -- the model
+    # occasionally normalises capitalisation or invents a tidy label.
+    mapping = {}
+    for field in ROSTER_TARGET_FIELDS:
+        val = (data.get(field) or '').strip()
+        mapping[field] = val if val in header_set else ''
+
+    # If the model gave us nothing usable, the heuristic is better than blank.
+    if not any(mapping.values()):
+        return _heuristic_roster_map(headers)
+    return mapping
+
+
+# ============================================================
 # SOLO-TIER AI COACHING: onboarding -> program, and daily check-ins
 # ============================================================
 
@@ -999,6 +1131,136 @@ def generate_weekly_review(digest, api_key, model, tone='encouraging'):
 
 
 # ============================================================
+# PARENT-FACING: AI-drafted weekly digest (coach-reviewed before it's ever
+# shown on the parent dashboard -- see routes_internal.digest_generate, the
+# Render Cron entry point, and routes_coach's digest review queue).
+# ============================================================
+
+DIGEST_TOOL_SCHEMA = {
+    "name": "write_parent_digest",
+    "description": "Draft a short weekly update for a swimmer's parent covering attendance, PBs and training this week.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "headline": {
+                "type": "string",
+                "description": "ONE sentence (max ~18 words): the single most relevant thing about this swimmer's week.",
+            },
+            "body": {
+                "type": "string",
+                "description": (
+                    "2-4 sentences (max ~70 words) covering attendance, any new PBs, and how training's "
+                    "going this week. Plain and factual, talking about the swimmer in the third person to "
+                    "their parent."
+                ),
+            },
+            "next_up": {
+                "type": "string",
+                "description": (
+                    "Optional: ONE short sentence naming the next upcoming squad event, only if one was "
+                    "given in the input. Leave empty if none was given."
+                ),
+            },
+        },
+        "required": ["headline", "body"],
+    },
+}
+
+
+def generate_parent_digest(swimmer_name, athlete_state, week_attendance, tone, api_key, model):
+    """Draft a coach-reviewed weekly update for one swimmer's parent.
+    `athlete_state` is the cached athlete_model.get_state(swimmer_id) dict
+    (trend, pbs, events -- reused as-is, not recomputed here). `week_attendance`
+    is {'attended', 'scheduled', 'no_session_scheduled'} for the week just
+    finished (a bye week reads as "no session scheduled", not a bad week).
+    This is a new, standalone call path, not a variant of generate_weekly_review
+    or generate_progress_insight, so it repeats the low-week and
+    back-half-slower guardrails explicitly rather than assuming they carry
+    over from elsewhere. Never raises -- returns {'ok': False, 'error': ...}
+    on any failure, otherwise {'ok': True, 'headline', 'body', 'next_up'}."""
+    athlete_state = athlete_state or {}
+    pbs = athlete_state.get('pbs') or {}
+    new_pbs = []
+    for key, p in pbs.items():
+        if not isinstance(p, dict):
+            continue
+        days_ago = p.get('days_ago') if p.get('days_ago') is not None else 999
+        if days_ago > 7:
+            continue
+        # Tolerate a not-yet-recomputed cached row from before PBs were keyed
+        # by (event, pool) -- key was the bare event name and the value had no
+        # event/pool fields. Derive from the key so this never renders
+        # "None (Nonem)" while waiting for the swimmer's next log to refresh
+        # the cache; self-heals within update_athlete_state's normal cadence.
+        event = p.get('event') or (str(key).split('|')[0] if '|' in str(key) else key)
+        pool = p.get('pool') or (str(key).split('|')[1] if '|' in str(key) else None)
+        pool_label = f' ({pool}m)' if pool else ''
+        new_pbs.append(f"{event}{pool_label}: {p.get('time')}")
+    events = athlete_state.get('events') or {}
+    trend_lines = [
+        f"{event}: {data.get('direction')} ({data.get('change_pct')}%)"
+        for event, data in events.items()
+    ]
+
+    if week_attendance.get('no_session_scheduled'):
+        attendance_line = "No squad session was scheduled this week (a bye/off week), so there's nothing to report on attendance."
+    else:
+        attendance_line = (
+            f"Attended {week_attendance.get('attended', 0)} of "
+            f"{week_attendance.get('scheduled', 0)} scheduled squad sessions this week."
+        )
+
+    prompt = (
+        "You are a swim coach's assistant drafting a short weekly update for a swimmer's parent. "
+        "A human coach will review this before the parent ever sees it, so be accurate and plain, never "
+        "speculative or dramatic.\n\n"
+        f"{_tone_line(tone)}\n\n"
+        f"Swimmer: {swimmer_name}\n"
+        f"{attendance_line}\n"
+        f"New personal bests this week: {'; '.join(new_pbs) if new_pbs else 'None'}\n"
+        f"Longer-term event trends: {'; '.join(trend_lines) if trend_lines else 'Not enough data yet'}\n"
+        f"Overall training trend (this swimmer's own model, not a comparison to anyone else): "
+        f"{athlete_state.get('trend') or 'not enough data yet'} "
+        f"({athlete_state.get('trend_reason') or 'still building a picture'})\n\n"
+        "RULES SPECIFIC TO THIS UPDATE:\n"
+        "- If attendance was low or there's nothing notable this week, do not manufacture positivity or "
+        "imply concern. State what happened plainly and let the coach's own judgment carry any real "
+        "concern in person -- this draft is not the place to raise an alarm.\n"
+        "- A slower back half or a single off day is completely normal, not a red flag. Never frame it "
+        "as one, even if the data mentions a slip.\n"
+        "- Don't invent PBs, events, or attendance numbers that weren't given above.\n"
+        "- Write about the swimmer in the third person to their parent (e.g. 'Jamie had a solid week'), "
+        "never talk directly to the swimmer as 'you'.\n\n"
+        "Call the write_parent_digest tool with your draft."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=512,
+            tools=[DIGEST_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "write_parent_digest"},
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception:
+        logger.exception('generate_parent_digest: API call failed')
+        return {'ok': False, 'error': "Couldn't draft the digest right now."}
+
+    tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input or not tool_use.input.get('headline') or not tool_use.input.get('body'):
+        return {'ok': False, 'error': "Couldn't draft the digest right now."}
+
+    result = _humanize(tool_use.input)
+    return {
+        'ok': True,
+        'headline': result.get('headline'),
+        'body': result.get('body'),
+        'next_up': result.get('next_up') or None,
+    }
+
+
+# ============================================================
 # COACH-TIER AI: squad performance insights for the coach dashboard
 # ============================================================
 
@@ -1153,12 +1415,52 @@ COACH_SET_TOOL_SCHEMA = {
 }
 
 
+# Realistic pool volume per minute of session time (INCLUDING rest, warm-up and
+# cool-down), by squad level. Elite squads genuinely cover far more ground than
+# an age-group group in the same hour -- a 2-hour national session is 6-9k,
+# whereas nobody is writing a 750m senior main set. Scaling the rate by level is
+# what lets a 90-120 min elite session reach the 7k a coach actually expects.
+COACH_SET_VOLUME_RATES = {
+    'age_group': (25, 40),   # 12 & under: lots of rest, drill, technique
+    'junior': (38, 55),      # 13-16
+    'senior': (48, 68),      # senior club (default)
+    'elite': (60, 90),       # national / elite
+}
+
+
+def _coach_set_level_key(level_text):
+    lt = (level_text or '').lower()
+    if 'age group' in lt or '12' in lt or 'novice' in lt or 'learn' in lt:
+        return 'age_group'
+    if 'junior' in lt or '13' in lt or '16' in lt or 'youth' in lt:
+        return 'junior'
+    if 'elite' in lt or 'national' in lt or 'advanced' in lt:
+        return 'elite'
+    return 'senior'
+
+
+def _coach_set_volume_target(level_text, minutes):
+    """Total-session volume range (metres, rounded to 100) for a level+duration,
+    used to anchor the generator so it stops under-producing thin sets."""
+    lo_rate, hi_rate = COACH_SET_VOLUME_RATES[_coach_set_level_key(level_text)]
+    lo = int(round(minutes * lo_rate / 100.0)) * 100
+    hi = int(round(minutes * hi_rate / 100.0)) * 100
+    return lo, hi
+
+
 def generate_coach_set(params, api_key, model):
     """Call Claude to write a coach's set from structured parameters, grounded
     in the elite-methodology notes above. `params` keys: focus, style,
     season_phase, level, pool, duration_minutes. Returns {'ok': True,
     'set': {...}} or {'ok': False, 'error': '...'} -- never raises."""
     focus = params.get('focus') or "coach's choice"
+    try:
+        minutes = int(float(params.get('duration_minutes') or 60))
+    except (ValueError, TypeError):
+        minutes = 60
+    minutes = max(20, min(minutes, 180))
+    level = params.get('level') or 'senior club'
+    vol_lo, vol_hi = _coach_set_volume_target(level, minutes)
     prompt = (
         "You are an elite swim coach's assistant writing tomorrow's set.\n"
         f"{ELITE_METHODOLOGY_NOTES}\n"
@@ -1166,17 +1468,22 @@ def generate_coach_set(params, api_key, model):
         f"- Training focus: {focus}\n"
         f"- Methodology style: {params.get('style') or 'best fit for the focus'}\n"
         f"- Season phase: {params.get('season_phase') or 'mid season'}\n"
-        f"- Squad level: {params.get('level') or 'senior club'}\n"
+        f"- Squad level: {level}\n"
         f"- Pool: {params.get('pool') or '25m'}\n"
-        f"- Session length: about {params.get('duration_minutes') or 60} minutes\n\n"
+        f"- Session length: about {minutes} minutes\n\n"
         "Call the create_coach_set tool with one complete session: warm up, main work, cool down. "
-        "Total volume must be realistic for the session length and level (roughly 45-60m/min for "
-        "seniors including rest, less for age-groupers). Intervals must be swimmable for the level. "
+        f"TARGET TOTAL VOLUME: {vol_lo}-{vol_hi} m across all blocks combined. This is the amount this "
+        "level genuinely covers in the session length (including rest, warm-up and cool-down). Land inside "
+        "this range: do NOT come in far under it (a thin 750m senior session is wrong), and don't blow "
+        "past it either. Build the main set(s) up to the volume the range demands rather than writing one "
+        "small set. "
+        "Intervals must be swimmable for the level. "
         "Remember rest_type='interval' means a SEND-OFF (the swimmer leaves every X; actual rest is "
         "whatever's left after the swim), so every send-off must exceed the level's realistic swim "
         "time for the rep with sensible rest to spare. "
         "Use the note field for cues like 'descend 1-4' or 'hold 200 race pace'. Stay true to the "
-        "requested methodology -- a USRPT set should look nothing like a Bowman aerobic set."
+        "requested methodology -- a USRPT set should look nothing like a Bowman aerobic set. (USRPT/pure "
+        "sprint work is deliberately lower volume; if that's the style, aim near the lower bound.)"
     )
 
     try:
@@ -1225,6 +1532,235 @@ def generate_coach_set(params, api_key, model):
         ) else 'Fitness',
         'blocks': blocks,
     }}
+
+
+# ============================================================
+# COACH-TIER AI: on-demand dryland content search (live web)
+#
+# Two-call pattern (see docs/plans/2026-07-19-coach-dryland-content-agent-design.md):
+# Call 1 lets Claude search/fetch the open web freely -- tool_choice is left
+# at its default ("auto") so it isn't forced into a tool from turn 1, which
+# would skip the web_search/web_fetch step entirely (the whole point of this
+# feature). Call 2 takes Call 1's plain-text findings and forces structured
+# extraction via tool_choice, same pattern as every other generation path in
+# this file. This is the one feature in the app where output isn't grounded
+# in a pre-vetted catalog, so allowed_domains + mandatory coach review are
+# load-bearing, not optional -- see the design doc's safety guardrails.
+# ============================================================
+
+# Curated allowlist for web_search -- reputable research, S&C and swimming
+# sources only, never the open web. FLAG FOR REVIEW: this is a starting
+# list, not exhaustive or final; revisit as coaches actually use the feature.
+DRYLAND_ALLOWED_DOMAINS = [
+    "ncbi.nlm.nih.gov",        # PubMed Central -- open-access research papers
+    "pubmed.ncbi.nlm.nih.gov",
+    "scholar.google.com",      # research aggregator
+    "nsca.com",                # National Strength and Conditioning Association
+    "usaswimming.org",
+    "britishswimming.org",
+    "youtube.com",             # metadata only -- see note in the prompt below
+    "stanford.edu",            # university athletics program with published swim S&C material
+]
+
+DRYLAND_TOOL_SCHEMA = {
+    "name": "extract_dryland_sets",
+    "description": (
+        "Extract 1-3 structured dryland/conditioning sessions from research findings already "
+        "gathered, each grounded in a real source found during that research."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "candidates": {
+                "type": "array",
+                "description": (
+                    "1-3 candidate sessions, best match first. Never invent a candidate that wasn't "
+                    "actually found in the research findings above."
+                ),
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "description": "Short title for the session, e.g. 'Shoulder Prehab Circuit (NSCA)'."},
+                        "description": {
+                            "type": "string",
+                            "description": "ONE short sentence: what this trains and why it fits the requested focus/age/level. Max ~25 words.",
+                        },
+                        "category": {
+                            "type": "string",
+                            "enum": ["Strength", "Mobility", "Core"],
+                            "description": "Library category that best fits this session's primary emphasis.",
+                        },
+                        "source_url": {"type": "string", "description": "The exact URL this candidate was found at."},
+                        "source_name": {
+                            "type": "string",
+                            "description": "Human-readable source, e.g. 'NSCA', 'PubMed', 'USA Swimming', or the YouTube channel name.",
+                        },
+                        "source_type": {
+                            "type": "string",
+                            "enum": ["research_paper", "youtube_video", "org_program", "other"],
+                            "description": (
+                                "research_paper/org_program sources are safe to extract exercise detail "
+                                "from directly. youtube_video sources only ever had title/description "
+                                "metadata available (web_fetch cannot read a video's transcript) -- treat "
+                                "as 'a video to watch', not a page you read exercises off of."
+                            ),
+                        },
+                        "exercises": {
+                            "type": "array",
+                            "description": (
+                                "The actual exercises. For a youtube_video source with no readable "
+                                "description detail, this may be a single entry pointing the coach to "
+                                "watch the video rather than fabricated exercise specifics."
+                            ),
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string", "description": "Exercise name, e.g. 'Band external rotation'."},
+                                    "sets": {"type": "string", "description": "Number of sets, e.g. '3'. Empty if not specified in the source."},
+                                    "reps": {"type": "string", "description": "Reps or duration, e.g. '10-12' or '30s hold'. Empty if not specified."},
+                                    "rest": {"type": "string", "description": "Rest between sets, e.g. '30-45s'. Empty if not specified."},
+                                    "notes": {"type": "string", "description": "Short cue or form note. Empty if none."},
+                                },
+                                "required": ["name"],
+                            },
+                        },
+                    },
+                    "required": ["title", "description", "category", "source_url", "source_name", "exercises"],
+                },
+            },
+        },
+        "required": ["candidates"],
+    },
+}
+
+
+def fetch_dryland_content(params, api_key, model):
+    """On-demand, coach-triggered live web search for dryland/conditioning
+    content. `params` keys: focus, age_range (explicit, e.g. '13-14' or
+    'senior' -- never inferred from context), level. Two-call pattern: Call 1
+    lets Claude search/fetch freely (tool_choice left at default), Call 2
+    forces structured extraction of Call 1's findings via tool_choice.
+    Returns {'ok': True, 'candidates': [...]} or {'ok': False, 'error':
+    '...'} -- never raises. Never saves or assigns anything itself -- purely
+    returns candidates for a coach to review."""
+    focus = (params.get('focus') or '').strip() or "general dryland conditioning"
+    age_range = (params.get('age_range') or '').strip() or "not specified -- keep it general and age-appropriate"
+    level = (params.get('level') or '').strip() or "club level"
+
+    research_prompt = (
+        "You are a swim coach's assistant researching dryland/conditioning content on the open web. "
+        "Search for and review real, credible sources: university/research papers (many swim-specific "
+        "strength & conditioning papers are open-access on PubMed/NCBI), known reputable S&C "
+        "organizations (e.g. NSCA), swimming federations (USA Swimming, British Swimming), and YouTube "
+        "videos.\n\n"
+        f"Coach's request:\n- Focus: {focus}\n- Age range: {age_range}\n- Level: {level}\n\n"
+        "Find 1-3 real candidate sessions or well-described exercise sets that fit this focus, age range "
+        "and level. Note: web_fetch on a YouTube URL only ever returns page metadata (title/description), "
+        "never the video's transcript -- so treat a YouTube hit as a video worth pointing the coach to "
+        "watch, not as a source you can extract detailed exercise prescriptions from. Only pull specific "
+        "sets/reps/rest detail from sources whose page text you actually fetched (research papers, org "
+        "pages). Age-appropriateness matters on safety grounds: keep youth/age-group recommendations "
+        "conservative on plyometric and loaded work.\n\n"
+        "When you're done researching, write a plain-text summary of what you found: for each candidate, "
+        "its exact source URL, the source name, and the exercise detail (sets/reps/rest) you were actually "
+        "able to read from the page. Don't fabricate detail you didn't find."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        research_response = client.messages.create(
+            model=model,
+            # Generous headroom: fetched page content (research papers can be
+            # long) plus multiple search/fetch round trips can otherwise eat
+            # the whole budget before the model writes its findings summary,
+            # leaving findings_text empty and a misleading "nothing found" error
+            # even when real content was actually retrieved.
+            max_tokens=8192,
+            tools=[
+                # allowed_domains on BOTH tools, not just web_search -- without
+                # it here, a search hit on an allowlisted page could link out
+                # to an arbitrary site and web_fetch would happily follow it,
+                # quietly defeating the "never the open web" guarantee this
+                # feature depends on for safety.
+                {"type": "web_search_20260209", "name": "web_search", "allowed_domains": DRYLAND_ALLOWED_DOMAINS},
+                {"type": "web_fetch_20260209", "name": "web_fetch", "allowed_domains": DRYLAND_ALLOWED_DOMAINS},
+            ],
+            messages=[{"role": "user", "content": research_prompt}],
+        )
+    except Exception:
+        logger.exception('fetch_dryland_content: research call failed')
+        return {'ok': False, 'error': "Couldn't search the web right now — try again in a moment."}
+
+    findings_text = "\n".join(
+        block.text for block in research_response.content
+        if getattr(block, 'type', None) == 'text' and getattr(block, 'text', None)
+    ).strip()
+    if not findings_text:
+        return {'ok': False, 'error': "No dryland content found for that focus — try broadening it or picking a different focus."}
+
+    extract_prompt = (
+        "Here are a swim coach's research findings for a dryland content search:\n\n"
+        f"{findings_text}\n\n"
+        "Call the extract_dryland_sets tool with 1-3 candidate sessions drawn ONLY from the findings "
+        "above. Never invent a source or exercise detail that isn't in the findings. If a candidate is a "
+        "YouTube video with no readable exercise detail, mark it source_type='youtube_video' and give a "
+        "single exercises entry pointing the coach to watch the video rather than fabricating sets/reps."
+    )
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        extract_response = client.messages.create(
+            model=model,
+            max_tokens=4096,
+            tools=[DRYLAND_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "extract_dryland_sets"},
+            messages=[{"role": "user", "content": extract_prompt}],
+        )
+    except Exception:
+        logger.exception('fetch_dryland_content: extraction call failed')
+        return {'ok': False, 'error': "Found some content but couldn't process it — try again in a moment."}
+
+    tool_use = next((c for c in extract_response.content if getattr(c, 'type', None) == 'tool_use'), None)
+    if not tool_use or not tool_use.input:
+        return {'ok': False, 'error': "Found some content but couldn't process it — try again in a moment."}
+
+    raw_candidates = tool_use.input.get('candidates') or []
+    candidates = []
+    for c in raw_candidates:
+        title = str(c.get('title') or '').strip()
+        source_url = str(c.get('source_url') or '').strip()
+        exercises = []
+        for ex in (c.get('exercises') or []):
+            name = str(ex.get('name') or '').strip()
+            if not name:
+                continue
+            exercises.append({
+                'name': name[:100],
+                'sets': str(ex.get('sets') or '').strip()[:20],
+                'reps': str(ex.get('reps') or '').strip()[:30],
+                'rest': str(ex.get('rest') or '').strip()[:30],
+                'notes': str(ex.get('notes') or '').strip()[:200],
+            })
+        if not title or not source_url or not exercises:
+            continue
+        candidates.append({
+            'title': title[:150],
+            'description': str(c.get('description') or '').strip()[:300],
+            'category': c.get('category') if c.get('category') in ('Strength', 'Mobility', 'Core') else 'Strength',
+            'source_url': source_url[:500],
+            'source_name': str(c.get('source_name') or '').strip()[:100] or 'Unknown source',
+            'source_type': c.get('source_type') if c.get('source_type') in (
+                'research_paper', 'youtube_video', 'org_program', 'other'
+            ) else 'other',
+            'exercises': exercises,
+        })
+        if len(candidates) >= 3:
+            break
+
+    if not candidates:
+        return {'ok': False, 'error': "No dryland content found for that focus — try broadening it or picking a different focus."}
+
+    return {'ok': True, 'candidates': _humanize(candidates)}
 
 
 # ============================================================
@@ -1594,3 +2130,134 @@ def render_coach_markdown(text):
         out.append('</ul>')
 
     return ''.join(out)
+
+
+# ============================================================
+# EVENT IMPORT: classify scraped calendar events for a squad
+# ============================================================
+# An external club calendar (see events_sources.py) lists everything: real
+# swim meets and championships, but also AGMs, awards nights and social dates.
+# When a coach auto-imports "key dates" they only want the competitions on
+# their squad calendar, not the admin noise. This asks Claude to tag each event
+# as a competition or not; a keyword heuristic covers the AI-off / failure case
+# so the import still works (same fallback philosophy as map_roster_columns).
+
+# Titles that clearly aren't a swim competition -- used by the heuristic and as
+# a belt-and-braces exclusion even after the AI classifies.
+_NON_COMPETITION_KEYWORDS = (
+    # NB: keep these specific -- avoid words like 'course' that appear in real
+    # meet names ('long course' / 'short course' championships).
+    'meeting', 'agm', 'annual general', 'awards', 'prizegiving',
+    'committee', 'social', 'quiz', 'fundraiser', 'working bee', 'clinic',
+    'workshop', 'camp', 'entries close', 'entry deadline',
+)
+
+EVENT_CLASSIFY_TOOL_SCHEMA = {
+    "name": "classify_swim_events",
+    "description": "Tag each listed swim-club calendar event as a competition or not, so only meets/championships get imported.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "events": {
+                "type": "array",
+                "description": "One entry per event, referenced by its index.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "index": {"type": "integer", "description": "The event's index as given in the prompt."},
+                        "is_competition": {
+                            "type": "boolean",
+                            "description": (
+                                "True only if this is an actual swimming COMPETITION a squad would attend: a meet, "
+                                "championship, gala, open-water race, junior league/festival, best-time or ribbon "
+                                "meet. False for AGMs, awards nights, socials, committee meetings, camps, clinics, "
+                                "entry deadlines, or anything that isn't a race."
+                            ),
+                        },
+                        "category": {
+                            "type": "string",
+                            "description": "Short lowercase label, e.g. 'championship', 'meet', 'open water', 'junior', 'social', 'admin'.",
+                        },
+                    },
+                    "required": ["index", "is_competition"],
+                },
+            },
+        },
+        "required": ["events"],
+    },
+}
+
+EVENT_CLASSIFY_PROMPT = (
+    "You are helping a swim coach auto-import a regional swimming calendar onto their squad's "
+    "schedule. The coach only wants actual COMPETITIONS (meets, championships, galas, open-water "
+    "races, junior leagues/festivals, best-time and ribbon meets). They do NOT want administrative "
+    "or social entries (AGMs, awards nights, committee meetings, socials, training camps, clinics, "
+    "entry deadlines).\n\n"
+    "For each event below, decide whether it's a competition and give a short category label. Call "
+    "classify_swim_events exactly once with a verdict for every event, keyed by its index."
+)
+
+
+def _heuristic_event_classify(events):
+    """Keyword fallback used when AI is off or the call fails. Treats an event
+    as a competition unless its title matches a clearly non-competition word.
+    Returns {index: is_competition_bool}."""
+    out = {}
+    for i, ev in enumerate(events):
+        title = (ev.get('title') or '').lower()
+        out[i] = not any(kw in title for kw in _NON_COMPETITION_KEYWORDS)
+    return out
+
+
+def classify_swim_events(events, api_key, model):
+    """Tag each event dict (needs a 'title') as a competition or not. Returns a
+    list of bools aligned to `events`. Never raises -- falls back to the keyword
+    heuristic if AI is unavailable, and always applies the non-competition
+    keyword list as a final backstop so an obvious AGM can't slip through."""
+    if not events:
+        return []
+
+    if not api_key:
+        verdicts = _heuristic_event_classify(events)
+    else:
+        verdicts = None
+        lines = []
+        for i, ev in enumerate(events):
+            loc = (ev.get('location') or '').strip()
+            lines.append(f"[{i}] {ev.get('title') or '(untitled)'}" + (f"  @ {loc}" if loc else ""))
+        prompt = f"{EVENT_CLASSIFY_PROMPT}\n\nEvents:\n" + "\n".join(lines)
+        try:
+            client = anthropic.Anthropic(api_key=api_key)
+            response = client.messages.create(
+                model=model,
+                max_tokens=1024,
+                tools=[EVENT_CLASSIFY_TOOL_SCHEMA],
+                tool_choice={"type": "tool", "name": "classify_swim_events"},
+                messages=[{"role": "user", "content": prompt}],
+            )
+            tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
+            if tool_use and tool_use.input:
+                verdicts = {}
+                for row in (tool_use.input.get('events') or []):
+                    try:
+                        idx = int(row.get('index'))
+                    except (TypeError, ValueError):
+                        continue
+                    if 0 <= idx < len(events):
+                        verdicts[idx] = bool(row.get('is_competition'))
+        except Exception:
+            logger.exception('classify_swim_events: API call failed, using heuristic')
+            verdicts = None
+        if not verdicts:
+            verdicts = _heuristic_event_classify(events)
+
+    # Final backstop: whatever the model said, never import an obvious
+    # non-competition title (defends against a stray true on an AGM).
+    result = []
+    for i, ev in enumerate(events):
+        is_comp = verdicts.get(i, False)
+        title = (ev.get('title') or '').lower()
+        if is_comp and any(kw in title for kw in _NON_COMPETITION_KEYWORDS):
+            is_comp = False
+        result.append(is_comp)
+    return result

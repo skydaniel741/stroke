@@ -9,6 +9,20 @@
       "autoPort": false
     },
     {
+      "name": "aftercall",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["aftercall/app.py"],
+      "port": 5098,
+      "autoPort": false
+    },
+    {
+      "name": "kept",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["kept/app.py"],
+      "port": 5099,
+      "autoPort": false
+    },
+    {
       "name": "flask-preview",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": ["preview_app.py"],

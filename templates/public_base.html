@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}STROKE{% endblock %}</title>
+<meta name="description" content="{% block description %}Swim team software for coaches, parents and swimmers.{% endblock %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stroke_landing.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stroke_pages.css') }}">
+{% block head_extra %}{% endblock %}
+</head>
+<body class="sl">
+
+{% block chrome %}
+<nav class="nav">
+  <a href="/" class="nav-logo">STROKE</a>
+  <div class="nav-links">
+    <a href="/for/coaches">For coaches</a>
+    <a href="/for/parents">For parents</a>
+    <a href="/for/swimmers">For swimmers</a>
+    <a href="/faq">FAQ</a>
+    <a href="/login" class="nav-coach">Log in</a>
+    <a href="/signup?as=coach" class="nav-cta">Start your squad free</a>
+  </div>
+  <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/for/coaches">For coaches</a>
+  <a href="/for/parents">For parents</a>
+  <a href="/for/swimmers">For swimmers</a>
+  <a href="/faq">FAQ</a>
+  <a href="/login">Log in</a>
+  <a href="/signup?as=coach">Start your squad free</a>
+</div>
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block footer %}
+<footer class="footer">
+  <div>
+    <p class="footer-logo">STROKE</p>
+    <p class="footer-sub">Built in New Zealand. For coaches and swimmers everywhere.</p>
+  </div>
+  <div class="footer-links">
+    {% for label, href in footer_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
+  </div>
+</footer>
+{% endblock %}
+
+{% include '_cookie_banner.html' %}
+
+<script>
+(function(){
+  var navToggle=document.getElementById('navToggle');
+  var mobileMenu=document.getElementById('mobileMenu');
+  if(navToggle&&mobileMenu){
+    navToggle.addEventListener('click',function(){
+      var isOpen=mobileMenu.classList.toggle('open');
+      navToggle.classList.toggle('open',isOpen);
+      navToggle.setAttribute('aria-expanded',isOpen);
+    });
+  }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('on'); });
+  },{threshold:.12});
+  document.querySelectorAll('.rv').forEach(function(el){ io.observe(el); });
+})();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

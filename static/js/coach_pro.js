@@ -4,22 +4,32 @@
    analytics, AI assistant. */
 
 const STROKE_LABELS = { FR: 'Freestyle', BK: 'Backstroke', BR: 'Breaststroke', FL: 'Butterfly', IM: 'IM', Kick: 'Kick', Pull: 'Pull', Drill: 'Drill' };
-const SET_CATEGORIES = ['Fast', 'Easy', 'Heart Rate', 'Drill', 'Lactate', 'Fitness', 'Open Water', 'Triathlon'];
+const SET_CATEGORIES = ['Fast', 'Sprint', 'Easy', 'Recovery', 'Heart Rate', 'Threshold', 'Lactate', 'Drill', 'Fitness', 'Race Pace', 'Starts & Turns', 'Open Water', 'Triathlon'];
+const TARGET_MEET_PRESETS = ['NAGs', 'NZ Short Course Champs', 'NZ Short Course Open', 'NZ Long Course Champs', 'NZ Long Course Open', 'Club Champs'];
+const SEASON_PHASE_COLORS = {
+  'Early season — base building': 'bg-slate-100 text-slate-700',
+  'Mid season — quality': 'bg-blue-50 text-blue-700',
+  'Taper — sharpen for racing': 'bg-amber-50 text-amber-700',
+  'Post long-course transition': 'bg-violet-50 text-violet-700',
+};
 
 const CP = {
-  squads: [], swimmers: [], savedSets: [], assignments: [], upcomingEvents: [], announcements: [], today: null, aiEnabled: false,
+  squads: [], swimmers: [], savedSets: [], assignments: [], upcomingEvents: [], announcements: [], digests: [], today: null, aiEnabled: false,
   activeTab: 'roster',
   ui: {
-    roster: { selectedSquadId: 'all', showAddSquad: false, showAddSwimmer: false, inviteSquadId: '', squadColor: 'blue' },
-    schedule: { showCreate: false, slot: 'AM' },
+    roster: { selectedSquadId: 'all', showAddSquad: false, showAddSwimmer: false, inviteSquadId: '', squadColor: 'blue',
+              showImport: false, importSquadId: '', importing: false, importPreview: null, importError: null, importCommitting: false },
+    schedule: { showCreate: false, slot: 'AM', seasonSquadId: null, showSeasonEditor: false, seasonMeetPreset: TARGET_MEET_PRESETS[0], seasonMeetCustom: '', seasonMeetDate: '', seasonPhases: [] },
     attendance: { squadId: null, date: null, marks: {}, dirty: false, saving: false },
-    builder: { showCreateSet: false, editingSetId: null, blocks: [], selectedSetForAssign: null, assignTargetType: 'squad', assignTargetId: '' },
+    builder: { showCreateSet: false, editingSetId: null, blocks: [], selectedSetForAssign: null, assignTargetType: 'squad', assignTargetId: '', scanning: false, scanError: null, scannedPool: null, sortBy: 'newest' },
     aiGen: { show: false, loading: false },
+    dryland: { show: false, loading: false, results: null, error: null, savingIndex: null, savedIndexes: [] },
     swimmer: { selectedSwimmerId: null },
     testsets: { squadId: null, scanning: false, result: null, error: null, saving: false },
     ai: { squadId: null, loading: false, insights: null, error: null, tone: 'balanced' },
     announcements: { squadId: null, posting: false },
     reports: { squadId: null },
+    digests: { loading: false, loaded: false, approvingId: null },
   }
 };
 
@@ -59,6 +69,57 @@ async function cpRefresh() {
   cpRenderAll();
 }
 
+/* Parent digest review queue -- coach-facing approval step for the AI-drafted
+   weekly parent updates (see ai_utils.generate_parent_digest /
+   routes_internal.digest_generate, the Render Cron job that creates these as
+   drafts). Backend already scopes /pro/api/digests/pending to this coach's
+   own squads (IDOR guard), so nothing further to filter client-side. */
+async function cpLoadDigests() {
+  const ui = CP.ui.digests;
+  if (ui.loading) return;
+  ui.loading = true;
+  cpRenderTab();
+  try {
+    const data = await cpApi('/coach/pro/api/digests/pending');
+    CP.digests = data.digests || [];
+  } catch (err) { /* cpApi already alerted */ }
+  ui.loading = false;
+  ui.loaded = true;
+  cpRenderTab();
+}
+
+function cpRenderDigestQueue() {
+  const ui = CP.ui.digests;
+  const digests = CP.digests || [];
+  if (ui.loading && !ui.loaded) {
+    return `<div class="bg-white border border-slate-200 rounded-xl p-5 text-xs text-slate-400">Loading parent digest drafts…</div>`;
+  }
+  if (!digests.length) {
+    return `<div class="bg-white border border-slate-200 rounded-xl p-5 text-xs text-slate-400 flex items-center gap-2"><i data-lucide="mail-check" class="w-4 h-4 text-slate-300"></i> No parent digest drafts waiting on review.</div>`;
+  }
+  return `
+    <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+      <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="mail-check" class="w-4 h-4 text-brand-500"></i> Parent digest drafts (${digests.length})</h4>
+      <p class="text-[11px] text-slate-400 -mt-1.5">AI-drafted from this week's attendance and PBs. Nothing reaches a parent until you approve it.</p>
+      ${digests.map(d => `
+        <div class="p-3 border border-slate-100 bg-slate-50 rounded-xl">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-900">${cpEsc(d.swimmerName)}</span>
+            <span class="text-[10px] text-slate-400">Week of ${cpEsc(d.weekStart)}</span>
+          </div>
+          <p class="text-xs font-semibold text-slate-800 mt-1.5">${cpEsc(d.headline || '')}</p>
+          <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">${cpEsc(d.body || '')}</p>
+          ${d.nextUp ? `<p class="text-[10px] text-slate-400 mt-1">Next up: ${cpEsc(d.nextUp)}</p>` : ''}
+          <div class="flex justify-end mt-2">
+            <button data-action="cp-digest-approve" data-id="${d.id}"
+              class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-[#03231a] rounded-lg text-[11px] font-semibold transition ${ui.approvingId === d.id ? 'opacity-60 pointer-events-none' : ''}">
+              ${ui.approvingId === d.id ? 'Approving…' : 'Approve'}
+            </button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
 async function cpInit() {
   await cpLoadState();
   const firstReal = CP.swimmers.find(s => s.userId);
@@ -96,6 +157,28 @@ function cpColorHex(color) {
 
 function cpEsc(str) {
   return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ---------- athlete_model.py state helpers (progression / trend / load) ---------- */
+
+function cpFmtSecs(secs) {
+  if (secs == null) return '—';
+  if (secs >= 60) {
+    const m = Math.floor(secs / 60);
+    const s = (secs % 60).toFixed(2).padStart(5, '0');
+    return `${m}:${s}`;
+  }
+  return secs.toFixed(2);
+}
+
+function cpTrendMeta(trend) {
+  switch (trend) {
+    case 'improving': return { label: 'Improving', badge: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
+    case 'regressing': return { label: 'Regressing', badge: 'bg-rose-50 text-rose-700 border-rose-100' };
+    case 'overtraining': return { label: 'Overtraining risk', badge: 'bg-rose-50 text-rose-700 border-rose-100' };
+    case 'undertraining': return { label: 'Undertraining', badge: 'bg-amber-50 text-amber-700 border-amber-100' };
+    default: return { label: 'Plateauing', badge: 'bg-slate-100 text-slate-600 border-slate-200' };
+  }
 }
 
 function cpStatusBadge(status) {
@@ -171,6 +254,145 @@ function cpSlotBadge(slot) {
   return '';
 }
 
+function cpWeeksOut(dateStr) {
+  const days = Math.ceil((new Date(dateStr + 'T00:00:00') - new Date(CP.today + 'T00:00:00')) / 86400000);
+  if (days < 0) return 'past';
+  const weeks = Math.round(days / 7);
+  if (days === 0) return 'today';
+  if (weeks === 0) return `${days} day${days === 1 ? '' : 's'} out`;
+  return `${weeks} week${weeks === 1 ? '' : 's'} out`;
+}
+
+function cpDaysBetween(startStr, endStr) {
+  if (!startStr || !endStr) return null;
+  return Math.round((new Date(endStr + 'T00:00:00') - new Date(startStr + 'T00:00:00')) / 86400000);
+}
+
+function cpDurationLabel(startStr, endStr) {
+  const days = cpDaysBetween(startStr, endStr);
+  if (days === null) return '—';
+  if (days < 0) return 'invalid range';
+  const weeks = Math.round(days / 7);
+  return weeks >= 1 ? `${weeks} wk${weeks === 1 ? '' : 's'}` : `${days} day${days === 1 ? '' : 's'}`;
+}
+
+const CP_FIELD = 'text-xs px-2.5 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg focus:ring-1 focus:ring-brand-500 focus:outline-hidden';
+
+function cpSeasonEditorHtml(ui) {
+  const meetIsCustom = !TARGET_MEET_PRESETS.includes(ui.seasonMeetPreset);
+  const phaseRows = ui.seasonPhases.map((p, i) => {
+    const isCustom = !CP_AIGEN_PHASES.includes(p.phase);
+    return `
+    <div class="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
+      <div class="flex gap-2 items-center">
+        <span class="w-6 h-6 rounded-full bg-brand-50 text-brand-700 text-[10px] font-bold flex items-center justify-center shrink-0">${i + 1}</span>
+        <select data-season-phase-index="${i}" class="cp-season-phase-select flex-1 ${CP_FIELD}">
+          ${CP_AIGEN_PHASES.map(ph => `<option ${ph === p.phase ? 'selected' : ''}>${ph}</option>`).join('')}
+          <option value="__custom__" ${isCustom ? 'selected' : ''}>Custom…</option>
+        </select>
+        <button type="button" data-action="cp-season-remove-phase" data-index="${i}" class="text-slate-300 hover:text-red-600 shrink-0 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+      </div>
+      ${isCustom ? `<input data-season-phase-index="${i}" class="cp-season-phase-custom w-full ${CP_FIELD}" placeholder="Phase name" value="${cpEsc(p.phase)}">` : ''}
+      <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-full pl-3 pr-1.5 py-1 focus-within:ring-1 focus-within:ring-brand-500">
+        <input type="date" data-season-phase-index="${i}" class="cp-season-phase-start flex-1 min-w-0 text-[11px] text-slate-700 bg-transparent border-none outline-hidden font-mono" value="${p.start}">
+        <i data-lucide="arrow-right" class="w-3 h-3 text-slate-300 shrink-0"></i>
+        <input type="date" data-season-phase-index="${i}" class="cp-season-phase-end flex-1 min-w-0 text-[11px] text-slate-700 bg-transparent border-none outline-hidden font-mono" value="${p.end}">
+        <span class="cp-season-phase-duration text-[9px] font-mono font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-full shrink-0" data-season-phase-index="${i}">${cpDurationLabel(p.start, p.end)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="bg-slate-50 text-slate-700 border border-slate-200 rounded-xl p-5 space-y-4 mt-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] text-slate-500 font-mono mb-1">Target meet</label>
+          <select id="cpSeasonMeetPreset" class="w-full ${CP_FIELD}">
+            ${TARGET_MEET_PRESETS.map(m => `<option ${m === ui.seasonMeetPreset ? 'selected' : ''}>${m}</option>`).join('')}
+            <option value="__custom__" ${meetIsCustom ? 'selected' : ''}>Custom…</option>
+          </select>
+          ${meetIsCustom ? `<input id="cpSeasonMeetCustom" class="w-full mt-1.5 ${CP_FIELD}" placeholder="Meet name" value="${cpEsc(ui.seasonMeetCustom)}">` : ''}
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-500 font-mono mb-1">Meet date</label>
+          <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-full pl-3 pr-1.5 py-1 focus-within:ring-1 focus-within:ring-brand-500">
+            <input type="date" id="cpSeasonMeetDate" class="flex-1 min-w-0 text-[11px] text-slate-700 bg-transparent border-none outline-hidden font-mono" value="${ui.seasonMeetDate}">
+            <span id="cpSeasonMeetCountdown" class="text-[9px] font-mono font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-full shrink-0">${ui.seasonMeetDate ? cpWeeksOut(ui.seasonMeetDate) : '—'}</span>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-slate-200 pt-3">
+        <label class="block text-[10px] text-slate-500 font-mono mb-2">Phases</label>
+        <div class="space-y-2">${phaseRows || '<p class="text-[11px] text-slate-400 italic">No phases yet.</p>'}</div>
+        <button type="button" data-action="cp-season-add-phase" class="mt-2 text-xs text-brand-700 hover:text-brand-900 font-medium flex items-center gap-1"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Add phase</button>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+        <button type="button" data-action="cp-season-cancel" class="px-3 py-1.5 text-xs text-slate-600 font-medium">Cancel</button>
+        <button data-action="cp-season-save" class="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 text-[#03231a] font-semibold text-xs rounded-lg transition">Save season plan</button>
+      </div>
+    </div>`;
+}
+
+function cpSeasonBannerHtml() {
+  const ui = CP.ui.schedule;
+  if (!ui.seasonSquadId && CP.squads.length) ui.seasonSquadId = CP.squads[0].id;
+  const squad = CP.squads.find(s => s.id === ui.seasonSquadId);
+  if (!squad) return '';
+  const plan = squad.seasonPlan;
+
+  const squadSelect = CP.squads.length > 1 ? `
+    <select id="cpSeasonSquadSelect" class="text-[10px] px-2 py-1 bg-white border border-slate-200 rounded font-mono text-slate-500">
+      ${CP.squads.map(sq => `<option value="${sq.id}" ${sq.id === ui.seasonSquadId ? 'selected' : ''}>${cpEsc(sq.name)}</option>`).join('')}
+    </select>` : '';
+
+  let body;
+  if (!plan && !ui.showSeasonEditor) {
+    body = `
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-slate-400">No season plan set for ${cpEsc(squad.name)}.</span>
+        <button type="button" data-action="cp-season-toggle-editor" class="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"><i data-lucide="flag" class="w-3.5 h-3.5"></i> Set up season plan</button>
+      </div>`;
+  } else if (!ui.showSeasonEditor) {
+    const today = CP.today;
+    const currentPhase = plan.phases.find(p => today >= p.start && today <= p.end);
+    const sorted = plan.phases.slice().sort((a, b) => a.start.localeCompare(b.start));
+    const rangeStart = sorted.length ? sorted[0].start : plan.targetMeet.date;
+    const rangeEnd = plan.targetMeet.date;
+    const totalSpan = Math.max(1, (new Date(rangeEnd) - new Date(rangeStart)) / 86400000);
+    const timelineBar = sorted.map(p => {
+      const width = Math.max(2, ((new Date(p.end) - new Date(p.start)) / 86400000) / totalSpan * 100);
+      const colorClass = SEASON_PHASE_COLORS[p.phase] || 'bg-slate-100 text-slate-700';
+      const bar = colorClass.split(' ')[0];
+      return `<div class="${bar} h-full" style="width:${width}%" title="${cpEsc(p.phase)}"></div>`;
+    }).join('');
+    body = `
+      <div class="flex items-center justify-between gap-4 mb-3">
+        <div>
+          <p class="text-[9px] text-slate-400 font-mono uppercase tracking-widest">Target meet</p>
+          <p class="text-sm font-bold text-white">${cpEsc(plan.targetMeet.name)} <span class="text-slate-400 font-normal">· ${cpFmtDay(plan.targetMeet.date)}</span></p>
+        </div>
+        <div class="flex items-center gap-2">
+          ${currentPhase ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${SEASON_PHASE_COLORS[currentPhase.phase] || 'bg-slate-100 text-slate-700'}">${cpEsc(currentPhase.phase)}</span>` : ''}
+          <span class="text-xs font-mono text-brand-400 font-bold">${cpWeeksOut(plan.targetMeet.date)}</span>
+          <button type="button" data-action="cp-season-toggle-editor" class="text-slate-400 hover:text-white transition" title="Edit season plan"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+        </div>
+      </div>
+      <div class="h-1.5 rounded-full overflow-hidden flex bg-slate-800">${timelineBar}</div>`;
+  } else {
+    body = '';
+  }
+
+  return `
+    <div class="bg-[#111111] text-white rounded-xl p-5" id="season_plan_banner">
+      <div class="flex items-center justify-between mb-1">
+        <p class="text-[10px] font-bold text-brand-400 uppercase tracking-widest">Season plan</p>
+        ${squadSelect}
+      </div>
+      ${body}
+      ${ui.showSeasonEditor ? cpSeasonEditorHtml(ui) : ''}
+    </div>`;
+}
+
 function cpRenderSchedule() {
   const ui = CP.ui.schedule;
   if (CP.squads.length === 0) {
@@ -182,14 +404,14 @@ function cpRenderSchedule() {
   const nextCard = next ? `
     <div class="bg-[#111111] text-white rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <p class="text-[10px] font-bold text-[#ccccff] uppercase tracking-widest mb-1.5">Next session</p>
+        <p class="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1.5">Next session</p>
         <div class="flex items-center gap-2">
           <h4 class="text-base font-bold">${cpEsc(next.title)}</h4>
           ${cpSlotBadge(next.slot)}
         </div>
         <p class="text-[11px] text-slate-300 mt-1">${cpFmtDay(next.date)}${next.time ? ' · ' + cpEsc(next.time) : ''} · ${cpEsc(nextSquad ? nextSquad.name : 'Squad')}${next.setTitle ? ` · ${cpEsc(next.setTitle)} (${next.setDistance}m)` : ''}</p>
       </div>
-      ${next.setTitle ? '<span class="text-[10px] text-[#ccccff] bg-white/10 px-3 py-1.5 rounded-lg">Auto-logs for swimmers marked present</span>' : ''}
+      ${next.setTitle ? '<span class="text-[10px] text-brand-400 bg-white/10 px-3 py-1.5 rounded-lg">Auto-logs for swimmers marked present</span>' : ''}
     </div>` : `
     <div class="bg-slate-50 border border-slate-100 rounded-xl p-6 text-center text-xs text-slate-400">Nothing scheduled yet — plan your first session below.</div>`;
 
@@ -217,7 +439,7 @@ function cpRenderSchedule() {
         <div>
           <label class="block text-[10px] text-slate-500 font-medium mb-1">Slot</label>
           <div class="flex gap-1">
-            ${['AM', 'PM'].map(s => `<button type="button" data-action="cp-pick-slot" data-slot="${s}" class="flex-1 py-1.5 rounded text-xs font-semibold ${ui.slot === s ? 'bg-[#111111] text-[#ccccff]' : 'bg-white border border-slate-200 text-slate-500'}">${s}</button>`).join('')}
+            ${['AM', 'PM'].map(s => `<button type="button" data-action="cp-pick-slot" data-slot="${s}" class="flex-1 py-1.5 rounded text-xs font-semibold ${ui.slot === s ? 'bg-brand-500 text-[#03231a]' : 'bg-white border border-slate-200 text-slate-500'}">${s}</button>`).join('')}
           </div>
         </div>
         <div>
@@ -277,6 +499,7 @@ function cpRenderSchedule() {
         </div>
         <button data-action="cp-toggle-create-event" class="px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 hover:bg-brand-700 transition"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Plan session</button>
       </div>
+      ${cpSeasonBannerHtml()}
       ${nextCard}
       ${createForm}
       ${dayGroups || ''}
@@ -339,7 +562,7 @@ function cpRenderTestSets() {
       <p class="text-[10px] text-slate-400">Each swimmer's best rep is logged as a swim tagged <span class="font-mono font-bold">test</span>; all reps are kept in the notes. Fix any times the scan misread before saving.</p>
       <div class="flex justify-end gap-2">
         <button data-action="cp-ts-discard" class="px-3 py-1.5 text-xs text-slate-600 font-medium">Discard</button>
-        <button data-action="cp-ts-save" class="px-5 py-2 bg-[#111111] hover:bg-slate-800 text-[#ccccff] rounded-lg text-xs font-semibold transition ${ui.saving ? 'opacity-60 pointer-events-none' : ''}">${ui.saving ? 'Saving…' : 'Log results'}</button>
+        <button data-action="cp-ts-save" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-[#03231a] rounded-lg text-xs font-semibold transition ${ui.saving ? 'opacity-60 pointer-events-none' : ''}">${ui.saving ? 'Saving…' : 'Log results'}</button>
       </div>
     </div>` : `
     <div class="p-12 text-center bg-slate-50 border border-slate-100 rounded-xl">
@@ -359,7 +582,7 @@ function cpRenderTestSets() {
             ${CP.squads.map(sq => `<option value="${sq.id}" ${sq.id === ui.squadId ? 'selected' : ''}>${cpEsc(sq.name)}</option>`).join('')}
           </select>
           <input type="file" id="cpTsPhoto" accept="image/*" capture="environment" class="hidden">
-          <button data-action="cp-ts-pick-photo" class="px-4 py-2 bg-[#111111] hover:bg-slate-800 text-[#ccccff] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${ui.scanning ? 'opacity-60 pointer-events-none' : ''}">
+          <button data-action="cp-ts-pick-photo" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-[#03231a] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${ui.scanning ? 'opacity-60 pointer-events-none' : ''}">
             <i data-lucide="camera" class="w-3.5 h-3.5"></i> Scan results photo
           </button>
         </div>
@@ -406,7 +629,7 @@ function cpRenderAnnouncements() {
         <button type="button" data-voice-target="cpAnnInput" title="Dictate with your voice" class="voice-btn shrink-0 w-9 h-9 flex items-center justify-center border border-slate-200 rounded-lg text-slate-600 hover:text-brand-700 hover:border-brand-300 transition">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </button>
-        <button type="submit" class="px-4 py-2 bg-[#111111] hover:bg-slate-800 text-[#ccccff] rounded-lg text-xs font-semibold transition ${ui.posting ? 'opacity-60 pointer-events-none' : ''}">${ui.posting ? 'Posting…' : 'Post'}</button>
+        <button type="submit" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-[#03231a] rounded-lg text-xs font-semibold transition ${ui.posting ? 'opacity-60 pointer-events-none' : ''}">${ui.posting ? 'Posting…' : 'Post'}</button>
       </form>
       <p class="text-[10px] text-slate-400 mt-1.5">🎙️ Tap the mic to dictate your announcement.</p>
 
@@ -449,7 +672,7 @@ function cpRenderReports() {
           <select id="cpRepSquadSelect" class="text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg font-medium focus:outline-hidden">
             ${CP.squads.map(sq => `<option value="${sq.id}" ${sq.id === ui.squadId ? 'selected' : ''}>${cpEsc(sq.name)}</option>`).join('')}
           </select>
-          <button data-action="cp-rep-print" class="px-4 py-2 bg-[#111111] hover:bg-slate-800 text-[#ccccff] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print / PDF</button>
+          <button data-action="cp-rep-print" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-[#03231a] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print / PDF</button>
         </div>
       </div>
 
@@ -550,7 +773,7 @@ function cpRenderAttendance() {
       <div class="space-y-2">${rows}</div>
       <div class="flex items-center justify-end gap-3 pt-2">
         ${ui.dirty ? '<span class="text-[10px] text-amber-600 font-medium">Unsaved changes</span>' : ''}
-        <button data-action="cp-att-save" class="px-5 py-2 bg-[#111111] hover:bg-slate-800 text-[#ccccff] rounded-lg text-xs font-semibold transition ${ui.saving ? 'opacity-60 pointer-events-none' : ''}">${ui.saving ? 'Saving…' : 'Save roll call'}</button>
+        <button data-action="cp-att-save" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-[#03231a] rounded-lg text-xs font-semibold transition ${ui.saving ? 'opacity-60 pointer-events-none' : ''}">${ui.saving ? 'Saving…' : 'Save roll call'}</button>
       </div>`}
     </div>`;
 }
@@ -644,11 +867,12 @@ function cpRenderAI() {
             <option value="balanced" ${ui.tone === 'balanced' ? 'selected' : ''}>Balanced</option>
             <option value="direct" ${ui.tone === 'direct' ? 'selected' : ''}>Direct</option>
           </select>
-          <button data-action="cp-ai-generate" class="px-4 py-2 bg-[#111111] hover:bg-slate-800 text-[#ccccff] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${ui.loading ? 'opacity-60 pointer-events-none' : ''}">
+          <button data-action="cp-ai-generate" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-[#03231a] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${ui.loading ? 'opacity-60 pointer-events-none' : ''}">
             <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> ${insights ? 'Re-analyze squad' : 'Analyze squad'}
           </button>
         </div>
       </div>
+      ${cpRenderDigestQueue()}
       ${body}
     </div>`;
 }
@@ -679,6 +903,102 @@ function cpFamilyCell(swimmer) {
 }
 
 /* ================= TAB 2: ROSTER MANAGER (real squads/memberships) ================= */
+
+/* AI roster import: coach drags an export from their old software, the AI
+   maps the columns, coach confirms in a preview before anything is written.
+   Backend: /coach/pro/api/squads/<id>/import/{preview,commit}. */
+function cpImportStatusBadge(status, hasAccount) {
+  if (status === 'new') return `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">New${hasAccount ? ' · has account' : ''}</span>`;
+  if (status === 'duplicate') return `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200">Already on roster</span>`;
+  return `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">No email · skipped</span>`;
+}
+
+function cpRenderImportPanel() {
+  const ui = CP.ui.roster;
+  if (!ui.showImport) return '';
+
+  const squadOptions = CP.squads.map(sq => `<option value="${sq.id}" ${sq.id === ui.importSquadId ? 'selected' : ''}>${cpEsc(sq.name)}</option>`).join('');
+  const pv = ui.importPreview;
+
+  const dropZone = `
+    <label for="cpImportFile" class="block border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-brand-400 hover:bg-white transition ${ui.importing ? 'opacity-60 pointer-events-none' : ''}">
+      <i data-lucide="upload-cloud" class="w-6 h-6 text-slate-400 mx-auto mb-1.5"></i>
+      <div class="text-xs font-medium text-slate-700">${ui.importing ? 'Reading your file…' : 'Drop a roster CSV here, or click to choose'}</div>
+      <div class="text-[10px] text-slate-400 mt-1">Export from TeamUnify, SwimTopia, Hy-Tek or a spreadsheet. The AI figures out your columns.</div>
+      <input type="file" id="cpImportFile" accept=".csv,text/csv" class="hidden">
+    </label>`;
+
+  let previewBlock = '';
+  if (pv) {
+    const mapPairs = Object.entries(pv.mapping || {}).filter(([, v]) => v);
+    const mapLine = mapPairs.length
+      ? mapPairs.map(([k, v]) => `<span class="text-slate-500">${cpEsc(k.replace('_', ' '))}</span> ← <span class="font-mono text-slate-700">${cpEsc(v)}</span>`).join('<span class="text-slate-300 mx-1.5">·</span>')
+      : '<span class="text-amber-600">The AI couldn\'t confidently map any columns — check your file has a name and email column.</span>';
+
+    const rows = (pv.rows || []).map((r, i) => {
+      const selectable = r.status === 'new';
+      return `
+        <tr class="${selectable ? '' : 'opacity-50'}">
+          <td class="px-2 py-2 text-center">
+            ${selectable
+              ? `<input type="checkbox" data-action="cp-import-toggle-row" data-index="${i}" ${r._selected !== false ? 'checked' : ''} class="accent-brand-600 w-3.5 h-3.5 align-middle">`
+              : '<span class="text-slate-300">—</span>'}
+          </td>
+          <td class="px-3 py-2 font-medium text-slate-800">${cpEsc(r.name)}</td>
+          <td class="px-3 py-2 text-slate-600">${cpEsc(r.email) || '<span class="text-slate-300 italic">none</span>'}</td>
+          <td class="px-3 py-2 text-slate-600">${cpEsc(r.group) || '<span class="text-slate-300">—</span>'}</td>
+          <td class="px-3 py-2 text-slate-500">${cpEsc(r.dob) || '<span class="text-slate-300">—</span>'}</td>
+          <td class="px-3 py-2">${cpImportStatusBadge(r.status, r.hasAccount)}</td>
+        </tr>`;
+    }).join('');
+
+    const selectedCount = (pv.rows || []).filter(r => r.status === 'new' && r._selected !== false).length;
+
+    previewBlock = `
+      <div class="mt-4 space-y-3">
+        <div class="text-[11px] bg-white border border-slate-200 rounded-lg px-3 py-2 leading-relaxed">
+          <span class="font-semibold text-slate-700">Column mapping:</span> ${mapLine}
+        </div>
+        <div class="flex items-center gap-3 text-[11px] text-slate-500">
+          <span><span class="font-bold text-emerald-600">${pv.counts.new}</span> new</span>
+          <span><span class="font-bold text-slate-500">${pv.counts.duplicate}</span> already on roster</span>
+          <span><span class="font-bold text-amber-600">${pv.counts.no_email}</span> without email</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden max-h-80 overflow-y-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="sticky top-0 bg-slate-50">
+              <tr class="border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                <th class="px-2 py-2 w-8"></th><th class="px-3 py-2 font-semibold">Name</th><th class="px-3 py-2 font-semibold">Email</th>
+                <th class="px-3 py-2 font-semibold">Group</th><th class="px-3 py-2 font-semibold">DOB</th><th class="px-3 py-2 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">${rows}</tbody>
+          </table>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" data-action="cp-import-reset" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 font-medium">Choose a different file</button>
+          <button type="button" data-action="cp-import-confirm" class="px-4 py-1.5 bg-brand-600 text-white font-medium text-xs rounded hover:bg-brand-700 transition ${selectedCount === 0 || ui.importCommitting ? 'opacity-60 pointer-events-none' : ''}">
+            ${ui.importCommitting ? 'Importing…' : `Import ${selectedCount} swimmer${selectedCount === 1 ? '' : 's'}`}
+          </button>
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3 shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-500"></i> Import roster from a CSV</h4>
+        <button type="button" data-action="cp-toggle-import" class="text-xs text-slate-500 hover:text-slate-700">Close</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-[10px] text-slate-500 font-mono">Import into</label>
+        <select id="cpImportSquadSelect" class="text-xs px-2 py-1 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-brand-500 focus:outline-hidden">${squadOptions}</select>
+      </div>
+      ${ui.importError ? `<div class="text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">${cpEsc(ui.importError)}</div>` : ''}
+      ${dropZone}
+      ${previewBlock}
+    </div>`;
+}
 
 function cpRenderRoster() {
   const ui = CP.ui.roster;
@@ -804,8 +1124,12 @@ function cpRenderRoster() {
             <h3 class="text-sm font-semibold text-slate-800 tracking-tight">${ui.selectedSquadId === 'all' ? 'Active Team Roster' : cpEsc((CP.squads.find(s => s.id === ui.selectedSquadId) || {}).name || '')}</h3>
             <p class="text-xs text-slate-400">Coaching ${filtered.length} athletes. Reassign, remove, or drill into performance from the Athlete Hub.</p>
           </div>
-          <button data-action="cp-open-add-swimmer" class="px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 hover:bg-brand-700 transition"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Invite Swimmer</button>
+          <div class="flex items-center gap-2">
+            <button data-action="cp-toggle-import" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1.5 hover:bg-slate-50 transition"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Import CSV</button>
+            <button data-action="cp-open-add-swimmer" class="px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 hover:bg-brand-700 transition"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Invite Swimmer</button>
+          </div>
         </div>
+        ${cpRenderImportPanel()}
         ${addSwimmerForm}
         <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
           ${filtered.length === 0 ? `<div class="p-12 text-center text-slate-400 text-xs">No swimmers in this cohort yet — invite one above.</div>` : `
@@ -836,7 +1160,11 @@ function cpRenderRoster() {
 
 function cpBlockSummary(b) {
   const restBit = b.rest ? (b.rest_type === 'rest' ? ' · rest ' + b.rest : ' on ' + b.rest) : '';
-  return `${b.reps}×${b.dist}m ${STROKE_LABELS[b.stroke] || b.stroke}${restBit}`;
+  const strokeLabel = STROKE_LABELS[b.stroke] || b.stroke;
+  // Scanned blocks keep the modifier (Kick/Pull/Drill) separate from the primary
+  // stroke -- merge them back for display, e.g. "Fly Kick".
+  const strokeBit = b.modifier ? `${strokeLabel} ${b.modifier}` : strokeLabel;
+  return `${b.reps}×${b.dist}m ${strokeBit}${restBit}`;
 }
 
 function cpRenderBuilder() {
@@ -850,7 +1178,7 @@ function cpRenderBuilder() {
 
   const editing = ui.editingSetId ? CP.savedSets.find(s => s.id === ui.editingSetId) : null;
   const catValue = editing ? editing.category : '';
-  const poolValue = editing ? editing.pool : '25m';
+  const poolValue = editing ? editing.pool : (ui.scannedPool || '25m');
   const createSetForm = (ui.showCreateSet || editing) ? `
     <form id="cpCreateSetForm" class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4 shadow-sm">
       <div class="flex items-center justify-between border-b border-slate-200 pb-2">
@@ -884,6 +1212,7 @@ function cpRenderBuilder() {
 
       <div class="border-t border-slate-200 pt-3">
         <label class="block text-[10px] text-slate-500 font-mono mb-2">Add a block (reps × distance × stroke)</label>
+        ${ui.scanError ? `<p class="text-[10.5px] text-red-600 mb-2">${cpEsc(ui.scanError)}</p>` : ''}
         <div class="grid grid-cols-6 gap-2">
           <select id="cpBlockSection" class="text-xs px-2 py-1.5 bg-white border border-slate-200 rounded col-span-1">
             <option>Warm up</option><option>Pre set</option><option selected>Main set</option><option>Sub set</option><option>Cool down</option>
@@ -899,7 +1228,10 @@ function cpRenderBuilder() {
             <option value="rest">Rest</option>
           </select>
         </div>
-        <button type="button" data-action="cp-add-block" class="mt-2 text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Add block</button>
+        <div class="mt-2 flex items-center justify-between">
+          <button type="button" data-action="cp-add-block" class="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Add block</button>
+          ${ui.blocks.length > 1 ? `<button type="button" data-action="cp-sort-blocks" class="text-xs text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1"><i data-lucide="arrow-down-up" class="w-3.5 h-3.5"></i> Sort by section</button>` : ''}
+        </div>
         <div class="mt-2 space-y-1.5">${blocksList || '<p class="text-[11px] text-slate-400 italic">No blocks added yet.</p>'}</div>
       </div>
 
@@ -909,7 +1241,14 @@ function cpRenderBuilder() {
       </div>
     </form>` : '';
 
-  const setCards = CP.savedSets.map(set => `
+  const sortedSets = CP.savedSets.slice().sort((a, b) => {
+    if (ui.sortBy === 'category') return a.category.localeCompare(b.category) || b.id - a.id;
+    if (ui.sortBy === 'title') return a.title.localeCompare(b.title);
+    if (ui.sortBy === 'distance') return b.totalDistance - a.totalDistance;
+    return b.id - a.id; // newest first
+  });
+
+  const setCards = sortedSets.map(set => `
     <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between hover:shadow-xs transition">
       <div>
         <div class="flex items-center justify-between mb-2">
@@ -1004,14 +1343,25 @@ function cpRenderBuilder() {
   return `
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6" id="workout_builder_section">
       <div class="lg:col-span-7 space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-slate-800 flex items-center gap-2"><i data-lucide="folder-heart" class="w-4 h-4 text-slate-500"></i> Set Blueprint Library</h3>
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-3">
+            <h3 class="text-sm font-semibold text-slate-800 flex items-center gap-2"><i data-lucide="folder-heart" class="w-4 h-4 text-slate-500"></i> Set Blueprint Library</h3>
+            <select id="cpSetsSortBy" class="text-[10px] px-2 py-1 bg-white border border-slate-200 rounded font-mono text-slate-500 focus:outline-hidden">
+              <option value="newest" ${ui.sortBy === 'newest' ? 'selected' : ''}>Sort: Newest</option>
+              <option value="category" ${ui.sortBy === 'category' ? 'selected' : ''}>Sort: Category</option>
+              <option value="title" ${ui.sortBy === 'title' ? 'selected' : ''}>Sort: Title A-Z</option>
+              <option value="distance" ${ui.sortBy === 'distance' ? 'selected' : ''}>Sort: Distance</option>
+            </select>
+          </div>
           <div class="flex items-center gap-4">
             ${CP.aiEnabled ? '<button data-action="cp-aigen-toggle" class="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1 transition"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Generate with AI</button>' : ''}
+            ${CP.aiEnabled ? '<button data-action="cp-dryland-toggle" class="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1 transition"><i data-lucide="dumbbell" class="w-3.5 h-3.5"></i> Find dryland content</button>' : ''}
+            ${CP.aiEnabled ? `<button type="button" data-action="cp-scan-photo" class="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1 transition ${ui.scanning ? 'opacity-60 pointer-events-none' : ''}"><i data-lucide="camera" class="w-3.5 h-3.5"></i> ${ui.scanning ? 'Scanning…' : 'Scan whiteboard'}</button><input type="file" id="cpSetScanPhoto" accept="image/*" capture="environment" class="hidden">` : ''}
             <button data-action="cp-toggle-create-set" class="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1 transition"><i data-lucide="plus" class="w-4 h-4"></i> Create Set Template</button>
           </div>
         </div>
         ${cpRenderAIGenPanel()}
+        ${cpRenderDrylandPanel()}
         ${createSetForm}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${setCards || '<p class="text-xs text-slate-400 italic">No sets yet — create your first blueprint above.</p>'}</div>
       </div>
@@ -1055,7 +1405,7 @@ function cpRenderAIGenPanel() {
   return `
     <form id="cpAIGenForm" class="bg-slate-900 text-slate-200 rounded-xl p-5 border border-slate-800 shadow-md space-y-3.5">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h4 class="text-xs font-bold text-white flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#ccccff]"></i> AI set generator</h4>
+        <h4 class="text-xs font-bold text-white flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-400"></i> AI set generator</h4>
         <button type="button" data-action="cp-aigen-toggle" class="text-[10px] text-slate-400 hover:text-white">Close</button>
       </div>
       <p class="text-[11px] text-slate-400 leading-relaxed">Writes a full session — warm up to cool down — using real elite methodology: Bowman's aerobic IM engine, USRPT race-pace, sprint programs, CSS threshold work, phased for your point in the season.</p>
@@ -1093,9 +1443,86 @@ function cpRenderAIGenPanel() {
           </div>
         </div>
       </div>
-      <button type="submit" class="w-full py-2 bg-[#ccccff] hover:bg-white text-[#111111] font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition ${ui.loading ? 'opacity-60 pointer-events-none' : ''}">
+      <button type="submit" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-[#03231a] font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition ${ui.loading ? 'opacity-60 pointer-events-none' : ''}">
         ${ui.loading ? '<span class="w-3.5 h-3.5 border-2 border-slate-400 border-t-slate-900 rounded-full animate-spin"></span> Writing the set…' : '<i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Generate & save to library'}
       </button>
+    </form>`;
+}
+
+/* Coach-triggered live web search for dryland/conditioning content --
+   university/research papers, YouTube, known public S&C programs. Never
+   auto-assigned: results are ephemeral until the coach clicks Save on a
+   specific candidate, which becomes a TrainingProgram row. */
+
+const CP_DRYLAND_AGE_RANGES = ['10-and-under', '11-12', '13-14', '15-16', 'Senior'];
+
+function cpRenderDrylandPanel() {
+  const ui = CP.ui.dryland;
+  if (!ui.show) return '';
+
+  const resultsHtml = (() => {
+    if (ui.loading) return '';
+    if (ui.error) {
+      return `<div class="p-4 bg-slate-800/60 border border-slate-800 rounded-lg text-xs text-slate-300 italic">${cpEsc(ui.error)}</div>`;
+    }
+    if (!ui.results || !ui.results.length) return '';
+    return `<div class="space-y-3 pt-1">${ui.results.map((c, i) => {
+      const saved = ui.savedIndexes.includes(i);
+      const exList = (c.exercises || []).map(ex => `
+        <li class="flex items-start justify-between gap-2 py-1 border-b border-slate-800 last:border-0">
+          <span class="text-slate-200">${cpEsc(ex.name)}${ex.notes ? ` <span class="text-slate-500 italic">— ${cpEsc(ex.notes)}</span>` : ''}</span>
+          <span class="text-slate-400 font-mono shrink-0">${[ex.sets && `${cpEsc(ex.sets)} sets`, ex.reps && cpEsc(ex.reps), ex.rest && `rest ${cpEsc(ex.rest)}`].filter(Boolean).join(' · ') || '—'}</span>
+        </li>`).join('');
+      return `
+        <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-3.5 space-y-2">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h5 class="text-xs font-bold text-white">${cpEsc(c.title)}</h5>
+              <p class="text-[11px] text-slate-400 mt-0.5">${cpEsc(c.description)}</p>
+            </div>
+            <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase bg-slate-700 text-slate-300 shrink-0">${cpEsc(c.category)}</span>
+          </div>
+          <ul class="text-[11px]">${exList}</ul>
+          <div class="flex items-center justify-between pt-1.5 border-t border-slate-800">
+            <a href="${cpEsc(c.source_url)}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-brand-400 hover:underline flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> ${cpEsc(c.source_name)}</a>
+            <button type="button" data-action="cp-dryland-save" data-index="${i}" class="text-[11px] font-semibold px-3 py-1 rounded-lg transition ${saved ? 'bg-emerald-900/40 text-emerald-300 pointer-events-none' : 'bg-brand-500 hover:bg-brand-400 text-[#03231a]'} ${ui.savingIndex === i ? 'opacity-60 pointer-events-none' : ''}">
+              ${saved ? '<i data-lucide="check" class="w-3 h-3 inline"></i> Saved' : (ui.savingIndex === i ? 'Saving…' : 'Save')}
+            </button>
+          </div>
+        </div>`;
+    }).join('')}</div>`;
+  })();
+
+  return `
+    <form id="cpDrylandForm" class="bg-slate-900 text-slate-200 rounded-xl p-5 border border-slate-800 shadow-md space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h4 class="text-xs font-bold text-white flex items-center gap-1.5"><i data-lucide="dumbbell" class="w-3.5 h-3.5 text-brand-400"></i> Find dryland content</h4>
+        <button type="button" data-action="cp-dryland-toggle" class="text-[10px] text-slate-400 hover:text-white">Close</button>
+      </div>
+      <p class="text-[11px] text-slate-400 leading-relaxed">Searches the live web (research papers, S&C organizations, swimming federations, YouTube) for dryland/conditioning content matching your focus. Returns candidates to review, nothing is ever assigned automatically.</p>
+      <div>
+        <label class="block text-[10px] text-slate-400 font-medium mb-1">Focus</label>
+        <input type="text" name="focus" placeholder="e.g. shoulder prehab for sprinters, plyometrics for starts" class="w-full text-xs px-2.5 py-1.5 bg-slate-800 border border-slate-800 text-slate-200 rounded focus:outline-hidden">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] text-slate-400 font-medium mb-1">Age range</label>
+          <select name="age_range" class="w-full text-xs px-2 py-1.5 bg-slate-800 border border-slate-800 text-slate-200 rounded focus:outline-hidden">
+            ${CP_DRYLAND_AGE_RANGES.map(a => `<option>${a}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 font-medium mb-1">Level</label>
+          <select name="level" class="w-full text-xs px-2 py-1.5 bg-slate-800 border border-slate-800 text-slate-200 rounded focus:outline-hidden">
+            ${CP_AIGEN_LEVELS.map((s, i) => `<option ${i === 2 ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-[#03231a] font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition ${ui.loading ? 'opacity-60 pointer-events-none' : ''}">
+        ${ui.loading ? '<span class="w-3.5 h-3.5 border-2 border-slate-400 border-t-slate-900 rounded-full animate-spin"></span> Searching the web…' : '<i data-lucide="search" class="w-3.5 h-3.5"></i> Search'}
+      </button>
+      ${resultsHtml}
+      ${(ui.results && ui.results.length) ? '<p class="text-[10px] text-amber-300/90 italic pt-1">AI-sourced from the web — review before assigning to a swimmer.</p>' : ''}
     </form>`;
 }
 
@@ -1161,7 +1588,13 @@ function cpRenderSwimmer() {
       </div>
 
       <div class="lg:col-span-8 space-y-6">
-        ${cpVolumeChart(selected)}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          ${cpProgressionPanel(selected)}
+          ${cpVolumeChart(selected)}
+        </div>
+        ${cpReadinessPanel(selected)}
+        ${cpCssTrendPanel(selected)}
+        ${cpPacingPanel(selected)}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between">
             <div>
@@ -1175,6 +1608,237 @@ function cpRenderSwimmer() {
           </div>
         </div>
       </div>
+    </div>`;
+}
+
+/* Readiness / load management, derived from the cached athlete_model state
+   (swimmer_payload.athleteState). Fuses the acute:chronic workload ratio (ACWR)
+   with the swimmer's own check-in trend into one plain verdict + a coach
+   recommendation. Deliberately framed as TRAINING-LOAD guidance, not medical or
+   injury advice. Thresholds mirror athlete_model.classify_trend so the coach
+   view and the solo trend engine never disagree. */
+function cpReadinessPanel(swimmer) {
+  const state = swimmer.athleteState;
+  if (!state || !state.total_logs) {
+    return `
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i data-lucide="heart-pulse" class="w-4 h-4 text-brand-500"></i> Readiness &amp; Load</h4>
+        <div class="py-6 text-center text-xs text-slate-400 italic">Not enough logged training yet to read load. Once ${cpEsc((swimmer.name || '').split(' ')[0] || 'they')} log a few sessions, this shows whether to push or ease off.</div>
+      </div>`;
+  }
+
+  const acwr = state.acwr;
+  const chronic = state.chronic_weekly_load || 0;
+  const c = state.checkins_14d || {};
+  const p = state.checkins_prev14 || {};
+  const hasCheckins = (c.n || 0) > 0;
+
+  // Load status from ACWR (same bands the progression badge + server use).
+  const loadMeta =
+    acwr == null ? { label: 'No load data yet', tone: 'bg-slate-100 text-slate-500 border-slate-200', bar: 'bg-slate-300', pct: 0 } :
+    acwr >= 1.7 ? { label: `Spiking · ${acwr}x normal`, tone: 'bg-rose-50 text-rose-700 border-rose-200', bar: 'bg-rose-500', pct: Math.min(100, acwr / 2 * 100) } :
+    acwr >= 1.35 ? { label: `Ramping up · ${acwr}x normal`, tone: 'bg-amber-50 text-amber-700 border-amber-200', bar: 'bg-amber-500', pct: Math.min(100, acwr / 2 * 100) } :
+    (acwr <= 0.55 && chronic > 500) ? { label: `Detraining · ${acwr}x normal`, tone: 'bg-amber-50 text-amber-700 border-amber-200', bar: 'bg-amber-400', pct: Math.max(6, acwr / 2 * 100) } :
+    { label: `In range · ${acwr}x normal`, tone: 'bg-emerald-50 text-emerald-700 border-emerald-200', bar: 'bg-emerald-500', pct: Math.min(100, acwr / 2 * 100) };
+
+  // Overall verdict, mirroring athlete_model.classify_trend's risk-first order.
+  let verdict, vTone, rec;
+  if (acwr != null && (acwr >= 1.7 || (acwr >= 1.35 && ((c.fatigue && c.fatigue >= 3.5) || (c.feeling && c.feeling <= 2.2))))) {
+    verdict = 'Ease off'; vTone = 'bg-rose-500';
+    rec = 'Load is running hotter than their recent normal. Pull back volume or intensity this week and let them absorb the work before the next hard block.';
+  } else if (acwr != null && acwr <= 0.55 && chronic > 500) {
+    verdict = 'Room to build'; vTone = 'bg-amber-500';
+    rec = "Load has dropped below their own normal. There's headroom to add work when they're ready, just ramp gradually rather than in one jump.";
+  } else if (acwr == null) {
+    verdict = 'Not enough data'; vTone = 'bg-slate-400';
+    rec = 'Need a few more logged sessions to read their load reliably.';
+  } else {
+    verdict = 'Good to push'; vTone = 'bg-emerald-500';
+    rec = 'Load and recovery look balanced against their own baseline. Safe to progress as planned.';
+  }
+
+  const arrow = (delta, goodDown) => {
+    if (delta == null || Math.abs(delta) < 0.2) return '<span class="text-slate-300">→</span>';
+    const worse = goodDown ? delta > 0 : delta < 0;
+    return `<span class="${worse ? 'text-amber-600' : 'text-emerald-600'}">${delta > 0 ? '▲' : '▼'} ${Math.abs(delta).toFixed(1)}</span>`;
+  };
+  const metric = (label, val, prev, goodDown) => {
+    if (val == null) return '';
+    const delta = prev == null ? null : val - prev;
+    return `
+      <div class="bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-2">
+        <div class="text-[9.5px] text-slate-400 font-semibold uppercase">${label}</div>
+        <div class="flex items-baseline justify-between mt-0.5">
+          <span class="text-sm font-bold text-slate-800">${val.toFixed(1)}<span class="text-[10px] text-slate-400 font-normal">/5</span></span>
+          <span class="text-[10px] font-mono font-bold">${arrow(delta, goodDown)}</span>
+        </div>
+      </div>`;
+  };
+
+  const checkinBlock = hasCheckins
+    ? `<div class="grid grid-cols-3 gap-2 mt-3">
+         ${metric('Energy', c.feeling, p.feeling, false)}
+         ${metric('Fatigue', c.fatigue, p.fatigue, true)}
+         ${metric('Sleep', c.sleep, p.sleep, false)}
+       </div>
+       <p class="text-[10px] text-slate-400 mt-1.5">Self-reported, last 14 days vs the 14 before (${c.n} check-in${c.n === 1 ? '' : 's'}).</p>`
+    : `<p class="text-[11px] text-slate-400 italic mt-3">No self-report check-ins from this swimmer, so readiness is read from training load alone. Invite them to log daily check-ins for a fuller picture.</p>`;
+
+  return `
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="heart-pulse" class="w-4 h-4 text-brand-500"></i> Readiness &amp; Load</h4>
+        <span class="text-[11px] font-bold text-white px-2.5 py-1 rounded-full ${vTone}">${verdict}</span>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[10px] text-slate-500 font-semibold uppercase">Training load (7d vs 4-week normal)</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${loadMeta.tone}">${loadMeta.label}</span>
+        </div>
+        <div class="h-2 bg-slate-100 rounded-full overflow-hidden relative">
+          <div class="absolute inset-y-0 left-1/2 w-px bg-slate-300"></div>
+          <div class="h-full ${loadMeta.bar} rounded-full" style="width:${loadMeta.pct}%"></div>
+        </div>
+        <div class="flex justify-between text-[9px] text-slate-400 font-mono mt-0.5"><span>detrain</span><span>1.0x normal</span><span>spike</span></div>
+      </div>
+      ${checkinBlock}
+      <p class="text-[11px] text-slate-600 leading-relaxed mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">${rec}</p>
+      <p class="text-[9.5px] text-slate-400 mt-2">Training-load guidance from this swimmer's own history. Not medical or injury advice.</p>
+    </div>`;
+}
+
+/* Pacing (split) analysis for a swimmer's recent races, from routes_coach's
+   swimmer_payload.pacingAnalyses (computed by pacing.py, the same engine the
+   solo analytics page uses). Reads back-half fade with the calibrated
+   thresholds -- a small positive split is normal and not flagged. */
+function cpPacingMeta(pattern) {
+  return {
+    'negative': { bar: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    'even': { bar: 'bg-brand-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    'normal-fade': { bar: 'bg-slate-400', badge: 'bg-slate-100 text-slate-600 border-slate-200' },
+    'big-fade': { bar: 'bg-amber-500', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
+  }[pattern] || { bar: 'bg-slate-400', badge: 'bg-slate-100 text-slate-600 border-slate-200' };
+}
+
+function cpPacingPanel(swimmer) {
+  const analyses = swimmer.pacingAnalyses || [];
+  const body = analyses.length === 0
+    ? `<div class="py-8 text-center text-xs text-slate-400 italic">No races with 50m splits logged yet. Splits come from meet swims or test sets, once they're in, each race's pacing shape shows here.</div>`
+    : `<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">${analyses.map(a => {
+        const meta = cpPacingMeta(a.pattern);
+        const bars = a.bars.map(b => `
+          <div class="flex-1 flex flex-col items-center justify-end gap-1" title="Split ${b.idx}: ${cpEsc(b.label)}">
+            <div class="w-full ${meta.bar} rounded-t" style="height:${Math.max(6, b.h)}%"></div>
+            <span class="text-[8px] text-slate-400 font-mono">${b.idx}</span>
+          </div>`).join('');
+        return `
+          <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/60">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div>
+                <span class="text-xs font-bold text-slate-800 block">${cpEsc(a.event)}</span>
+                <span class="text-[10px] text-slate-400 font-mono">${cpEsc(a.date)} · ${cpEsc(a.time || '')}</span>
+              </div>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${meta.badge} shrink-0">${cpEsc(a.label)}</span>
+            </div>
+            <div class="flex items-end gap-1 h-16 bg-white border border-slate-100 rounded-lg px-2 py-2">${bars}</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-500 font-mono mt-2">
+              <span>1st half avg <span class="font-bold text-slate-700">${cpEsc(a.first_avg)}</span></span>
+              <span>fade <span class="font-bold ${a.fade_pct > 7 ? 'text-amber-600' : 'text-slate-700'}">${a.fade_pct > 0 ? '+' : ''}${a.fade_pct}%</span></span>
+              <span>2nd half avg <span class="font-bold text-slate-700">${cpEsc(a.second_avg)}</span></span>
+            </div>
+            <p class="text-[11px] text-slate-600 leading-relaxed mt-2">${cpEsc(a.note)}</p>
+          </div>`;
+      }).join('')}</div>`;
+
+  return `
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+      <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3.5 flex items-center gap-1.5"><i data-lucide="gauge" class="w-4 h-4 text-brand-500"></i> Race Pacing (50m splits)</h4>
+      ${body}
+    </div>`;
+}
+
+/* Aerobic-capacity trend via CSS (Critical Swim Speed) -- the same engine
+   the Solo training-plan feature computes from (plan_logic.compute_css), just
+   surfaced coach-side. Requires no new data: derived from the swimmer's best
+   recent 400+200 freestyle pair, compared against the same pair from the
+   prior 90-day window. */
+function cpCssTrendPanel(swimmer) {
+  const css = swimmer.cssTrend;
+  if (!css) {
+    return `
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i data-lucide="timer" class="w-4 h-4 text-brand-500"></i> Aerobic capacity (CSS)</h4>
+        <div class="py-8 text-center text-xs text-slate-400 italic">No 400 + 200 freestyle time-trial pair logged in the last 90 days yet — CSS needs both to compute.</div>
+      </div>`;
+  }
+  const dir = css.direction === 'improving' ? { cls: 'text-emerald-700 bg-emerald-50 border-emerald-100', icon: '▼' } :
+    css.direction === 'slipping' ? { cls: 'text-rose-700 bg-rose-50 border-rose-100', icon: '▲' } :
+    { cls: 'text-slate-500 bg-slate-100 border-slate-200', icon: '—' };
+  return `
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+      <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3.5 flex items-center gap-1.5"><i data-lucide="timer" class="w-4 h-4 text-brand-500"></i> Aerobic capacity (CSS)</h4>
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <span class="text-lg font-black text-slate-900 font-mono">${cpEsc(css.cssPace)}<span class="text-xs font-semibold text-slate-400"> /100m</span></span>
+          <span class="text-[10px] text-slate-400 font-mono block">from time trial ${cpEsc(css.trialDate)}</span>
+        </div>
+        ${css.direction ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border font-mono shrink-0 ${dir.cls}">${dir.icon} ${Math.abs(css.changePct).toFixed(1)}%</span>` : ''}
+      </div>
+      ${css.previousCssPace ? `<p class="text-[10.5px] text-slate-400 mt-2">vs. ${cpEsc(css.previousCssPace)} /100m the prior 90 days</p>` : `<p class="text-[10.5px] text-slate-400 mt-2">No prior-period trial pair yet to compare against.</p>`}
+    </div>`;
+}
+
+/* Per-event trend lines + overall classification + ACWR, sourced from the
+   swimmer's cached athlete_model state (routes_coach.py's swimmer_payload
+   passes it through as `athleteState`, same engine /solo/analytics uses). */
+function cpProgressionPanel(swimmer) {
+  const state = swimmer.athleteState;
+  if (!state || !state.total_logs) {
+    return `
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i data-lucide="line-chart" class="w-4 h-4 text-brand-500"></i> Progression</h4>
+        <div class="py-8 text-center text-xs text-slate-400 italic">Not enough data yet — once ${cpEsc((swimmer.name || '').split(' ')[0] || 'they')} log a few more swims or sessions, trends will show here.</div>
+      </div>`;
+  }
+
+  const meta = cpTrendMeta(state.trend);
+  const acwr = state.acwr;
+  const acwrMeta =
+    acwr == null ? { label: 'No load data yet', badge: 'bg-slate-100 text-slate-500' } :
+    acwr >= 1.7 ? { label: `${acwr}x — spiking`, badge: 'bg-rose-50 text-rose-700 border-rose-100' } :
+    acwr >= 1.35 ? { label: `${acwr}x — ramping up`, badge: 'bg-amber-50 text-amber-700 border-amber-100' } :
+    acwr <= 0.55 ? { label: `${acwr}x — well below normal`, badge: 'bg-amber-50 text-amber-700 border-amber-100' } :
+    { label: `${acwr}x — normal range`, badge: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
+
+  const events = Object.entries(state.events || {}).sort((a, b) => a[1].change_pct - b[1].change_pct);
+  const eventRows = events.length === 0
+    ? `<div class="py-6 text-center text-xs text-slate-400 italic">Not enough repeated timed swims yet to read per-event trends.</div>`
+    : events.map(([event, d]) => {
+        const dir = d.direction === 'improving' ? { cls: 'text-emerald-700 bg-emerald-50 border-emerald-100', icon: '▼' } :
+          d.direction === 'slipping' ? { cls: 'text-rose-700 bg-rose-50 border-rose-100', icon: '▲' } :
+          { cls: 'text-slate-500 bg-slate-100 border-slate-200', icon: '—' };
+        return `
+        <div class="py-2 flex items-center justify-between gap-2">
+          <div>
+            <span class="text-xs font-semibold text-slate-800 block">${cpEsc(event)}</span>
+            <span class="text-[10px] text-slate-400 font-mono">${cpFmtSecs(d.recent_avg)} avg · ${d.n} swims</span>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border font-mono shrink-0 ${dir.cls}">${dir.icon} ${Math.abs(d.change_pct).toFixed(1)}%</span>
+        </div>`;
+      }).join('');
+
+  return `
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3.5">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="line-chart" class="w-4 h-4 text-brand-500"></i> Progression</h4>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.badge}">${meta.label}</span>
+      </div>
+      <p class="text-[11px] text-slate-500 leading-snug">${cpEsc(state.trend_reason || '')}</p>
+      <div class="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-lg">
+        <span class="text-[10px] text-slate-500 font-semibold uppercase">Training load (ACWR)</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border font-mono ${acwrMeta.badge}">${acwrMeta.label}</span>
+      </div>
+      <div class="divide-y divide-slate-100 max-h-[220px] overflow-y-auto">${eventRows}</div>
     </div>`;
 }
 
@@ -1219,14 +1883,7 @@ function cpRenderAnalytics() {
     return { squad: sq, count, totalSessions, avgDistance };
   });
 
-  const today = new Date();
-  const inactiveAlerts = realSwimmers.map(s => {
-    if (!s.lastActive) return { swimmer: s, diffDays: Infinity };
-    const diffDays = Math.ceil(Math.abs(today.getTime() - new Date(s.lastActive).getTime()) / 86400000);
-    return { swimmer: s, diffDays };
-  }).filter(item => item.diffDays >= 5).sort((a, b) => b.diffDays - a.diffDays);
-
-  const mostActive = [...realSwimmers].sort((a, b) => (b.totalDistance || 0) - (a.totalDistance || 0)).slice(0, 3);
+  const needsAttention = cpNeedsAttention(realSwimmers);
 
   const squadCards = squadMetrics.map(({ squad, count, totalSessions, avgDistance }) => `
     <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between min-h-[160px]">
@@ -1244,25 +1901,23 @@ function cpRenderAnalytics() {
       </div>
     </div>`).join('');
 
-  const alertsList = inactiveAlerts.length === 0 ? `<div class="p-8 text-center text-xs text-slate-400 italic">All swimmers active within 5 days.</div>` :
-    inactiveAlerts.map(({ swimmer, diffDays }) => `
-      <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-2.5">
-        <div class="w-2 h-2 rounded-full bg-rose-500 mt-1.5 shrink-0"></div>
+  const attentionBadgeClasses = {
+    rose: { card: 'bg-rose-50 border-rose-100', dot: 'bg-rose-500' },
+    amber: { card: 'bg-amber-50 border-amber-100', dot: 'bg-amber-500' },
+    slate: { card: 'bg-slate-50 border-slate-200', dot: 'bg-slate-400' },
+  };
+  const attentionList = needsAttention.length === 0 ? `<div class="p-8 text-center text-xs text-slate-400 italic">Nobody needs attention right now — everyone's tracking well.</div>` :
+    needsAttention.map(({ swimmer, reason, badge }) => {
+      const cls = attentionBadgeClasses[badge] || attentionBadgeClasses.slate;
+      return `
+      <div class="p-3 ${cls.card} border rounded-xl flex items-start gap-2.5">
+        <div class="w-2 h-2 rounded-full ${cls.dot} mt-1.5 shrink-0"></div>
         <div>
           <h5 class="text-xs font-bold text-slate-900 leading-none">${cpEsc(swimmer.name)}</h5>
-          <span class="text-[10px] font-mono text-slate-400 block mt-1">${swimmer.lastActive ? `Inactive: ${diffDays} days` : 'Never logged a swim'}</span>
+          <span class="text-[10px] font-mono text-slate-400 block mt-1">${cpEsc(reason || '')}</span>
         </div>
-      </div>`).join('');
-
-  const climbersList = mostActive.length === 0 ? `<div class="py-6 text-center text-xs text-slate-400 italic">No swimmer activity logged yet.</div>` :
-    mostActive.map((swimmer, idx) => `
-      <div class="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-lg">
-        <div class="flex items-center gap-2.5">
-          <span class="text-xs font-mono font-bold text-slate-400">#${idx + 1}</span>
-          <div><span class="text-xs font-bold text-slate-800 block leading-tight">${cpEsc(swimmer.name)}</span><span class="text-[9.5px] text-slate-400 font-mono">${swimmer.sessionsCount} sessions</span></div>
-        </div>
-        <div class="flex items-center gap-1 text-emerald-600 font-mono text-xs font-bold bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded"><i data-lucide="trending-up" class="w-3.5 h-3.5"></i> ${(swimmer.totalDistance || 0).toLocaleString()}m</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
   return `
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6" id="squad_analytics_section">
@@ -1272,15 +1927,57 @@ function cpRenderAnalytics() {
       </div>
       <div class="lg:col-span-4 space-y-6">
         <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5"><i data-lucide="shield-alert" class="w-4 h-4 text-rose-500"></i> Inactivity Alerts</h4>
-          <div class="space-y-2 max-h-[190px] overflow-y-auto pr-1">${alertsList}</div>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3.5 flex items-center gap-1.5"><i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i> Most Active Swimmers</h4>
-          <div class="space-y-3">${climbersList}</div>
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5"><i data-lucide="shield-alert" class="w-4 h-4 text-rose-500"></i> Needs Attention</h4>
+          <div class="space-y-2 max-h-[500px] overflow-y-auto pr-1">${attentionList}</div>
         </div>
       </div>
     </div>`;
+}
+
+/* Ranked "who needs a look" list, computed from each swimmer's already-cached
+   athlete_model state (athleteState.trend) plus attendance/last-active --
+   no raw Swim/Session rescans, just the fields already on the payload.
+   Priority: overtraining > regressing > undertraining > plateaued (with real
+   data) > inactive > low attendance. */
+function cpNeedsAttention(realSwimmers) {
+  const today = new Date();
+  const items = realSwimmers.map(s => {
+    const state = s.athleteState;
+    const trend = (state && state.total_logs) ? state.trend : null;
+    // Checked unconditionally, not just as a fallback: athleteState.trend is a
+    // cached classification that only updates when the swimmer logs something
+    // new, so a swimmer who went quiet keeps whatever trend they had at their
+    // last active period (e.g. a stale 'plateauing' reads as calm, masking
+    // that they've actually stopped showing up). Inactivity is a hard fact
+    // from lastActive, not a stale inference, so it must be able to surface
+    // regardless of what the cached trend says -- this restores the old
+    // unconditional inactivity-alert coverage this list replaced.
+    const diffDays = s.lastActive ? Math.ceil(Math.abs(today.getTime() - new Date(s.lastActive).getTime()) / 86400000) : Infinity;
+    const isInactive = diffDays >= 5;
+    let priority = null, reason = null, badge = null;
+
+    if (trend === 'overtraining') { priority = 1; reason = state.trend_reason; badge = 'rose'; }
+    else if (trend === 'regressing') { priority = 2; reason = state.trend_reason; badge = 'rose'; }
+    else if (trend === 'undertraining') { priority = 3; reason = state.trend_reason; badge = 'amber'; }
+    else if (isInactive) {
+      priority = 4;
+      reason = s.lastActive ? `Inactive: ${diffDays} days` : 'Never logged a swim';
+      badge = 'rose';
+    } else if (trend === 'plateauing' && Object.keys(state.events || {}).length > 0) {
+      priority = 5;
+      reason = state.trend_reason;
+      badge = 'slate';
+    } else if (s.attendanceRate != null && s.attendanceRate < 70) {
+      priority = 6;
+      reason = `Attendance ${s.attendanceRate}% over the last 30 days`;
+      badge = 'amber';
+    }
+
+    return priority == null ? null : { swimmer: s, priority, reason, badge };
+  }).filter(Boolean);
+
+  items.sort((a, b) => a.priority - b.priority);
+  return items.slice(0, 10);
 }
 
 /* ================= EVENT WIRING ================= */
@@ -1297,6 +1994,7 @@ document.addEventListener('DOMContentLoaded', () => {
       CP.activeTab = el.dataset.tab;
       cpRenderAll();
       if (CP.activeTab === 'attendance') cpLoadAttendanceMarks();
+      if (CP.activeTab === 'ai' && !CP.ui.digests.loaded) cpLoadDigests();
     }
 
     // Schedule
@@ -1307,16 +2005,100 @@ document.addEventListener('DOMContentLoaded', () => {
       CP.ui.schedule.slot = el.dataset.slot;
       // Repaint just the slot buttons so typed form values survive.
       document.querySelectorAll('[data-action="cp-pick-slot"]').forEach(b => {
-        b.className = `flex-1 py-1.5 rounded text-xs font-semibold ${b.dataset.slot === CP.ui.schedule.slot ? 'bg-[#111111] text-[#ccccff]' : 'bg-white border border-slate-200 text-slate-500'}`;
+        b.className = `flex-1 py-1.5 rounded text-xs font-semibold ${b.dataset.slot === CP.ui.schedule.slot ? 'bg-brand-500 text-[#03231a]' : 'bg-white border border-slate-200 text-slate-500'}`;
       });
     } else if (action === 'cp-remove-event') {
       await cpApi(`/coach/pro/api/schedule/${el.dataset.id}/delete`, { method: 'POST' });
       await cpRefresh();
     }
 
+    // Season plan
+    else if (action === 'cp-season-toggle-editor') {
+      const ui = CP.ui.schedule;
+      const squad = CP.squads.find(s => s.id === ui.seasonSquadId);
+      const plan = squad && squad.seasonPlan;
+      if (!ui.showSeasonEditor && plan) {
+        ui.seasonMeetPreset = TARGET_MEET_PRESETS.includes(plan.targetMeet.name) ? plan.targetMeet.name : '__custom__';
+        ui.seasonMeetCustom = TARGET_MEET_PRESETS.includes(plan.targetMeet.name) ? '' : plan.targetMeet.name;
+        ui.seasonMeetDate = plan.targetMeet.date;
+        ui.seasonPhases = plan.phases.map(p => ({ ...p }));
+      } else if (!ui.showSeasonEditor) {
+        ui.seasonMeetPreset = TARGET_MEET_PRESETS[0];
+        ui.seasonMeetCustom = '';
+        ui.seasonMeetDate = '';
+        ui.seasonPhases = [];
+      }
+      ui.showSeasonEditor = !ui.showSeasonEditor;
+      cpRenderTab();
+    } else if (action === 'cp-season-cancel') {
+      CP.ui.schedule.showSeasonEditor = false;
+      cpRenderTab();
+    } else if (action === 'cp-season-add-phase') {
+      const phases = CP.ui.schedule.seasonPhases;
+      const last = phases[phases.length - 1];
+      const start = last ? new Date(new Date(last.end + 'T00:00:00').getTime() + 86400000).toISOString().slice(0, 10) : CP.today;
+      phases.push({ phase: CP_AIGEN_PHASES[0], start, end: start });
+      cpRenderTab();
+    } else if (action === 'cp-season-remove-phase') {
+      CP.ui.schedule.seasonPhases.splice(Number(el.dataset.index), 1);
+      cpRenderTab();
+    } else if (action === 'cp-season-save') {
+      const ui = CP.ui.schedule;
+      const presetEl = document.getElementById('cpSeasonMeetPreset');
+      const customEl = document.getElementById('cpSeasonMeetCustom');
+      const dateEl = document.getElementById('cpSeasonMeetDate');
+      const preset = presetEl ? presetEl.value : ui.seasonMeetPreset;
+      const meetName = preset === '__custom__' ? (customEl ? customEl.value.trim() : '') : preset;
+      const meetDate = dateEl ? dateEl.value : '';
+      if (!meetName || !meetDate) { alert('A target meet name and date are required.'); return; }
+
+      const phases = ui.seasonPhases.map((p, i) => {
+        const selectEl = document.querySelector(`.cp-season-phase-select[data-season-phase-index="${i}"]`);
+        const customPhaseEl = document.querySelector(`.cp-season-phase-custom[data-season-phase-index="${i}"]`);
+        const startEl = document.querySelector(`.cp-season-phase-start[data-season-phase-index="${i}"]`);
+        const endEl = document.querySelector(`.cp-season-phase-end[data-season-phase-index="${i}"]`);
+        const selVal = selectEl ? selectEl.value : p.phase;
+        const phase = selVal === '__custom__' ? (customPhaseEl ? customPhaseEl.value.trim() : '') : selVal;
+        return { phase, start: startEl ? startEl.value : p.start, end: endEl ? endEl.value : p.end };
+      }).filter(p => p.phase && p.start && p.end);
+
+      await cpApi(`/coach/pro/api/squads/${ui.seasonSquadId}/season-plan`, {
+        method: 'POST',
+        body: cpForm({ season_plan: JSON.stringify({ targetMeet: { name: meetName, date: meetDate }, phases }) }),
+      });
+      ui.showSeasonEditor = false;
+      await cpRefresh();
+    }
+
     // AI set generator
     else if (action === 'cp-aigen-toggle') {
       CP.ui.aiGen.show = !CP.ui.aiGen.show;
+      cpRenderTab();
+    }
+
+    // Dryland content search
+    else if (action === 'cp-dryland-toggle') {
+      CP.ui.dryland.show = !CP.ui.dryland.show;
+      cpRenderTab();
+    } else if (action === 'cp-dryland-save') {
+      const ui = CP.ui.dryland;
+      const index = Number(el.dataset.index);
+      const candidate = (ui.results || [])[index];
+      if (!candidate || ui.savingIndex != null) return;
+      ui.savingIndex = index;
+      cpRenderTab();
+      try {
+        const data = await cpApi('/coach/pro/api/dryland/save', { method: 'POST', body: cpForm({
+          title: candidate.title,
+          description: candidate.description,
+          category: candidate.category,
+          source_name: candidate.source_name,
+          source_url: candidate.source_url,
+          exercises: JSON.stringify(candidate.exercises || []),
+        }) });
+        if (data) ui.savedIndexes.push(index);
+      } catch (err) { /* cpApi already alerted */ }
+      ui.savingIndex = null;
       cpRenderTab();
     }
 
@@ -1424,6 +2206,21 @@ document.addEventListener('DOMContentLoaded', () => {
       cpRenderTab();
     }
 
+    // Parent digest review queue
+    else if (action === 'cp-digest-approve') {
+      const ui = CP.ui.digests;
+      const id = Number(el.dataset.id);
+      if (ui.approvingId) return;
+      ui.approvingId = id;
+      cpRenderTab();
+      try {
+        await cpApi(`/coach/pro/api/digests/${id}/approve`, { method: 'POST' });
+        CP.digests = CP.digests.filter(d => d.id !== id);
+      } catch (err) { /* cpApi already alerted */ }
+      ui.approvingId = null;
+      cpRenderTab();
+    }
+
     // Roster
     else if (action === 'cp-toggle-add-squad') {
       CP.ui.roster.showAddSquad = !CP.ui.roster.showAddSquad;
@@ -1468,12 +2265,56 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Roster CSV import
+    else if (action === 'cp-toggle-import') {
+      const ui = CP.ui.roster;
+      ui.showImport = !ui.showImport;
+      if (ui.showImport) {
+        if (CP.squads.length === 0) { alert('Create a squad first.'); ui.showImport = false; return; }
+        ui.importSquadId = ui.selectedSquadId === 'all' ? CP.squads[0].id : ui.selectedSquadId;
+      }
+      ui.importPreview = null;
+      ui.importError = null;
+      cpRenderTab();
+    } else if (action === 'cp-import-reset') {
+      CP.ui.roster.importPreview = null;
+      CP.ui.roster.importError = null;
+      cpRenderTab();
+    } else if (action === 'cp-import-toggle-row') {
+      const pv = CP.ui.roster.importPreview;
+      const row = pv && pv.rows[Number(el.dataset.index)];
+      if (row) row._selected = !(row._selected !== false);
+      cpRenderTab();
+    } else if (action === 'cp-import-confirm') {
+      const ui = CP.ui.roster;
+      const pv = ui.importPreview;
+      if (!pv || ui.importCommitting) return;
+      const rows = pv.rows.filter(r => r.status === 'new' && r._selected !== false)
+        .map(r => ({ name: r.name, email: r.email, group: r.group }));
+      if (!rows.length) return;
+      ui.importCommitting = true;
+      cpRenderTab();
+      try {
+        const data = await cpApi(`/coach/pro/api/squads/${ui.importSquadId}/import/commit`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows }),
+        });
+        ui.showImport = false;
+        ui.importPreview = null;
+        await cpRefresh();
+        if (data) alert(`Imported ${data.imported} swimmer${data.imported === 1 ? '' : 's'}.${data.skipped ? ` ${data.skipped} skipped (already on the roster).` : ''}`);
+      } catch (err) { /* cpApi already alerted */ }
+      ui.importCommitting = false;
+      cpRenderTab();
+    }
+
     // Builder
     else if (action === 'cp-toggle-create-set') {
       const isOpen = CP.ui.builder.showCreateSet || CP.ui.builder.editingSetId;
       CP.ui.builder.editingSetId = null;
       CP.ui.builder.showCreateSet = !isOpen;
       CP.ui.builder.blocks = [];
+      CP.ui.builder.scannedPool = null;
+      CP.ui.builder.scanError = null;
       cpRenderTab();
     } else if (action === 'cp-edit-set') {
       const set = CP.savedSets.find(s => s.id === Number(el.dataset.setId));
@@ -1484,6 +2325,13 @@ document.addEventListener('DOMContentLoaded', () => {
       cpRenderTab();
       const form = document.getElementById('cpCreateSetForm');
       if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (action === 'cp-scan-photo') {
+      if (!CP.ui.builder.showCreateSet && !CP.ui.builder.editingSetId) {
+        CP.ui.builder.showCreateSet = true;
+        cpRenderTab();
+      }
+      const input = document.getElementById('cpSetScanPhoto');
+      if (input) input.click();
     } else if (action === 'cp-add-block') {
       const section = document.getElementById('cpBlockSection').value;
       const reps = Number(document.getElementById('cpBlockReps').value) || 1;
@@ -1492,6 +2340,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const rest = document.getElementById('cpBlockRest').value;
       const rest_type = document.getElementById('cpBlockRestType').value;
       CP.ui.builder.blocks.push({ section, reps, dist, stroke, rest, rest_type });
+      cpRenderTab();
+    } else if (action === 'cp-sort-blocks') {
+      const order = ['Warm up', 'Pre set', 'Main set', 'Sub set', 'Cool down'];
+      CP.ui.builder.blocks = CP.ui.builder.blocks
+        .map((b, i) => ({ b, i }))
+        .sort((x, y) => (order.indexOf(x.b.section) - order.indexOf(y.b.section)) || (x.i - y.i))
+        .map(({ b }) => b);
       cpRenderTab();
     } else if (action === 'cp-remove-block') {
       CP.ui.builder.blocks.splice(Number(el.dataset.index), 1);
@@ -1526,7 +2381,29 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.body.addEventListener('change', async (e) => {
-    if (e.target.id === 'cpSwimmerSelect') {
+    if (e.target.id === 'cpSeasonSquadSelect') {
+      CP.ui.schedule.seasonSquadId = Number(e.target.value);
+      CP.ui.schedule.showSeasonEditor = false;
+      cpRenderTab();
+    } else if (e.target.id === 'cpSeasonMeetPreset') {
+      CP.ui.schedule.seasonMeetPreset = e.target.value;
+      cpRenderTab();
+    } else if (e.target.classList.contains('cp-season-phase-select')) {
+      const i = Number(e.target.dataset.seasonPhaseIndex);
+      CP.ui.schedule.seasonPhases[i].phase = e.target.value === '__custom__' ? '' : e.target.value;
+      cpRenderTab();
+    } else if (e.target.id === 'cpSeasonMeetDate') {
+      CP.ui.schedule.seasonMeetDate = e.target.value;
+      const badge = document.getElementById('cpSeasonMeetCountdown');
+      if (badge) badge.textContent = e.target.value ? cpWeeksOut(e.target.value) : '—';
+    } else if (e.target.classList.contains('cp-season-phase-start') || e.target.classList.contains('cp-season-phase-end')) {
+      const i = Number(e.target.dataset.seasonPhaseIndex);
+      const field = e.target.classList.contains('cp-season-phase-start') ? 'start' : 'end';
+      const p = CP.ui.schedule.seasonPhases[i];
+      p[field] = e.target.value;
+      const badge = document.querySelector(`.cp-season-phase-duration[data-season-phase-index="${i}"]`);
+      if (badge) badge.textContent = cpDurationLabel(p.start, p.end);
+    } else if (e.target.id === 'cpSwimmerSelect') {
       CP.ui.swimmer.selectedSwimmerId = Number(e.target.value);
       cpRenderTab();
     } else if (e.target.id === 'cpAttSquadSelect') {
@@ -1578,6 +2455,62 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.error = 'Something went wrong — please try again.';
       }
       ui.scanning = false;
+      cpRenderTab();
+    } else if (e.target.id === 'cpSetsSortBy') {
+      CP.ui.builder.sortBy = e.target.value;
+      cpRenderTab();
+    } else if (e.target.id === 'cpSetScanPhoto') {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const ui = CP.ui.builder;
+      ui.scanning = true;
+      ui.scanError = null;
+      cpRenderTab();
+      try {
+        const fd = new FormData();
+        fd.append('photo', file);
+        const res = await fetch('/coach/pro/api/sets/scan', { method: 'POST', credentials: 'same-origin', body: fd });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.ok === false) {
+          ui.scanError = (data && data.error) || "Couldn't read that photo — try again or enter it manually.";
+        } else {
+          ui.blocks.push(...data.blocks);
+          ui.scannedPool = data.pool;
+        }
+      } catch (err) {
+        ui.scanError = "Couldn't read that photo — try again or enter it manually.";
+      }
+      ui.scanning = false;
+      cpRenderTab();
+    } else if (e.target.id === 'cpImportSquadSelect') {
+      CP.ui.roster.importSquadId = Number(e.target.value);
+      CP.ui.roster.importPreview = null;
+      CP.ui.roster.importError = null;
+      cpRenderTab();
+    } else if (e.target.id === 'cpImportFile') {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const ui = CP.ui.roster;
+      ui.importing = true;
+      ui.importError = null;
+      ui.importPreview = null;
+      cpRenderTab();
+      try {
+        const fd = new FormData();
+        fd.append('csv_file', file);
+        const res = await fetch(`/coach/pro/api/squads/${ui.importSquadId}/import/preview`, {
+          method: 'POST', credentials: 'same-origin', body: fd,
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.ok === false) {
+          ui.importError = (data && data.error) || 'Could not read that file — please try again.';
+        } else {
+          ui.importPreview = data;
+        }
+      } catch (err) {
+        ui.importError = 'Something went wrong reading that file — please try again.';
+      }
+      ui.importing = false;
       cpRenderTab();
     } else if (e.target.dataset.action === 'cp-reassign-squad') {
       const membershipId = e.target.dataset.membershipId;
@@ -1631,6 +2564,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       ui.loading = false;
       cpRenderAll();
+    } else if (e.target.id === 'cpDrylandForm') {
+      e.preventDefault();
+      const ui = CP.ui.dryland;
+      if (ui.loading) return;
+      const fd = new FormData(e.target); // capture before re-render clears the form
+      ui.loading = true;
+      ui.error = null;
+      ui.results = null;
+      ui.savedIndexes = [];
+      cpRenderTab();
+      try {
+        const res = await fetch('/coach/pro/api/dryland/search', {
+          method: 'POST', credentials: 'same-origin', body: fd,
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.ok === false) {
+          ui.error = (data && data.error) || "No dryland content found for that focus — try a different focus.";
+        } else {
+          ui.results = data.candidates || [];
+        }
+      } catch (err) {
+        ui.error = 'Something went wrong — please try again.';
+      }
+      ui.loading = false;
+      cpRenderTab();
     } else if (e.target.id === 'cpCreateSquadForm') {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -1664,6 +2622,7 @@ document.addEventListener('DOMContentLoaded', () => {
       CP.ui.builder.showCreateSet = false;
       CP.ui.builder.editingSetId = null;
       CP.ui.builder.blocks = [];
+      CP.ui.builder.scannedPool = null;
       await cpRefresh();
     } else if (e.target.id === 'cpCreateAssignmentForm') {
       e.preventDefault();

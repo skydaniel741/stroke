@@ -1,0 +1,83 @@
+{% extends 'public_base.html' %}
+
+{% block title %}Cookie Policy — STROKE{% endblock %}
+{% block description %}Every cookie STROKE sets, what it does and how long it lasts. There are two, both strictly necessary, and no advertising or cross-site tracking.{% endblock %}
+
+{% block content %}
+<header class="phead">
+  <div class="phead-inner">
+    <nav class="crumb rv"><a href="/">Home</a> <span>/</span> <span>Cookie Policy</span></nav>
+    <p class="eyebrow rv">Legal</p>
+    <h1 class="rv">Cookie Policy</h1>
+    <p class="prose-updated rv">Last updated: {{ updated_date }}</p>
+    <p class="phead-lede rv">This is the complete list. It is two cookies long, and neither of them follows you anywhere.</p>
+  </div>
+</header>
+
+<article class="prose">
+
+  <h2>1. What we set</h2>
+  <table class="ptable">
+    <thead><tr><th>Cookie</th><th>Type</th><th>What it does</th><th>How long</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>session</td>
+        <td>Strictly necessary</td>
+        <td>Keeps you signed in as you move between pages, and carries the security token that protects form submissions. Without it you would be logged out on every click.</td>
+        <td>Until you close your browser, or you log out</td>
+      </tr>
+      <tr>
+        <td>remember_token</td>
+        <td>Strictly necessary</td>
+        <td>Set only if you tick "Remember me" when logging in, so you stay signed in on that device.</td>
+        <td>Until it expires or you log out</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. What we do not set</h2>
+  <ul>
+    <li>No advertising cookies. There is no advertising in STROKE.</li>
+    <li>No cross-site tracking or retargeting pixels.</li>
+    <li>No third-party analytics cookies that follow you to other websites.</li>
+    <li>No social media tracking widgets.</li>
+    <li>We do not sell or share cookie data, because there is none worth selling.</li>
+  </ul>
+
+  <h2>3. Why there is no "manage preferences" panel</h2>
+  <p>Consent banners exist because most sites set cookies you did not ask for. Both of ours are strictly necessary to deliver a service you actively requested — staying logged in — which is the category that does not require consent under the GDPR's ePrivacy rules, and which the New Zealand Privacy Act 2020 treats as ordinary collection you have been told about.</p>
+  <p>Building a preferences panel with a single toggle you cannot turn off would be theatre. So we show a plain notice instead, and this page. If we ever add an analytics or marketing cookie, that notice becomes a real opt-in and those cookies will not be set until you agree.</p>
+
+  <h2>4. Other storage we use</h2>
+  <p>Two small things are kept in your browser's local storage rather than in a cookie. Local storage is not sent to our server:</p>
+  <ul>
+    <li>A flag recording that you have dismissed the cookie notice, so it does not reappear on every page.</li>
+    <li>Minor interface preferences, such as which tab you last had open on a dashboard.</li>
+  </ul>
+
+  <h2>5. Third-party cookies</h2>
+  <p>If you choose to sign in with Google or Apple, that provider may set its own cookies on its own sign-in page as part of authenticating you. That happens on their domain and under their policies, not ours. We do not set anything on your device on their behalf.</p>
+  <p>We load a web font from Google Fonts. Google receives the request for that font file, which necessarily includes your IP address, but no cookie is set by us for it.</p>
+
+  <h2>6. Controlling cookies yourself</h2>
+  <p>Every browser lets you view, block and delete cookies in its settings. Blocking our session cookie will stop you from being able to log in, since there would be nothing left to remember that you had.</p>
+
+  <h2>7. Contact</h2>
+  <p>Questions about this policy: <a href="mailto:privacy@stroke.app">privacy@stroke.app</a>. See also the <a href="/privacy">privacy policy</a>.</p>
+
+</article>
+
+<section class="related">
+  <p class="related-h">Also worth reading</p>
+  <div class="related-grid">
+    <a href="/privacy" class="related-card card tap rv">
+      <span class="related-title">Privacy Policy</span>
+      <span class="related-desc">What we collect, who sees it, and your rights.<span class="tap-arrow"></span></span>
+    </a>
+    <a href="/data-safety" class="related-card card tap rv">
+      <span class="related-title">How we keep your data safe</span>
+      <span class="related-desc">Passwords, access boundaries, and what happens if something goes wrong.<span class="tap-arrow"></span></span>
+    </a>
+  </div>
+</section>
+{% endblock %}

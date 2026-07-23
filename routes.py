@@ -57,12 +57,99 @@ def _group_rounds(blocks):
 
 @main.route('/')
 def home():
-    return render_template('index.html')
+    return _public('index.html')
+
+
+# ---------------------------------------------------------------------------
+# Public marketing + legal pages
+#
+# Every page here is reachable without an account, and none of them redirect a
+# visitor straight to /signup. The point of the deep-dive pages is that
+# clicking "Session builder" on the landing page explains the session builder,
+# rather than dumping the reader on a form before they know what they'd be
+# signing up for.
+# ---------------------------------------------------------------------------
+
+# Bumped by hand when a legal page's substance changes -- shown as
+# "Last updated" on /privacy, /terms and /cookies. Keep it honest: only move
+# it when the wording actually changed.
+LEGAL_UPDATED = '24 July 2026'
+
+
+def _public(template, **kw):
+    """Render a public page with the chrome every one of them needs."""
+    from marketing_content import FOOTER_LINKS
+    kw.setdefault('footer_links', FOOTER_LINKS)
+    kw.setdefault('updated_date', LEGAL_UPDATED)
+    return render_template(template, **kw)
 
 
 @main.route('/privacy')
 def privacy():
-    return render_template('privacy.html')
+    return _public('privacy.html')
+
+
+@main.route('/terms')
+def terms():
+    return _public('terms.html')
+
+
+@main.route('/cookies')
+def cookies():
+    return _public('cookies.html')
+
+
+@main.route('/data-safety')
+def data_safety():
+    return _public('data_safety.html')
+
+
+@main.route('/faq')
+def faq():
+    from marketing_content import FAQ
+    return _public('faq.html', faq=FAQ)
+
+
+@main.route('/features/<slug>')
+def feature_page(slug):
+    from marketing_content import FEATURES
+    page = FEATURES.get(slug)
+    if not page:
+        abort(404)
+    related = [(s, FEATURES[s]) for s in page.get('related', []) if s in FEATURES]
+    return _public(
+        'marketing_page.html',
+        page=page,
+        crumb=page['title'],
+        related_cards=related,
+        feature_cards=None,
+        cta_heading='Ready to try it?',
+        cta_sub='Free while we build with early coaches. No card, and you can ask us to delete everything at any time.',
+    )
+
+
+@main.route('/for/<audience>')
+def audience_page(audience):
+    from marketing_content import AUDIENCES, FEATURES
+    page = AUDIENCES.get(audience)
+    if not page:
+        abort(404)
+    features = [(s, FEATURES[s]) for s in page.get('features', []) if s in FEATURES]
+    ctas = {
+        'coaches': ('Start your squad', 'Free while we build with early coaches. No card required.'),
+        'parents': ('Not been sent a link yet?', "Ask your swimmer's coach to send you one from their roster. There's nothing for you to sign up to first."),
+        'swimmers': ('Start logging', 'Free to create an account and log your swims.'),
+    }
+    heading, sub = ctas[audience]
+    return _public(
+        'marketing_page.html',
+        page=page,
+        crumb=page['eyebrow'],
+        feature_cards=features,
+        related_cards=None,
+        cta_heading=heading,
+        cta_sub=sub,
+    )
 
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -229,7 +316,58 @@ def login():
             flash('Incorrect email or password.', 'error')
             return redirect(url_for('main.login'))
 
-    return render_template('login.html')
+    return _login_page('any')
+
+
+# Copy for the three doors into the same login form. The role here is
+# presentation only -- it never reaches the POST handler, because where an
+# account lands after logging in is decided by the role stored on the account,
+# not by which page the person happened to open. A visitor picking "Coach"
+# does not become one.
+LOGIN_VARIANTS = {
+    'any': {
+        'tag': 'Welcome back',
+        'headline': "Pick up where your last <em>length</em> left off.",
+        'sub': "Every best time, split and points score you've logged is still here, waiting for the next session.",
+        'points': ['Your full season history', 'Personal bests per course', 'World Aquatics points on everything'],
+        'form_h': 'Welcome back',
+        'form_sub': 'Log in to your STROKE account.',
+        'switch': 'No account yet? <a href="/signup">Sign up free</a>',
+    },
+    'coach': {
+        'tag': 'Coach login',
+        'headline': "Your squad's morning is <em>already set up.</em>",
+        'sub': "Roster, attendance, today's session and the whole squad's numbers, in the same place you left them.",
+        'points': ['Attendance logs the set for everyone present', 'Squad-wide analytics, not one swimmer at a time', 'Parent links you control and can revoke'],
+        'form_h': 'Coach login',
+        'form_sub': 'Same login for every STROKE account — this door just knows you run a squad.',
+        'switch': 'Not set up yet? <a href="/signup?as=coach">Start your squad free</a> &middot; <a href="/for/coaches">What coaches get</a>',
+    },
+    'parent': {
+        'tag': 'Parent login',
+        'headline': "See how their season is <em>actually going.</em>",
+        'sub': "Times, personal bests, attendance and what's coming up — for your swimmer, read-only.",
+        'points': ['Your own swimmer, and nobody else', 'Read-only: nothing to break', "The coach's private notes stay private"],
+        'form_h': 'Parent login',
+        'form_sub': "Log in to the parent view.",
+        'switch': "Haven't been sent a parent link? Ask your swimmer's coach for one &middot; <a href=\"/for/parents\">How it works</a>",
+    },
+}
+
+
+def _login_page(role):
+    return _public('login.html', role=role, variant=LOGIN_VARIANTS[role])
+
+
+@main.route('/login/coach')
+def login_coach():
+    return _login_page('coach')
+
+
+@main.route('/login/parent')
+def login_parent():
+    return _login_page('parent')
+
 
 def _oauth_login_or_create(email, display_name):
     """Find an existing user by email or create a fresh, already-verified

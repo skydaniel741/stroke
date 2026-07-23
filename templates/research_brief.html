@@ -1,0 +1,74 @@
+{% extends 'coach_base.html' %}
+{% block title %}{{ brief.title or 'Research brief' }}{% endblock %}
+{% set header_eyebrow = 'Coaching science · Week of ' ~ brief.week_of.strftime('%d %b %Y') %}
+{% block page_title %}{{ brief.title or 'Weekly research brief' }}{% endblock %}
+{% block page_sub %}<p class="coach-header-sub">{{ brief.item_count }} source{{ 's' if brief.item_count != 1 else '' }} reviewed · generated {{ brief.generated_at.strftime('%d %b %Y') }}</p>{% endblock %}
+{% block page_actions %}
+  <a href="/research" class="coach-btn">← All briefs</a>
+{% endblock %}
+
+{% block content %}
+  <div class="rb-summary">
+    {% for para in (brief.summary or '').split('\n') %}
+      {% if para.strip() %}<p>{{ para.strip() }}</p>{% endif %}
+    {% endfor %}
+  </div>
+
+  {% set takeaways = brief.get_takeaways() %}
+  {% if takeaways %}
+  <div class="rb-block">
+    <h2 class="rb-heading">Coaching takeaways</h2>
+    <ul class="rb-takeaways">
+      {% for t in takeaways %}
+      <li>{{ t }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="rb-block">
+    <h2 class="rb-heading">Source items{% if items %} <span class="rb-count">{{ items|length }}</span>{% endif %}</h2>
+    {% if items %}
+      {% for item in items %}
+      <div class="rb-item">
+        <div class="rb-item-head">
+          <span class="rb-item-title">{{ item.title or 'Untitled item' }}</span>
+          {% if item.relevance_score is not none %}<span class="rb-score">{{ '%.0f'|format(item.relevance_score) }}/10</span>{% endif %}
+        </div>
+        {% if item.authors %}<p class="rb-item-authors">{{ item.authors }}</p>{% endif %}
+        <p class="rb-item-meta">
+          {% if item.published_date %}{{ item.published_date }}{% endif %}
+          {% if item.get_topics() %}
+            &nbsp;·&nbsp;{% for topic in item.get_topics() %}<span class="rb-topic">{{ topic }}</span>{% endfor %}
+          {% endif %}
+        </p>
+        {% if item.url and item.url.startswith(('https://', 'http://')) %}<a class="rb-item-link" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">Open source ↗</a>{% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="panel-note">No linked source items.</p>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .rb-summary{max-width:720px;}
+  .rb-summary p{font-size:15px;line-height:1.65;color:#223052;margin:0 0 14px;}
+  .rb-block{margin-top:30px;}
+  .rb-heading{font-family:'Schibsted Grotesk',sans-serif;font-size:16px;font-weight:800;color:#0c1626;margin:0 0 14px;display:flex;align-items:center;gap:8px;}
+  .rb-count{font-size:12px;font-weight:700;color:#1f63c9;background:#eef2fb;border-radius:999px;padding:2px 9px;}
+  .rb-takeaways{list-style:none;padding:0;margin:0;max-width:720px;}
+  .rb-takeaways li{position:relative;padding:12px 16px 12px 34px;margin-bottom:10px;background:#ffffff;border:1px solid #dce3f0;border-radius:12px;font-size:14px;line-height:1.5;color:#223052;}
+  .rb-takeaways li::before{content:'';position:absolute;left:14px;top:18px;width:8px;height:8px;border-radius:50%;background:#1f63c9;}
+  .rb-item{border:1px solid #dce3f0;border-radius:14px;background:#ffffff;padding:16px 18px;margin-bottom:12px;max-width:720px;}
+  .rb-item-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
+  .rb-item-title{font-weight:800;font-size:14.5px;color:#0c1626;line-height:1.35;}
+  .rb-score{flex-shrink:0;font-size:11px;font-weight:800;color:#1f63c9;background:#eef2fb;border-radius:999px;padding:3px 9px;}
+  .rb-item-authors{font-size:12.5px;color:#56637d;margin:6px 0 0;}
+  .rb-item-meta{font-size:12px;color:#7986a0;margin:6px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+  .rb-topic{font-size:11px;color:#56637d;background:#f2f5fb;border:1px solid #dce3f0;border-radius:999px;padding:1px 8px;}
+  .rb-item-link{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:700;color:#1f63c9;text-decoration:none;}
+  .rb-item-link:hover{text-decoration:underline;}
+</style>
+{% endblock %}

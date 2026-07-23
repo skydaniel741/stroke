@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AfterCall — owner dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f1c2b; --navy2:#16283c; --hivis:#ffd60a; --white:#f6f7f4; --dim:#93a3b4; --line:#24384e; --red:#ff5340}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Barlow',sans-serif; background:var(--navy); color:var(--white)}
+.stripe{height:10px; background:repeating-linear-gradient(-45deg, var(--hivis) 0 18px, var(--navy) 18px 36px)}
+.wrap{max-width:960px; margin:0 auto; padding:20px 24px 60px}
+header{display:flex; justify-content:space-between; align-items:center; margin-bottom:22px}
+.logo{font-family:'Archivo Black'; font-size:19px}
+.logo span{color:var(--hivis)}
+.logo a{color:inherit; text-decoration:none}
+h1{font-family:'Archivo Black'; font-size:30px; text-transform:uppercase; margin-bottom:4px}
+.sub{color:var(--dim); font-size:14.5px; margin-bottom:24px}
+.tiles{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:26px}
+@media(max-width:680px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--navy2); border:1px solid var(--line); border-left:4px solid var(--hivis); padding:18px}
+.tile .n{font-family:'Archivo Black'; font-size:30px; color:var(--hivis)}
+.tile .d{color:var(--dim); font-size:13px; margin-top:4px}
+.lead{background:var(--navy2); border:1px solid var(--line); border-radius:10px; padding:15px 18px; margin-bottom:10px;
+  display:flex; justify-content:space-between; gap:14px; align-items:center; flex-wrap:wrap}
+.lead .s{font-weight:600; font-size:15px}
+.lead .meta{color:var(--dim); font-size:13px; margin-top:4px}
+.lead .val{font-family:'Archivo Black'; font-size:20px; color:var(--hivis); white-space:nowrap}
+.urg{padding:2px 10px; border-radius:100px; font-size:11.5px; font-weight:800; text-transform:uppercase; margin-right:8px}
+.urg.emergency{background:var(--red); color:#fff}
+.urg.urgent{background:var(--hivis); color:var(--navy)}
+.urg.routine,.urg.quote{background:#2b4058; color:var(--white)}
+.empty{color:var(--dim); padding:30px; text-align:center; border:1px dashed var(--line); border-radius:10px}
+</style>
+</head>
+<body>
+<div class="stripe"></div>
+<div class="wrap">
+<header>
+  <div class="logo"><a href="/">AFTER<span>CALL</span></a></div>
+  <a href="/demo" style="color:var(--hivis); font-weight:600; font-size:14px; text-decoration:none">← back to demo call</a>
+</header>
+<h1>Harbour Plumbing</h1>
+<p class="sub">After-hours leads captured by Mia. Emergencies were texted to you instantly; the rest are queued for the 7:30am callback run.</p>
+
+<div class="tiles">
+  <div class="tile"><div class="n">{{ leads|length }}</div><div class="d">calls answered after hours</div></div>
+  <div class="tile"><div class="n">{{ leads|selectattr("escalated")|list|length }}</div><div class="d">emergencies escalated to your phone</div></div>
+  <div class="tile"><div class="n">${{ "{:,}".format(total) }}</div><div class="d">estimated job value captured (NZD)</div></div>
+</div>
+
+{% if not leads %}
+<div class="empty">No calls yet — run the <a href="/demo" style="color:var(--hivis)">demo call</a> and the lead will land here.</div>
+{% endif %}
+{% for l in leads %}
+<div class="lead">
+  <div>
+    <div class="s">{% if l.urgency %}<span class="urg {{ l.urgency }}">{{ l.urgency }}</span>{% endif %}{{ l.summary }}</div>
+    <div class="meta">{{ l.ts }} · {{ l.name or "name not captured" }} · {{ l.phone or "no number" }} · {{ l.address or "no address" }}</div>
+  </div>
+  <div class="val">{% if l.est_value_nzd %}~${{ "{:,}".format(l.est_value_nzd) }}{% else %}—{% endif %}</div>
+</div>
+{% endfor %}
+</div>
+</body>
+</html>

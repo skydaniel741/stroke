@@ -76,12 +76,14 @@ def compute_css(t400, t200):
     return css
 
 
-def find_time_trials(user_id, days=90):
-    """The swimmer's fastest recent freestyle 400 and 200 from logged Swims.
-    Returns (swim400, swim200) -- either may be None."""
+def find_time_trials(user_id, days=90, end=None):
+    """The swimmer's fastest freestyle 400 and 200 from logged Swims in the
+    `days`-long window ending at `end` (defaults to now). Returns
+    (swim400, swim200) -- either may be None."""
     from models import Swim
-    cutoff = datetime.utcnow() - timedelta(days=days)
-    swims = Swim.query.filter(Swim.user_id == user_id, Swim.logged_at >= cutoff).all()
+    end = end or datetime.utcnow()
+    cutoff = end - timedelta(days=days)
+    swims = Swim.query.filter(Swim.user_id == user_id, Swim.logged_at >= cutoff, Swim.logged_at < end).all()
     best = {200: None, 400: None}
     for s in swims:
         if 'free' not in (s.event or '').lower():

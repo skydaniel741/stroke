@@ -94,15 +94,24 @@ def recompute_state(user_id):
             'n': len(times),
         }
 
-    # --- PBs with recency ---
+    # --- PBs with recency, keyed by (event, pool) -- a 50m-pool time and a
+    # 25m-pool time for the same event aren't comparable, so keying by event
+    # alone let one silently overwrite (or lose to) the other. Key is a plain
+    # string ("event|pool") rather than a tuple since this dict gets
+    # json.dumps'd for persistence, and JSON object keys must be strings. ---
     pbs = {}
     for s in swims:
         secs = s.time_in_seconds()
         if secs is None:
             continue
-        cur = pbs.get(s.event)
+        pool_key = '50' if str(s.pool or '25').startswith('50') else '25'
+        key = f'{s.event}|{pool_key}'
+        cur = pbs.get(key)
         if cur is None or secs < cur['secs']:
-            pbs[s.event] = {'secs': secs, 'time': _fmt_secs(secs), 'days_ago': (now - s.logged_at).days}
+            pbs[key] = {
+                'event': s.event, 'pool': pool_key, 'secs': secs,
+                'time': _fmt_secs(secs), 'days_ago': (now - s.logged_at).days,
+            }
 
     # --- check-ins: last 14 days vs the 14 before (fatigue/recovery signal) ---
     def _checkin_window(start, end):
@@ -228,6 +237,36 @@ def get_state(user_id, max_age_hours=24):
             datetime.utcnow() - row.updated_at < timedelta(hours=max_age_hours):
         return row.get_state()
     return update_athlete_state(user_id) or (row.get_state() if row else {})
+
+
+def get_states_batch(user_ids, max_age_hours=24):
+    """Batch form of get_state() -- one query for every cached row instead of
+    one query per user_id, so rendering a whole squad doesn't call get_state()
+    once per SquadMembership (an N+1, and a double read for any swimmer who
+    belongs to more than one squad under the same coach). Rows that are
+    missing or stale still cost one recompute each, same as get_state() alone
+    -- that work is unavoidable, this only removes the redundant cache reads.
+    Returns {user_id: state_dict}."""
+    from app import db
+    from models import AthleteState
+
+    unique_ids = {uid for uid in user_ids if uid}
+    if not unique_ids:
+        return {}
+
+    rows_by_user = {
+        r.user_id: r for r in
+        db.session.query(AthleteState).filter(AthleteState.user_id.in_(unique_ids)).all()
+    }
+    now = datetime.utcnow()
+    states = {}
+    for uid in unique_ids:
+        row = rows_by_user.get(uid)
+        if row and row.state_json and row.updated_at and now - row.updated_at < timedelta(hours=max_age_hours):
+            states[uid] = row.get_state()
+        else:
+            states[uid] = update_athlete_state(uid) or (row.get_state() if row else {})
+    return states
 
 
 # ---------------------------------------------------------------------------

@@ -236,6 +236,35 @@ def join(token):
     return render_template('parent_join.html', link=link)
 
 
+def _latest_digest(parent_link_id):
+    """Most recent approved ParentDigest for this link, or None. Only
+    'approved' rows are ever considered here -- a draft awaiting coach
+    review must never be visible on this page (see ParentDigest/
+    routes_internal.digest_generate/routes_coach's review queue)."""
+    import json
+    from app import db
+    from models import ParentDigest
+
+    digest = (
+        db.session.query(ParentDigest)
+        .filter_by(parent_link_id=parent_link_id, status='approved')
+        .order_by(ParentDigest.week_start.desc())
+        .first()
+    )
+    if not digest:
+        return None
+    try:
+        parsed = json.loads(digest.content or '{}')
+    except ValueError:
+        parsed = {}
+    return {
+        'weekStart': digest.week_start,
+        'headline': parsed.get('headline'),
+        'body': parsed.get('body'),
+        'nextUp': parsed.get('next_up'),
+    }
+
+
 @parent_bp.route('/dashboard')
 @login_required
 @parent_required
@@ -254,9 +283,11 @@ def parent_dashboard():
         active_link = next((l for l in links if l.swimmer_id == swimmer_id), links[0])
 
     snapshot = _swimmer_snapshot(active_link.swimmer_id) if active_link else None
+    digest = _latest_digest(active_link.id) if active_link else None
     return render_template(
         'parent_dashboard.html',
         links=links,
         active_link=active_link,
         snapshot=snapshot,
+        digest=digest,
     )

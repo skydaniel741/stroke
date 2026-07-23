@@ -1,0 +1,24 @@
+{% extends 'coach_base.html' %}
+{% block title %}Research briefs{% endblock %}
+{% set header_eyebrow = 'Coaching science' %}
+{% block page_title %}Research briefs{% endblock %}
+{% block page_sub %}<p class="coach-header-sub">Weekly digest of new swimming sport-science and coaching practice.</p>{% endblock %}
+
+{% block content %}
+  {% if briefs %}
+    {% for brief in briefs %}
+    <a href="/research/{{ brief.id }}" class="coach-card-link">
+      <div>
+        <div class="coach-card-name">{{ brief.title or 'Weekly research brief' }}</div>
+        <div class="coach-card-meta">
+          Week of {{ brief.week_of.strftime('%d %b %Y') }}
+          &nbsp;·&nbsp; {{ brief.item_count }} source{{ 's' if brief.item_count != 1 else '' }}
+        </div>
+      </div>
+      <span class="coach-card-arrow">→</span>
+    </a>
+    {% endfor %}
+  {% else %}
+    <p class="panel-note">No research briefs yet. The weekly agent files one here each week.</p>
+  {% endif %}
+{% endblock %}

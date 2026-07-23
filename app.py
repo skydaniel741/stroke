@@ -19,6 +19,18 @@ def create_app():
             )
         secret_key = 'dev-secret-key'
     app.config['SECRET_KEY'] = secret_key
+    # Session/remember cookie hardening. HttpOnly keeps page scripts from
+    # reading the session; SameSite=Lax stops another site POSTing a form as
+    # the logged-in user; Secure means the cookie never travels over plain
+    # HTTP -- off in local dev, where there is no TLS to travel over.
+    # The /cookies and /data-safety pages state these publicly, so they have
+    # to actually be set.
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = not is_debug
+    app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+    app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
+    app.config['REMEMBER_COOKIE_SECURE'] = not is_debug
     db_url = os.getenv('DATABASE_URL') or f"sqlite:///{os.path.join(BASE_DIR, 'stroke.db')}"
     # Render (and Heroku before it) hands out postgres:// connection strings,
     # but SQLAlchemy 1.4+ / psycopg2 require the postgresql:// scheme -- fix
@@ -39,6 +51,10 @@ def create_app():
     app.config['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY')
     app.config['ANTHROPIC_MODEL'] = os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-5')
     app.config['AI_SCAN_ENABLED'] = bool(os.getenv('ANTHROPIC_API_KEY'))
+    # Shared secret for the Render Cron Job -> /internal/digest/generate call
+    # (no user login concept for a service-to-service hit). Left unset in dev
+    # is fine -- the route just refuses every request until it's configured.
+    app.config['INTERNAL_CRON_SECRET'] = os.getenv('INTERNAL_CRON_SECRET')
 
     # Initialize extensions with the app
     db.init_app(app)
@@ -77,6 +93,15 @@ def create_app():
             },
         )
         app.config['APPLE_AUTH_ENABLED'] = True
+        # Apple returns the authorization via response_mode=form_post, i.e. a
+        # cross-site POST back to our callback. SameSite=Lax withholds the
+        # session cookie on exactly that request, so Authlib would find no
+        # stored state and every Apple sign-in would fail with a state
+        # mismatch. SameSite=None is the only setting that works, and browsers
+        # require Secure alongside it -- which means Apple sign-in cannot be
+        # enabled on a plain-HTTP dev server.
+        app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+        app.config['SESSION_COOKIE_SECURE'] = True
 
     with app.app_context():
         from models import User
@@ -89,10 +114,14 @@ def create_app():
         from routes_solo import solo
         from routes_coach import coach
         from routes_parent import parent_bp
+        from routes_internal import internal_bp
+        from routes_research import research_bp
         app.register_blueprint(main)
         app.register_blueprint(solo)
         app.register_blueprint(coach)
         app.register_blueprint(parent_bp)
+        app.register_blueprint(internal_bp)
+        app.register_blueprint(research_bp)
 
         db.create_all()
 

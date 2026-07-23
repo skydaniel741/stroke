@@ -579,57 +579,20 @@ def _build_analytics(user_id):
     total_12wk = sum(w['vol'] for w in weeks)
 
     # --- split (pacing) analysis, from logged 50m splits ---
+    # The pacing math + the (calibrated) back-half-fade thresholds live in
+    # pacing.py so the coach Athlete Hub reads splits the same way. The note
+    # here is the swimmer-facing voice; the calibration is shared.
+    import pacing
     split_analyses = []
     for s in swims:
-        raw = s.get_splits()
-        secs_list = [v for v in (_an_parse_secs(x) for x in raw) if v is not None]
-        if len(secs_list) < 2:
+        analysis = pacing.analyze_splits(s.get_splits())
+        if not analysis:
             continue
-        n = len(secs_list)
-        max_s = max(secs_list)
-        bars = [
-            {'idx': i + 1, 'secs': v, 'label': _an_fmt(v), 'h': round(v / max_s * 100)}
-            for i, v in enumerate(secs_list)
-        ]
-        half = n // 2
-        first = secs_list[:half]
-        second = secs_list[-half:]
-        first_avg = sum(first) / len(first)
-        second_avg = sum(second) / len(second)
-        fade = (second_avg - first_avg) / first_avg * 100 if first_avg else 0
-        # Reality check on pacing: the back half is almost always slower. The
-        # first 50 carries the dive/push (roughly half a second of free speed)
-        # and fatigue builds through the race, so a small positive split is the
-        # NORMAL, well-paced outcome. A true negative split (faster back half)
-        # is genuinely hard and a mark of excellent pacing and aerobic strength.
-        # So we only flag a real problem when the drop-off is large.
-        if fade <= -0.5:
-            pattern = 'negative'
-            note = ("Negative split, you actually came home faster. That's genuinely hard to do and a sign of "
-                    "great pacing and aerobic strength. Most swimmers can't, so this is a real strength.")
-        elif fade <= 3:
-            pattern = 'even'
-            note = ("Well paced. The back half being a touch slower is completely normal (your first 50 has the "
-                    "dive), so this is strong, controlled pacing.")
-        elif fade <= 7:
-            pattern = 'normal-fade'
-            note = ("A normal amount of fade for the distance, and some of it is just the dive advantage on your "
-                    "first 50. Holding a little more through the back half is where your next bit of time is.")
-        else:
-            pattern = 'big-fade'
-            note = ("Big drop-off in the back half. That usually means you went out too fast for your current "
-                    "fitness. Try starting a touch more controlled, your back half will thank you.")
-        split_analyses.append({
-            'event': s.event,
-            'date': s.logged_at.strftime('%d %b %Y'),
-            'time': s.time,
-            'bars': bars,
-            'first_avg': _an_fmt(first_avg),
-            'second_avg': _an_fmt(second_avg),
-            'fade_pct': round(fade, 1),
-            'pattern': pattern,
-            'note': note,
-        })
+        analysis['event'] = s.event
+        analysis['date'] = s.logged_at.strftime('%d %b %Y')
+        analysis['time'] = s.time
+        analysis['note'] = pacing.SWIMMER_NOTES[analysis['pattern']]
+        split_analyses.append(analysis)
         if len(split_analyses) >= 4:
             break
 

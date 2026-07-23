@@ -397,6 +397,34 @@ class ParentLink(db.Model):
     parent = db.relationship('User', foreign_keys=[parent_id])
 
 
+class ParentDigest(db.Model):
+    """One AI-drafted weekly update for one ParentLink, covering that
+    swimmer's attendance/PBs/training for the week (see ai_utils.
+    generate_parent_digest and routes_internal.digest_generate, the Render
+    Cron entry point that creates these as status='draft'). A coach must
+    approve a draft (routes_coach's digest review queue) before it's ever
+    shown on the parent dashboard -- routes_parent.parent_dashboard only
+    ever queries status='approved' rows. `content` is a JSON string with
+    keys headline/body/next_up (see generate_parent_digest's tool schema).
+    One digest per (parent_link, week) -- same idempotency pattern as
+    AttendanceRecord.uq_attendance_day, so a cron retry can't double-draft
+    the same week."""
+    __tablename__ = 'parent_digest'
+    __table_args__ = (
+        db.UniqueConstraint('parent_link_id', 'week_start', name='uq_parent_digest_week'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    parent_link_id = db.Column(db.Integer, db.ForeignKey('parent_link.id'), nullable=False)
+    week_start = db.Column(db.Date, nullable=False)
+    content = db.Column(db.Text)
+    status = db.Column(db.String(20), default='draft')  # draft/approved
+    generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    approved_at = db.Column(db.DateTime, nullable=True)
+
+    parent_link = db.relationship('ParentLink', foreign_keys=[parent_link_id])
+
+
 class AdminAuditLog(db.Model):
     __tablename__ = 'admin_audit_log'
 
@@ -472,6 +500,7 @@ class Squad(db.Model):
     per_swimmer_fee = db.Column(db.Numeric(10, 2), default=0)
     color = db.Column(db.String(20), default='blue')  # badge/theme color for the coach dashboard
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    season_plan_json = db.Column(db.Text)  # {targetMeet: {name, date}, phases: [{phase, start, end}]}
 
     memberships = db.relationship('SquadMembership', backref='squad', lazy=True)
 
@@ -768,4 +797,65 @@ class PlannedSession(db.Model):
             except (TypeError, ValueError):
                 pass
         return total
+
+
+class ResearchBrief(db.Model):
+    """One weekly coach-facing digest of new swimming sport-science and
+    coaching content, synthesized by the research agent (see synthesize.py
+    and scripts/run_research.py). `coaching_takeaways` is a JSON list of
+    short, actionable strings, stored as Text like every other JSON column
+    in this file. One brief per week -- the cron runner is idempotent on
+    week_of, and the DB unique constraint below is the hard backstop against a
+    TOCTOU race between two overlapping runs (same pattern as
+    ParentDigest.uq_parent_digest_week)."""
+    __tablename__ = 'research_brief'
+    __table_args__ = (
+        db.UniqueConstraint('week_of', name='uq_research_brief_week'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    week_of = db.Column(db.Date, nullable=False)  # Monday of the covered week
+    title = db.Column(db.String(200))
+    summary = db.Column(db.Text)
+    coaching_takeaways = db.Column(db.Text)  # JSON list of strings
+    item_count = db.Column(db.Integer, default=0)
+    generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    items = db.relationship('ResearchItem', backref='brief', lazy=True)
+
+    def get_takeaways(self):
+        try:
+            return json.loads(self.coaching_takeaways or '[]')
+        except (ValueError, TypeError):
+            return []
+
+
+class ResearchItem(db.Model):
+    """One source item (a paper/preprint) pulled by the research agent from an
+    external source (see sources.py). `external_id` is unique and indexed --
+    it is BOTH the novelty check and the main cost control: dedupe on it
+    before any LLM call so we never re-score or re-synthesize something we've
+    already seen. `topics` is a JSON list of short topic tags assigned by the
+    scout pass; `relevance_score` is the scout's 0-10 rating. `brief_id` is
+    set once an item is included in a synthesized brief."""
+    __tablename__ = 'research_item'
+
+    id = db.Column(db.Integer, primary_key=True)
+    source = db.Column(db.String(40), nullable=False)  # e.g. 'europepmc'
+    external_id = db.Column(db.String(120), unique=True, index=True, nullable=False)
+    title = db.Column(db.Text)
+    authors = db.Column(db.Text)
+    abstract = db.Column(db.Text)
+    url = db.Column(db.String(500))
+    published_date = db.Column(db.String(20))  # source date string as-is (may be partial)
+    fetched_at = db.Column(db.DateTime, default=datetime.utcnow)
+    relevance_score = db.Column(db.Float)  # scout pass 0-10, NULL until scored
+    topics = db.Column(db.Text)  # JSON list of topic tag strings
+    brief_id = db.Column(db.Integer, db.ForeignKey('research_brief.id'), nullable=True)
+
+    def get_topics(self):
+        try:
+            return json.loads(self.topics or '[]')
+        except (ValueError, TypeError):
+            return []
 

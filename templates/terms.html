@@ -1,0 +1,118 @@
+{% extends 'public_base.html' %}
+
+{% block title %}Terms of Use — STROKE{% endblock %}
+{% block description %}The rules for using STROKE: who may hold an account, what coaches are responsible for, what we promise, what we do not, and how either side can end it.{% endblock %}
+
+{% block content %}
+<header class="phead">
+  <div class="phead-inner">
+    <nav class="crumb rv"><a href="/">Home</a> <span>/</span> <span>Terms of Use</span></nav>
+    <p class="eyebrow rv">Legal</p>
+    <h1 class="rv">Terms of Use</h1>
+    <p class="prose-updated rv">Last updated: {{ updated_date }}</p>
+    <p class="phead-lede rv">The acceptable-use agreement between you and STROKE. Short version: use it for coaching and training, only put other people's data in if you are allowed to, do not attack the service, and either of us can walk away.</p>
+    <div class="prose-toc rv">
+      <a href="#accept">Agreement</a>
+      <a href="#accounts">Accounts</a>
+      <a href="#roles">Coaches and parents</a>
+      <a href="#acceptable">Acceptable use</a>
+      <a href="#content">Your content</a>
+      <a href="#ai">AI output</a>
+      <a href="#paid">Paid plans</a>
+      <a href="#availability">Availability</a>
+      <a href="#liability">Liability</a>
+      <a href="#ending">Ending it</a>
+    </div>
+  </div>
+</header>
+
+<article class="prose">
+
+  <h2 id="accept">1. Agreeing to these terms</h2>
+  <p>By creating an account or using STROKE you agree to these terms. If you are using STROKE on behalf of a club or squad, you confirm you are authorised to accept these terms for that organisation. If you do not agree, do not use the service.</p>
+  <p>These terms are governed by New Zealand law, and the New Zealand courts have non-exclusive jurisdiction over any dispute.</p>
+
+  <h2 id="accounts">2. Your account</h2>
+  <ul>
+    <li>You must give accurate account information and keep your password secure. Anything done through your account is treated as done by you.</li>
+    <li>One account per person. Do not share logins — a shared coach login makes the audit log meaningless and exposes swimmer data to people who should not have it.</li>
+    <li>If you are under 16, you should have a parent or guardian's permission to hold an account. Where a squad requires guardian consent, the account is not activated until that consent is given.</li>
+    <li>Tell us promptly at <a href="mailto:hello@stroke.app">hello@stroke.app</a> if you think someone else has accessed your account.</li>
+  </ul>
+
+  <h2 id="roles">3. Extra responsibilities for coaches and parents</h2>
+  <p>A coach account holds other people's information, including information about children. If you use one, you accept that:</p>
+  <ul>
+    <li>You will only add a swimmer to a squad where you have a legitimate coaching relationship with them, and the right to hold their information.</li>
+    <li>You are responsible for obtaining any consent your club, your national body or the law requires before entering a minor's details, and for using the consent flow where your squad requires it.</li>
+    <li>Notes you write about a swimmer are working coaching notes, not private diary entries: write them as though the swimmer or their guardian could one day lawfully request them, because under the Privacy Act 2020 they can.</li>
+    <li>You will only send a parent link to a person entitled to see that swimmer's information, and you will revoke it when that stops being true.</li>
+    <li>You will not use squad data for anything outside coaching that squad — no recruiting lists, no marketing, no passing it to a third party.</li>
+  </ul>
+  <p>A parent account is read-only and limited to the swimmers it has been linked to. Attempting to reach any other swimmer's data is a breach of these terms.</p>
+
+  <h2 id="acceptable">4. Acceptable use</h2>
+  <p>You must not:</p>
+  <ul>
+    <li>Try to access data belonging to a swimmer, squad or club you are not entitled to see, including by guessing or altering identifiers in a URL or request.</li>
+    <li>Probe, scan, load-test or attempt to breach the service, or interfere with anyone else's use of it, without our written permission. Genuine security research is welcome — see the <a href="/data-safety#report">reporting section</a> instead of doing it silently.</li>
+    <li>Scrape, bulk-export or systematically harvest data from the service, or use automated tools against it beyond normal use of the app.</li>
+    <li>Upload anything unlawful, abusive, or that infringes someone else's rights, or upload a photograph containing personal information you have no right to enter.</li>
+    <li>Resell, sublicense or white-label the service without our agreement.</li>
+    <li>Use the AI features to generate content that harasses or defames anyone.</li>
+  </ul>
+  <p>We may suspend or terminate an account that breaches this section, and where the breach involves other people's data we may be legally required to report it.</p>
+
+  <h2 id="content">5. Your content</h2>
+  <p>The training data, sets, notes and images you put into STROKE remain yours. You give us the limited licence needed to operate the service: to store that content, process it, display it to the people entitled to see it, and send the necessary parts to the providers listed in the <a href="/privacy#share">privacy policy</a> so the features work.</p>
+  <p>We do not claim ownership of your training data, we do not sell it, and we do not use it to advertise to anyone.</p>
+
+  <h2 id="ai">6. AI-generated output</h2>
+  <div class="callout">
+    <p>AI features in STROKE — squad summaries, generated training plans, the results-board scanner, the nutrition and dryland coach — produce <strong>suggestions, not instructions</strong>. They can be wrong.</p>
+    <p>Nothing STROKE generates is medical, physiotherapy, dietetic or safeguarding advice. A coach remains fully responsible for what they ask their swimmers to do. A swimmer remains responsible for their own health decisions. If something hurts, see a professional, not a chatbot.</p>
+  </div>
+  <p>The results-board scanner requires you to confirm the times it reads before anything is saved, because handwriting recognition on a wet whiteboard is imperfect. You are responsible for what you confirm.</p>
+
+  <h2 id="paid">7. Free and paid plans</h2>
+  <ul>
+    <li>Creating an account and logging your own swims is free.</li>
+    <li>The coach tier is currently free while we build with early squads. If that changes we will give existing coaches notice before any charge applies.</li>
+    <li>Solo is a paid tier for swimmers training without a coach. Fees are shown before you subscribe and are billed in New Zealand dollars.</li>
+    <li>You can cancel a paid plan at any time; access continues to the end of the paid period. We do not refund part-periods, except where the Consumer Guarantees Act or another law requires it.</li>
+    <li>Where you are a consumer in New Zealand, nothing in these terms limits your rights under the Consumer Guarantees Act 1993 or the Fair Trading Act 1986.</li>
+  </ul>
+
+  <h2 id="availability">8. Availability and changes</h2>
+  <p>We aim to keep STROKE running, but it is provided on an "as is" basis and we do not promise uninterrupted or error-free service. We may change, add or remove features. Where a change materially reduces something you rely on, we will try to give notice.</p>
+  <p>Keep your own copy of anything you cannot afford to lose. Personal bests can be exported from the app at any time.</p>
+
+  <h2 id="liability">9. Liability</h2>
+  <p>To the extent the law allows, we are not liable for indirect or consequential loss, lost data, lost opportunity, or any loss arising from a decision made on the basis of AI-generated output or analytics in the app. Where liability cannot be excluded, it is limited to the amount you have paid us in the twelve months before the claim, or NZ$100 if you have paid us nothing.</p>
+  <p>This section does not limit liability that cannot lawfully be limited, including under the Consumer Guarantees Act 1993 where it applies to you.</p>
+
+  <h2 id="ending">10. Ending your account</h2>
+  <p>You can stop using STROKE at any time and ask us to delete your account by emailing <a href="mailto:privacy@stroke.app">privacy@stroke.app</a>. We may suspend or end an account that breaches these terms, or where we are required to by law. If a coach's account ends, the swimmers in that squad keep their own training records — those belong to the swimmer.</p>
+
+  <h2 id="changes">11. Changes to these terms</h2>
+  <p>We may update these terms. The date at the top changes, and material changes will be notified in the app or by email. Continuing to use STROKE after that means you accept the updated terms.</p>
+
+  <h2 id="contact">12. Contact</h2>
+  <p><a href="mailto:hello@stroke.app">hello@stroke.app</a> for anything about these terms.</p>
+
+</article>
+
+<section class="related">
+  <p class="related-h">Also worth reading</p>
+  <div class="related-grid">
+    <a href="/privacy" class="related-card card tap rv">
+      <span class="related-title">Privacy Policy</span>
+      <span class="related-desc">What we collect, who sees it, and your rights under the Privacy Act 2020.<span class="tap-arrow"></span></span>
+    </a>
+    <a href="/data-safety" class="related-card card tap rv">
+      <span class="related-title">How we keep your data safe</span>
+      <span class="related-desc">The technical measures behind the promises on this page.<span class="tap-arrow"></span></span>
+    </a>
+  </div>
+</section>
+{% endblock %}
