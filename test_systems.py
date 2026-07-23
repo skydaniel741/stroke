@@ -442,6 +442,49 @@ def test_coach_routes(app):
               state['pbs'])
 
 
+def test_admin_routes(app):
+    """Regression guard for the admin-facing CSS/swimmer-type panels added
+    2026-07-24: /admin gets an adoption-stats + roadmap panel, /admin/solo/<id>
+    gets a per-user CSS+zones card. Also checks access control isn't
+    accidentally loosened by the new code path."""
+    from app import db
+    from models import User, Swim
+
+    with app.app_context():
+        admin = _mk_user(db, User, 'siteadmin@test.com')
+        admin.is_admin = True
+        solo = _mk_user(db, User, 'solo-admin-view@test.com', plan='solo')
+        _seed_swims(db, Swim, solo.id, '400m Freestyle', [('5:52.00', 1)])
+        db.session.commit()
+        admin_id, solo_id = admin.id, solo.id
+
+    client = app.test_client()
+
+    # --- non-admin gets refused ---
+    client.post('/login', data={'email': 'solo-admin-view@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+    r = client.get('/admin')
+    check('non-admin refused /admin', r.status_code in (302, 403), r.status_code)
+    client.get('/logout')
+
+    # --- admin sees the adoption stats + roadmap panel ---
+    client.post('/login', data={'email': 'siteadmin@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+    r = client.get('/admin')
+    check('admin /admin renders', r.status_code == 200, r.status_code)
+    body = r.get_data(as_text=True)
+    check('adoption stats panel present', 'CSS / swimmer-type adoption' in body)
+    check('roadmap panel present', 'Roadmap: not yet built' in body)
+    check('roadmap lists meet-results importer gap', 'Meet-results importer' in body)
+
+    # --- admin sees the per-user CSS card, sourced from routes_coach's engine ---
+    r = client.get(f'/admin/solo/{solo_id}')
+    check('admin solo detail renders', r.status_code == 200, r.status_code)
+    body2 = r.get_data(as_text=True)
+    check('CSS panel present on solo detail', 'CSS &amp; training zones' in body2, body2[:200])
+    check('estimated badge shown for single-swim CSS', 'Estimated' in body2)
+
+
 # ===========================================================================
 # 8. HTTP layer: invalid input never crashes or corrupts data
 # ===========================================================================
@@ -1254,6 +1297,7 @@ def main():
         ('Athlete model + weekly reports', test_athlete_model, True),
         ('Training plans (CSS + generator)', test_training_plan, True),
         ('Coach routes (IDOR + PB pool-conflation)', test_coach_routes, True),
+        ('Admin routes (CSS/swimmer-type panels, access control)', test_admin_routes, True),
         ('HTTP layer', test_http, True),
         ('Research sources (URL/SSRF hardening)', test_research_sources, False),
         ('Research scout filtering', test_research_scout_filter, False),

@@ -87,24 +87,52 @@
     </div>
   </div>
 
+  <div class="adm-panel">
+    <div class="adm-panel-head">CSS &amp; training zones</div>
+    {% if css_trend %}
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-lbl">CSS pace</div><div class="kv-val">{{ css_trend.cssPace }} /100m {% if css_trend.source == 'estimated_riegel' %}<span class="badge no">Estimated</span>{% else %}<span class="badge yes">Real pair</span>{% endif %}</div></div>
+      {% if css_trend.previousCssPace %}
+      <div class="kv"><div class="kv-lbl">Prior 90 days</div><div class="kv-val">{{ css_trend.previousCssPace }} /100m ({{ css_trend.direction }})</div></div>
+      {% endif %}
+    </div>
+    {% if css_trend.basisNote %}<p style="margin-top:8px;font-size:11.5px;color:#8a5a12;">{{ css_trend.basisNote }}</p>{% endif %}
+    <div class="kv-grid" style="margin-top:12px;">
+      {% for z in css_trend.zones %}
+      <div class="kv"><div class="kv-lbl">{{ z.label }}</div><div class="kv-val">{{ z.pace }} /100</div></div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-note">No freestyle PB logged yet to estimate CSS from.</p>
+    {% endif %}
+
+    <div class="adm-panel-head" style="margin-top:18px;">Swimmer type (computed from PBs)</div>
+    {% if swimmer_type %}
+    <p style="font-size:13px;"><strong>{{ swimmer_type.label }}</strong> &mdash; {{ swimmer_type.note }}</p>
+    <p style="margin-top:6px;font-size:11.5px;color:#9a96b0;">Based on {{ swimmer_type.basedOn|join(' & ') }}</p>
+    {% else %}
+    <p class="empty-note">Needs freestyle PBs at two distances with a real gap (e.g. 100 &amp; 400) to read a lean from.</p>
+    {% endif %}
+  </div>
+
   {% if profile %}
   <div class="adm-panel">
     <div class="adm-panel-head">Onboarding profile</div>
     <div class="kv-grid">
-      <div class="kv"><div class="kv-lbl">Level</div><div class="kv-val">{{ profile.level or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Age</div><div class="kv-val">{{ profile.age or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Training days/week</div><div class="kv-val">{{ profile.training_days_per_week or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Fitness ability</div><div class="kv-val">{{ profile.fitness_ability or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Primary stroke</div><div class="kv-val">{{ profile.primary_stroke or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Swimmer type</div><div class="kv-val">{{ profile.swimmer_type or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Coaching situation</div><div class="kv-val">{{ profile.coaching_situation or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Eating habits</div><div class="kv-val">{{ profile.eating_habits or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Level</div><div class="kv-val">{{ profile.level or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Age</div><div class="kv-val">{{ profile.age or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Training days/week</div><div class="kv-val">{{ profile.training_days_per_week or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Fitness ability</div><div class="kv-val">{{ profile.fitness_ability or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Primary stroke</div><div class="kv-val">{{ profile.primary_stroke or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Swimmer type</div><div class="kv-val">{{ profile.swimmer_type or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Coaching situation</div><div class="kv-val">{{ profile.coaching_situation or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Eating habits</div><div class="kv-val">{{ profile.eating_habits or 'n/a' }}</div></div>
       <div class="kv"><div class="kv-lbl">Coaching tone / intensity</div><div class="kv-val">{{ profile.coaching_tone or 'balanced' }} / {{ profile.intensity or 'normal' }}</div></div>
       <div class="kv"><div class="kv-lbl">Rebuilds used this week</div><div class="kv-val">{{ 3 - profile.regens_left(3) }} of 3</div></div>
     </div>
     {% if profile.main_goal %}<p style="margin-top:12px;font-size:13px;"><b>Goal:</b> {{ profile.main_goal }}</p>{% endif %}
     {% if profile.limitations %}<p style="margin-top:6px;font-size:13px;"><b>Limitations noted at onboarding:</b> {{ profile.limitations }}</p>{% endif %}
-    <p style="margin-top:10px;font-size:11.5px;color:#9a96b0;">Profile last updated {{ profile.updated_at.strftime('%d %b %Y') if profile.updated_at else '—' }}</p>
+    <p style="margin-top:10px;font-size:11.5px;color:#9a96b0;">Profile last updated {{ profile.updated_at.strftime('%d %b %Y') if profile.updated_at else 'n/a' }}</p>
   </div>
 
   <div class="adm-panel">

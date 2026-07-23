@@ -1566,12 +1566,50 @@ def _log_admin_action(action, target_type=None, target_id=None, detail=None):
     db.session.commit()
 
 
+# Manually maintained -- not derived from code scanning. Update this list when
+# a planned-but-unbuilt item ships or a new one gets parked, so the admin
+# dashboard stays an honest single source of truth for "what's left."
+ADMIN_ROADMAP = [
+    {
+        'title': 'Meet-results importer (Tier 1 perf)',
+        'note': "Coaches still enter meet swims one at a time. No bulk CSV import for a whole meet's "
+                "results yet (the roster CSV importer exists; a results-CSV sibling doesn't).",
+    },
+    {
+        'title': 'Stroke Index / SR-SL profile (Tier B perf)',
+        'note': 'No stroke-count-based efficiency metric. Needs one stroke-count number per rep, not '
+                'currently captured anywhere.',
+    },
+    {
+        'title': 'Dryland power benchmarks (Tier C perf)',
+        'note': 'Lat-pulldown / jump / med-ball benchmarks only exist as general AI prompt content '
+                '(ai_utils.py), not as a tracked, trended metric.',
+    },
+    {
+        'title': 'CSS zones -> set builder hookup',
+        'note': 'Coaches can see a swimmer’s zone paces but can’t yet prescribe a set "at 90% CSS" '
+                'and have it auto-fill the target time. Parked in the 2026-07-24 CSS design doc.',
+    },
+    {
+        'title': 'Self-swimmer squad layout',
+        'note': 'The parent portal (coach-invited, read-only, one swimmer) exists; there’s no equivalent '
+                'for the swimmer themselves to see their own squad-side view. Parked, needs its own design pass.',
+    },
+    {
+        'title': 'Research agent not actually scheduled',
+        'note': 'scripts/run_research.py + the fetch/scout/synthesize pipeline are built and tested, but '
+                'render.yaml has no cron service block -- it only runs if triggered manually, not weekly.',
+    },
+]
+
+
 @main.route('/admin')
 @login_required
 @admin_required
 def admin_dashboard():
     from app import db
     from models import User, Swim, Session, SavedSet, Announcement, Club
+    import plan_logic
 
     pending_clubs_count = db.session.query(Club).filter_by(status='pending').count()
 
@@ -1615,6 +1653,20 @@ def admin_dashboard():
         .first()
     )
 
+    # --- CSS / swimmer-type feature adoption, across all-time freestyle PBs
+    # (days=None) -- an admin-facing snapshot of how much of the swimmer base
+    # this new feature actually reaches, not just the last 90 days. Scoped to
+    # role='swimmer' since coach/parent/admin accounts structurally can't
+    # carry swim data. ---
+    css_stats = {'time_trial': 0, 'estimated_riegel': 0, 'none': 0}
+    type_stats = {'sprint': 0, 'balanced': 0, 'distance': 0, 'none': 0}
+    swimmer_accounts = [u for u in users_query if u.role == 'swimmer']
+    for u in swimmer_accounts:
+        css = plan_logic.css_estimate(u.id, days=None)
+        css_stats[css['source'] if css else 'none'] += 1
+        st = plan_logic.classify_swimmer_type(u.id)
+        type_stats[st['profile'] if st else 'none'] += 1
+
     return render_template(
         'admin_dashboard.html',
         total_users=total_users,
@@ -1631,6 +1683,10 @@ def admin_dashboard():
         max_week_signups=max_week_signups,
         site_announcement=site_announcement,
         pending_clubs_count=pending_clubs_count,
+        css_stats=css_stats,
+        type_stats=type_stats,
+        swimmer_account_count=len(swimmer_accounts),
+        admin_roadmap=ADMIN_ROADMAP,
     )
 
 
@@ -1675,6 +1731,7 @@ def admin_solo():
 def admin_solo_detail(user_id):
     from app import db
     from models import User, AthleteProfile, CoachMessage, InjuryStatus, DrylandLogEntry
+    from routes_coach import _css_trend, _swimmer_type
 
     u = db.session.query(User).get(user_id)
     if not u:
@@ -1706,6 +1763,8 @@ def admin_solo_detail(user_id):
         program=profile.get_program() if profile else {},
         nutrition=profile.get_nutrition() if profile else {},
         dryland=profile.get_dryland() if profile else {},
+        css_trend=_css_trend(user_id),
+        swimmer_type=_swimmer_type(user_id),
     )
 
 

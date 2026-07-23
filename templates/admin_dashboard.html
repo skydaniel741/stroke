@@ -104,7 +104,46 @@
   </div>
 
   <div class="adm-panel">
-    <div class="adm-panel-head">Signups — last 8 weeks</div>
+    <div class="adm-panel-head">CSS / swimmer-type adoption ({{ swimmer_account_count }} swimmer account{{ 's' if swimmer_account_count != 1 else '' }})</div>
+    <div style="padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div class="adm-stat-lbl" style="margin-bottom:8px;">CSS reading</div>
+        <div style="font-size:13px;line-height:1.9;">
+          Real (400+200 pair): <strong>{{ css_stats.time_trial }}</strong><br>
+          Estimated (Riegel): <strong>{{ css_stats.estimated_riegel }}</strong><br>
+          None yet: <strong>{{ css_stats.none }}</strong>
+        </div>
+      </div>
+      <div>
+        <div class="adm-stat-lbl" style="margin-bottom:8px;">Swimmer type</div>
+        <div style="font-size:13px;line-height:1.9;">
+          Sprint-leaning: <strong>{{ type_stats.sprint }}</strong><br>
+          Balanced: <strong>{{ type_stats.balanced }}</strong><br>
+          Distance-leaning: <strong>{{ type_stats.distance }}</strong><br>
+          Not enough spread yet: <strong>{{ type_stats.none }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Roadmap: not yet built</div>
+    <div class="adm-table-scroll">
+    <table>
+      <tbody>
+        {% for item in admin_roadmap %}
+        <tr>
+          <td style="font-weight:700;white-space:nowrap;">{{ item.title }}</td>
+          <td>{{ item.note }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">Signups, last 8 weeks</div>
     <div class="adm-chart">
       {% for v in weekly_signups %}
       <div class="adm-chart-bar" style="height:{{ [(v / max_week_signups * 100)|round(0,'floor')|int, 4]|max }}%"><span>{{ v }}</span></div>
