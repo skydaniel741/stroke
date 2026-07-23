@@ -43,16 +43,13 @@
       {% if nav_squads %}
       <p class="coach-nav-lbl">Your squads</p>
       {% for sq in nav_squads %}
-        <a href="/coach/squad/{{ sq.id }}" class="coach-nav-link {{ 'active' if squad and squad.id == sq.id else '' }}">
+        <a href="/coach/squad/{{ sq.id }}/calendar" class="coach-nav-link {{ 'active' if squad and squad.id == sq.id else '' }}">
           <span class="coach-nav-dot"></span>
           <span class="coach-nav-link-text">{{ sq.name }}</span>
         </a>
         {% if squad and squad.id == sq.id %}
         <div class="coach-subnav">
-          <a href="/coach/squad/{{ sq.id }}" class="coach-subnav-link {{ 'active' if request.path == '/coach/squad/' ~ sq.id|string else '' }}">Roster</a>
           <a href="/coach/squad/{{ sq.id }}/calendar" class="coach-subnav-link {{ 'active' if request.path.endswith('/calendar') else '' }}">Calendar</a>
-          <a href="/coach/squad/{{ sq.id }}/announcements" class="coach-subnav-link {{ 'active' if request.path.endswith('/announcements') else '' }}">Announcements</a>
-          <a href="/coach/squad/{{ sq.id }}/report" class="coach-subnav-link {{ 'active' if request.path.endswith('/report') else '' }}">End-of-term report</a>
         </div>
         {% endif %}
       {% endfor %}

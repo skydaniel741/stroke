@@ -442,6 +442,49 @@ def test_coach_routes(app):
               state['pbs'])
 
 
+def test_log_set_preload_idor(app):
+    """Regression guard: /log?use=<id> used to preload ANY SavedSet by id with
+    no ownership check, unlike the Set Library (_library_sets_query) two
+    routes away. A coach's private AI-generated set content could leak to any
+    logged-in user who guessed/incremented the id. Fixed 2026-07-24."""
+    from app import db
+    from models import User, SavedSet
+
+    with app.app_context():
+        owner = _mk_user(db, User, 'set-owner@test.com')
+        other = _mk_user(db, User, 'set-other@test.com')
+        admin = _mk_user(db, User, 'set-admin@test.com')
+        admin.is_admin = True
+        # preload_set (the JSON blob loadLibrarySet() reads client-side) never
+        # carries the set's name -- only pool/session_type/blocks -- so use a
+        # distinguishing dist value in the blocks rather than the name to tell
+        # whether the two sets' content actually reached the page.
+        private_set = SavedSet(name='Coach private set', created_by=owner.id,
+                                sets_data='[{"reps": 4, "dist": 111, "stroke": "FR", "rest": "1:30", "rest_type": "interval"}]')
+        library_set = SavedSet(name='Public library set', created_by=admin.id,
+                                sets_data='[{"reps": 4, "dist": 222, "stroke": "FR", "rest": "1:30", "rest_type": "interval"}]')
+        db.session.add_all([private_set, library_set])
+        db.session.commit()
+        owner_id, other_id, private_id, library_id = owner.id, other.id, private_set.id, library_set.id
+
+    client = app.test_client()
+    client.post('/login', data={'email': 'set-other@test.com', 'password': 'test1234'}, follow_redirects=True)
+
+    r = client.get(f'/log?use={private_id}')
+    body = r.get_data(as_text=True)
+    check('other user cannot preload a private set', '"dist": 111' not in body)
+
+    r = client.get(f'/log?use={library_id}')
+    body = r.get_data(as_text=True)
+    check('any user CAN preload a public library set', '"dist": 222' in body)
+
+    client.get('/logout')
+    client.post('/login', data={'email': 'set-owner@test.com', 'password': 'test1234'}, follow_redirects=True)
+    r = client.get(f'/log?use={private_id}')
+    body = r.get_data(as_text=True)
+    check('owner CAN preload their own set', '"dist": 111' in body)
+
+
 def test_admin_routes(app):
     """Regression guard for the admin-facing CSS/swimmer-type panels added
     2026-07-24: /admin gets an adoption-stats + roadmap panel, /admin/solo/<id>
@@ -1297,6 +1340,7 @@ def main():
         ('Athlete model + weekly reports', test_athlete_model, True),
         ('Training plans (CSS + generator)', test_training_plan, True),
         ('Coach routes (IDOR + PB pool-conflation)', test_coach_routes, True),
+        ('Log set-preload IDOR fix', test_log_set_preload_idor, True),
         ('Admin routes (CSS/swimmer-type panels, access control)', test_admin_routes, True),
         ('HTTP layer', test_http, True),
         ('Research sources (URL/SSRF hardening)', test_research_sources, False),

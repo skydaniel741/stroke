@@ -774,6 +774,15 @@ def log():
     use_session_id = request.args.get('use_session')
     if use_id:
         picked = db.session.query(SavedSet).get(use_id)
+        # Only preload sets that are actually meant to be public: the
+        # Set Library's own admin-authored sets, or one of the current
+        # user's own -- never an arbitrary other user's (e.g. a coach's
+        # private AI-generated set) just because its id was guessed.
+        if picked and picked.created_by != current_user.id:
+            from models import User
+            author = db.session.query(User).get(picked.created_by) if picked.created_by else None
+            if not (author and author.is_admin):
+                picked = None
         if picked:
             try:
                 blocks = json.loads(picked.sets_data or '[]')

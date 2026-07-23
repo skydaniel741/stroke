@@ -1599,188 +1599,6 @@ def coach_pro_digest_approve(digest_id):
     return {'ok': True}
 
 
-@coach.route('/squad/create', methods=['POST'])
-@login_required
-@coach_required
-def squad_create():
-    from app import db
-    from models import Squad, Club
-
-    name = request.form.get('name', '').strip()
-    if not name:
-        flash('Squad needs a name.', 'error')
-        return redirect(url_for('coach.coach_dashboard'))
-
-    club_id = request.form.get('club_id') or None
-    if club_id:
-        club = db.session.query(Club).filter_by(id=club_id, owner_id=current_user.id, status='active').first()
-        club_id = club.id if club else None
-
-    squad = Squad(
-        name=name,
-        coach_id=current_user.id,
-        club_id=club_id,
-        invite_code=secrets.token_urlsafe(6),
-    )
-    db.session.add(squad)
-    db.session.commit()
-    flash(f'Squad "{name}" created. Invite code: {squad.invite_code}', 'success')
-    return redirect(url_for('coach.squad_roster', squad_id=squad.id))
-
-
-@coach.route('/club/create', methods=['POST'])
-@login_required
-@coach_required
-def club_create():
-    from app import db
-    from models import Club
-
-    name = request.form.get('name', '').strip()
-    if not name:
-        flash('Club needs a name.', 'error')
-        return redirect(url_for('coach.coach_dashboard'))
-
-    # A coach's very first club is instantly usable. Any club after that needs
-    # a site admin to approve it before it can hold squads.
-    already_has_club = db.session.query(Club).filter_by(owner_id=current_user.id).count() > 0
-    status = 'pending' if already_has_club else 'active'
-
-    club = Club(
-        name=name,
-        owner_id=current_user.id,
-        age_range=request.form.get('age_range', '').strip(),
-        contact_email=request.form.get('contact_email', '').strip(),
-        newsletter_url=request.form.get('newsletter_url', '').strip(),
-        status=status,
-        approved_at=None if status == 'pending' else datetime.utcnow(),
-    )
-    db.session.add(club)
-    db.session.commit()
-
-    if status == 'pending':
-        flash(f'Club "{name}" submitted — an admin needs to approve it before you can add squads to it.', 'success')
-        return redirect(url_for('coach.coach_dashboard'))
-
-    flash(f'Club "{name}" created.', 'success')
-    return redirect(url_for('coach.club_overview', club_id=club.id))
-
-
-@coach.route('/squad/<int:squad_id>')
-@login_required
-@coach_required
-def squad_roster(squad_id):
-    from app import db
-    from models import SquadMembership, CoachNote, StatusFlag, Swim, Standard
-
-    squad = _squad_or_404(squad_id)
-    memberships = (
-        db.session.query(SquadMembership)
-        .filter_by(squad_id=squad.id)
-        .order_by(SquadMembership.created_at.desc())
-        .all()
-    )
-
-    statuses = {
-        s.swimmer_id: s for s in
-        db.session.query(StatusFlag).filter_by(squad_id=squad.id).all()
-    }
-    note_counts = {}
-    for n in db.session.query(CoachNote).filter_by(squad_id=squad.id).all():
-        note_counts[n.swimmer_id] = note_counts.get(n.swimmer_id, 0) + 1
-
-    standards = db.session.query(Standard).all()
-
-    rows = []
-    for m in memberships:
-        met_standards = []
-        if m.user_id:
-            swims = db.session.query(Swim).filter_by(user_id=m.user_id).all()
-            best_by_event_pool = _best_by_event_pool(swims)
-            for st in standards:
-                cutoff = st.cutoff_seconds()
-                best = best_by_event_pool.get((st.event, _pool_key(st.pool)))
-                if cutoff is not None and best is not None and best['secs'] <= cutoff:
-                    met_standards.append(st.name)
-
-        rows.append({
-            'membership': m,
-            'status': statuses.get(m.user_id),
-            'note_count': note_counts.get(m.user_id, 0),
-            'met_standards': met_standards,
-        })
-
-    return render_template('squad_roster.html', squad=squad, rows=rows)
-
-
-@coach.route('/squad/<int:squad_id>/invite', methods=['POST'])
-@login_required
-@coach_required
-def squad_invite(squad_id):
-    from app import db
-    from models import SquadMembership, User
-
-    squad = _squad_or_404(squad_id)
-    email = (request.form.get('email') or '').strip().lower()
-    lane_group = request.form.get('lane_group', '').strip()
-    requires_consent = bool(request.form.get('requires_consent'))
-
-    if not email:
-        flash('Enter an email to invite.', 'error')
-        return redirect(url_for('coach.squad_roster', squad_id=squad.id))
-
-    existing_user = db.session.query(User).filter_by(email=email).first()
-    membership = SquadMembership(
-        squad_id=squad.id,
-        user_id=existing_user.id if existing_user else None,
-        invited_email=email,
-        status='invited',
-        lane_group=lane_group,
-        requires_consent=requires_consent,
-    )
-    db.session.add(membership)
-    db.session.commit()
-    flash(f'Invited {email}.', 'success')
-    return redirect(url_for('coach.squad_roster', squad_id=squad.id))
-
-
-@coach.route('/squad/<int:squad_id>/import', methods=['POST'])
-@login_required
-@coach_required
-def squad_import(squad_id):
-    from app import db
-    from models import SquadMembership, User
-
-    squad = _squad_or_404(squad_id)
-    file = request.files.get('csv_file')
-    if not file or not file.filename:
-        flash('Choose a CSV file first.', 'error')
-        return redirect(url_for('coach.squad_roster', squad_id=squad.id))
-
-    try:
-        text = file.stream.read().decode('utf-8-sig')
-        reader = csv.DictReader(io.StringIO(text))
-        count = 0
-        for row in reader:
-            email = (row.get('email') or '').strip().lower()
-            if not email:
-                continue
-            existing_user = db.session.query(User).filter_by(email=email).first()
-            db.session.add(SquadMembership(
-                squad_id=squad.id,
-                user_id=existing_user.id if existing_user else None,
-                invited_email=email,
-                status='invited',
-                lane_group=(row.get('lane_group') or '').strip(),
-            ))
-            count += 1
-        db.session.commit()
-        flash(f'Imported {count} swimmer(s).', 'success')
-    except Exception:
-        flash('Could not read that CSV — expected columns: name, email, lane_group.', 'error')
-
-    return redirect(url_for('coach.squad_roster', squad_id=squad.id))
-
-
 @coach.route('/squad/<int:squad_id>/membership/<int:membership_id>/lane', methods=['POST'])
 @login_required
 @coach_required
@@ -1794,7 +1612,7 @@ def squad_membership_lane(squad_id, membership_id):
         m.lane_group = request.form.get('lane_group', '').strip()
         db.session.commit()
         flash('Lane group updated.', 'success')
-    return redirect(url_for('coach.squad_roster', squad_id=squad.id))
+    return redirect(url_for('coach.coach_dashboard'))
 
 
 @coach.route('/join/<invite_code>')
@@ -1897,7 +1715,7 @@ def squad_swimmer_note(squad_id, swimmer_id):
         db.session.add(CoachNote(squad_id=squad.id, swimmer_id=swimmer_id, coach_id=current_user.id, note=note))
         db.session.commit()
         flash('Note added.', 'success')
-    return redirect(url_for('coach.squad_roster', squad_id=squad.id))
+    return redirect(url_for('coach.squad_swimmer_notes', squad_id=squad.id, swimmer_id=swimmer_id))
 
 
 @coach.route('/squad/<int:squad_id>/swimmer/<int:swimmer_id>/notes')
@@ -1946,74 +1764,7 @@ def squad_swimmer_status(squad_id, swimmer_id):
     flag.updated_by = current_user.id
     db.session.commit()
     flash('Status updated.', 'success')
-    return redirect(url_for('coach.squad_roster', squad_id=squad.id))
-
-
-@coach.route('/squad/<int:squad_id>/announcements', methods=['GET', 'POST'])
-@login_required
-@coach_required
-def squad_announcements(squad_id):
-    from app import db
-    from models import Announcement
-
-    squad = _squad_or_404(squad_id)
-
-    if request.method == 'POST':
-        message = request.form.get('message', '').strip()
-        if message:
-            db.session.add(Announcement(squad_id=squad.id, author_id=current_user.id, message=message))
-            db.session.commit()
-            flash('Announcement posted.', 'success')
-        return redirect(url_for('coach.squad_announcements', squad_id=squad.id))
-
-    announcements = (
-        db.session.query(Announcement)
-        .filter_by(squad_id=squad.id)
-        .order_by(Announcement.created_at.desc())
-        .all()
-    )
-    return render_template('coach_announcements.html', squad=squad, announcements=announcements)
-
-
-@coach.route('/squad/<int:squad_id>/report')
-@login_required
-@coach_required
-def squad_report(squad_id):
-    from app import db
-    from models import SquadMembership, Swim, Session, User
-
-    squad = _squad_or_404(squad_id)
-    memberships = (
-        db.session.query(SquadMembership)
-        .filter_by(squad_id=squad.id, status='active')
-        .all()
-    )
-
-    since = datetime.utcnow() - timedelta(days=90)
-    rows = []
-    for m in memberships:
-        if not m.user_id:
-            continue
-        user = db.session.query(User).get(m.user_id)
-        swims = (
-            db.session.query(Swim)
-            .filter(Swim.user_id == m.user_id, Swim.logged_at >= since)
-            .all()
-        )
-        sessions_count = (
-            db.session.query(Session)
-            .filter(Session.user_id == m.user_id, Session.logged_at >= since)
-            .count()
-        )
-        best_by_event_pool = _best_by_event_pool(swims)
-
-        rows.append({
-            'user': user,
-            'pbs': sorted(best_by_event_pool.values(), key=lambda x: (x['event'], x['pool'] or '')),
-            'attendance': sessions_count + len(swims),
-        })
-
-    return render_template('squad_report.html', squad=squad, rows=rows, since=since)
+    return redirect(url_for('coach.squad_swimmer_notes', squad_id=squad.id, swimmer_id=swimmer_id))
 
 
 @coach.route('/squad/<int:squad_id>/calendar')
@@ -2235,22 +1986,3 @@ def squad_calendar_import_scwc(squad_id):
     return back
 
 
-@coach.route('/club/<int:club_id>')
-@login_required
-@coach_required
-def club_overview(club_id):
-    from app import db
-    from models import Club, Squad
-
-    club = db.session.query(Club).get(club_id)
-    if not club or (club.owner_id != current_user.id and not current_user.is_admin):
-        abort(404)
-
-    squads = db.session.query(Squad).filter_by(club_id=club.id).all()
-    rows = [{
-        'squad': s,
-        'active_count': s.active_member_count(),
-        'estimate': s.billing_estimate(),
-    } for s in squads]
-
-    return render_template('club_overview.html', club=club, rows=rows)
