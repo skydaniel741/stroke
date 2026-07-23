@@ -1,7 +1,7 @@
 /* ============================================================
    SET LIBRARY STYLES
    Covers the library home, category listing, and set detail
-   pages — matches the bold, playful visual system used across
+   pages, matches the bold, playful visual system used across
    the rest of STROKE (Schibsted Grotesk, lavender, hard borders + offset
    shadows), but built for wide desktop viewing as well as mobile.
    ============================================================ */
@@ -682,7 +682,7 @@
   .sets-wrap{max-width:100%;padding:0}
   .set-detail-wrap{max-width:100%}
 
-  /* Coach's practice card — clean, readable type a 5-year-old or a
+  /* Coach's practice card, clean, readable type a 5-year-old or a
      95-year-old can follow on the pool deck. */
   .print-sheet{
     font-family:'Schibsted Grotesk','Segoe UI',Arial,sans-serif;

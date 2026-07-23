@@ -177,18 +177,38 @@ def join(token):
         return redirect(url_for('main.login'))
 
     if current_user.is_authenticated:
-        if current_user.role != 'parent':
-            flash(
-                "You're signed in to a swimmer or coach account. Log out first, "
-                "then open this link again to create a separate parent account.",
-                'error',
-            )
-            return redirect(url_for('main.home'))
+        # Any signed-in account can claim a link. A parent who also swims,
+        # or who coaches, keeps ONE account: their own training stays where
+        # it is and the parent view is added alongside it. Forcing a second
+        # account here was the old behaviour and it meant a masters swimmer
+        # with a kid in the club had to log out to check on their own child.
+        if link.swimmer_id == current_user.id:
+            flash("That's your own invite link. Send it to a parent or guardian instead.", 'error')
+            return redirect(url_for('parent.invite'))
+
+        already = (
+            db.session.query(ParentLink)
+            .filter_by(swimmer_id=link.swimmer_id, parent_id=current_user.id, status='active')
+            .first()
+        )
+        if already:
+            flash("You're already linked to that swimmer.", 'info')
+            return redirect(url_for('parent.parent_dashboard'))
+
+        # Confirm before claiming. Opening a link used to attach the account
+        # on the GET, which is a state change on a page load: anyone who got
+        # a signed-in user to follow their invite URL could attach themselves
+        # to that user's view. Now the link has to be accepted deliberately.
+        if request.method != 'POST':
+            swimmer = db.session.get(User, link.swimmer_id)
+            return render_template('parent_join.html', link=link, swimmer=swimmer,
+                                   confirm_existing=True)
+
         link.parent_id = current_user.id
         link.status = 'active'
         link.claimed_at = datetime.utcnow()
         db.session.commit()
-        flash("You're now linked to that swimmer.", 'success')
+        flash("You're now linked to that swimmer. Your own account is unchanged.", 'success')
         return redirect(url_for('parent.parent_dashboard'))
 
     if request.method == 'POST':
@@ -208,7 +228,7 @@ def join(token):
 
         existing = db.session.query(User).filter_by(email=email).first()
         if existing:
-            flash('An account with that email already exists — log in, then open this link again.', 'error')
+            flash('An account with that email already exists. Log in, then open this link again.', 'error')
             return redirect(url_for('main.login'))
         if db.session.query(User).filter_by(username=username).first():
             flash('That name is taken, try another.', 'error')
@@ -234,6 +254,27 @@ def join(token):
         return redirect(url_for('main.verify', email=email))
 
     return render_template('parent_join.html', link=link)
+
+
+@parent_bp.route('/enable-training', methods=['POST'])
+@login_required
+@parent_required
+def enable_training():
+    """Turn a parent-only account into one that also swims.
+
+    The other direction (a swimmer being sent a parent link) needs no route:
+    claiming the link is enough, because parent access is derived from the
+    link rather than stored on the account. This is the same idea going the
+    other way, and it only touches role -- every existing parent link stays
+    exactly as it was.
+    """
+    from app import db
+
+    if current_user.role == 'parent':
+        current_user.role = 'swimmer'
+        db.session.commit()
+        flash("Your account can now log swims too. Your parent view is still here.", 'success')
+    return redirect(url_for('main.dashboard'))
 
 
 def _latest_digest(parent_link_id):

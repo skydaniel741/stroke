@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WA Points Calculator — STROKE</title>
+<title>WA Points Calculator | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -25,7 +25,7 @@
   <div class="wa-cols">
   <div class="wa-col">
   <h1 class="wa-title">World Aquatics Points</h1>
-  <p class="wa-sub">See exactly where a time stands — and who owns the world record for it.</p>
+  <p class="wa-sub">See exactly where a time stands, and who owns the world record for it.</p>
 
   <div class="wa-toggle-row">
     <button class="wa-toggle-btn active" id="modeTime" onclick="setMode('time')">Time → Points</button>
@@ -63,7 +63,7 @@
   </div>
 
   <div class="wa-result">
-    <div class="wa-result-val" id="resultVal">—</div>
+    <div class="wa-result-val" id="resultVal">n/a</div>
     <div class="wa-result-label" id="resultLabel">Enter a time to see your points</div>
     <div class="wa-result-sub" id="resultSub"></div>
   </div>
@@ -74,17 +74,17 @@
   </div>
 
   <p class="wa-note">
-    Base times sourced from World Aquatics: SCM 2025 table (valid 01 Sep 2025 – 31 Aug 2026) and
-    LCM 2026 table (valid 01 Jan 2026 – 31 Dec 2026). Formula: P = 1000 × (B/T)³, where B is the
+    Base times sourced from World Aquatics: SCM 2025 table (valid 01 Sep 2025 to 31 Aug 2026) and
+    LCM 2026 table (valid 01 Jan 2026 to 31 Dec 2026). Formula: P = 1000 × (B/T)³, where B is the
     base time and T is your time, both in seconds. World record details are long course (50m) only
-    for now — short course records are coming soon.
+    for now. Short course records are coming soon.
   </p>
 
   </div>
   <div class="wa-col">
   <!-- ═══ CRITICAL SWIM SPEED ═══ -->
   <h2 class="wa-title css-title">Critical Swim Speed</h2>
-  <p class="wa-sub">The triathlete's threshold pace — like FTP, but for swimming. Swim an all-out 400 and 200 (from a push, 5 min recovery between), enter both times, and train off the zones.</p>
+  <p class="wa-sub">The triathlete's threshold pace, like FTP, but for swimming. Swim an all-out 400 and 200 (from a push, 5 min recovery between), enter both times, and train off the zones.</p>
 
   <div class="wa-card">
     <label class="wa-field-label">400m time trial</label>
@@ -103,7 +103,7 @@
   </div>
 
   <div class="wa-result">
-    <div class="wa-result-val" id="cssResultVal">—</div>
+    <div class="wa-result-val" id="cssResultVal">n/a</div>
     <div class="wa-result-label" id="cssResultLabel">Enter both times to get your CSS pace</div>
   </div>
 
@@ -114,8 +114,8 @@
 
   <p class="wa-note">
     CSS per 100m = (400 time − 200 time) ÷ 2. Your CSS approximates the pace you could hold for a
-    maximal 1500m — threshold sets (like the CSS Threshold 100s in the Set Library) are swum at this
-    pace with short rest. Retest every 6–8 weeks.
+    maximal 1500m, threshold sets (like the CSS Threshold 100s in the Set Library) are swum at this
+    pace with short rest. Retest every 6 to 8 weeks.
   </p>
   </div>
   </div>
@@ -248,7 +248,7 @@ function getBaseTime(){
 }
 
 function secondsToDisplay(totalSec){
-  if(!isFinite(totalSec) || totalSec <= 0) return '—';
+  if(!isFinite(totalSec) || totalSec <= 0) return 'n/a';
   const mins = Math.floor(totalSec / 60);
   const secs = totalSec - mins*60;
   const secStr = secs.toFixed(2).padStart(5,'0');
@@ -279,7 +279,7 @@ function calculate(){
     const T = min*60 + sec + ms/100;
 
     if(T <= 0){
-      document.getElementById('resultVal').textContent = '—';
+      document.getElementById('resultVal').textContent = 'n/a';
       document.getElementById('resultLabel').textContent = 'Enter a time to see your points';
       document.getElementById('resultSub').textContent = '';
       return;
@@ -293,7 +293,7 @@ function calculate(){
   } else {
     let P = parseFloat(document.getElementById('inPoints').value);
     if(!P || P <= 0){
-      document.getElementById('resultVal').textContent = '—';
+      document.getElementById('resultVal').textContent = 'n/a';
       document.getElementById('resultLabel').textContent = 'Enter a points target to see the time';
       document.getElementById('resultSub').textContent = '';
       return;
@@ -328,7 +328,7 @@ function renderWorldRecord(){
     <p class="wr-name">${wr.name}</p>
     <p class="wr-country">${wr.country}</p>
     <p class="wr-time">${wr.time}</p>
-    <p class="wr-meta">${wr.meet}, ${wr.location} — ${wr.date}</p>
+    <p class="wr-meta">${wr.meet}, ${wr.location}, ${wr.date}</p>
     <a class="wr-video-btn" href="${videoUrl}" target="_blank" rel="noopener">${videoLabel} →</a>
   `;
 }
@@ -350,13 +350,13 @@ function cssCalc(){
   const zonesCard = document.getElementById('cssZonesCard');
 
   if(t400 <= 0 || t200 <= 0){
-    val.textContent = '—';
+    val.textContent = 'n/a';
     label.textContent = 'Enter both times to get your CSS pace';
     zonesCard.style.display = 'none';
     return;
   }
   if(t400 <= t200){
-    val.textContent = '—';
+    val.textContent = 'n/a';
     label.textContent = 'Your 400 time should be slower than your 200';
     zonesCard.style.display = 'none';
     return;
@@ -369,8 +369,8 @@ function cssCalc(){
   const zones = [
     { name: 'Easy / recovery',  pace: css + 15, desc: 'warm ups, cool downs, easy days' },
     { name: 'Endurance',        pace: css + 8,  desc: 'long steady swims, aerobic base' },
-    { name: 'Threshold (CSS)',  pace: css,      desc: '100–400m repeats, short rest' },
-    { name: 'VO2 max',          pace: css - 5,  desc: '50–200m repeats, hard' },
+    { name: 'Threshold (CSS)',  pace: css,      desc: '100 to 400m repeats, short rest' },
+    { name: 'VO2 max',          pace: css - 5,  desc: '50 to 200m repeats, hard' },
   ];
   document.getElementById('cssZoneList').innerHTML = zones.map(z => `
     <div class="css-zone-row">

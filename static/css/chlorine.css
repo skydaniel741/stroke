@@ -1,5 +1,5 @@
 /* ============================================================
-   CHLORINE — STROKE redesign system (2026)
+   CHLORINE, STROKE redesign system (2026)
    A near-black "timing console" identity: blue + coral on a
    cool near-black base, with a light-ground variant for daytime.
    Self-contained: only pages with <html data-skin="chlorine">
@@ -11,7 +11,7 @@
      --coach light blue = the AI coach's voice
      --warn  amber  = caution (never a normal positive split)
      --err   coral  = error / destructive
-   Single typeface: Schibsted Grotesk. No emoji — Lucide icons only.
+   Single typeface: Schibsted Grotesk. No emoji, Lucide icons only.
    ============================================================ */
 
 /* ---------- DARK (default) ---------- */
@@ -62,7 +62,7 @@
 [data-skin="chlorine"] *::after{ box-sizing:border-box; margin:0; padding:0; }
 
 /* main.css sets overflow-x:hidden on <html>/<body> to stop horizontal
-   scroll — but that also breaks position:sticky for every descendant on
+   scroll, but that also breaks position:sticky for every descendant on
    the page (Chrome/Firefox drop sticky once the root's own scroll
    container has overflow != visible on either axis). overflow-x:clip
    gives the same "no horizontal scrollbar" result without creating that
@@ -90,7 +90,7 @@ html[data-skin="chlorine"]{ overflow-x:clip; }
 [data-skin="chlorine"] :focus-visible{ outline:2px solid var(--sig); outline-offset:2px; border-radius:6px; }
 
 /* ============================================================
-   APP SHELL — persistent left icon rail (FC88 / Sana AI)
+   APP SHELL, persistent left icon rail (FC88 / Sana AI)
    ============================================================ */
 [data-skin="chlorine"] .cx-shell{ display:flex; min-height:100vh; background:var(--base); }
 
@@ -200,7 +200,7 @@ html[data-skin="chlorine"]{ overflow-x:clip; }
 [data-skin="chlorine"] .cx-banner--site svg{ stroke:var(--muted); }
 
 /* ============================================================
-   STAT TILES — one oversized number each, meaning-coded
+   STAT TILES, one oversized number each, meaning-coded
    ============================================================ */
 [data-skin="chlorine"] .cx-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
 [data-skin="chlorine"] .cx-stat{
@@ -359,7 +359,7 @@ html[data-skin="chlorine"]{ overflow-x:clip; }
 }
 
 /* ============================================================
-   AUTH — asymmetric brand/form split (Dark + editorial)
+   AUTH, asymmetric brand/form split (Dark + editorial)
    ============================================================ */
 [data-skin="chlorine"] .cx-auth{ display:grid; grid-template-columns:1.15fr .85fr; min-height:100vh; }
 

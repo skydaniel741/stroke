@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parent access — STROKE</title>
+    <title>Parent access | STROKE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
@@ -28,6 +28,21 @@
 
     <main class="cx-auth-formside">
         <div class="cx-auth-card">
+            {% if confirm_existing %}
+            {# Already signed in: no new account needed, just confirm the link.
+               One account holds both sides, so their own training is untouched. #}
+            <h1>Link {{ link.swimmer.username }} to your account?</h1>
+            <p class="cx-auth-sub">You'll get a read-only view of {{ link.swimmer.username }}'s times, personal bests, attendance and upcoming sessions. You stay signed in as yourself and your own account doesn't change.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            <form method="POST">
+                <button type="submit" class="cx-btn-primary">Yes, link {{ link.swimmer.username }}</button>
+            </form>
+            <p class="cx-auth-switch">Didn't expect this? <a href="/dashboard">Go back</a> and nothing will be linked.</p>
+            {% else %}
             <h1>Create your parent account</h1>
             <p class="cx-auth-sub">This links you to {{ link.swimmer.username }}'s account, read-only.</p>
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -51,7 +66,8 @@
                 <button type="submit" class="cx-btn-primary">Create account &amp; link</button>
             </form>
 
-            <p class="cx-auth-switch">Already have a parent account? <a href="/login">Log in</a>, then open this invite link again to add {{ link.swimmer.username }}.</p>
+            <p class="cx-auth-switch">Already have a STROKE account? <a href="/login">Log in</a>, then open this invite link again. You don't need a second account, even if you swim or coach yourself.</p>
+            {% endif %}
         </div>
     </main>
 </div>

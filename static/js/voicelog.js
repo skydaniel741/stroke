@@ -1,4 +1,4 @@
-/* Voice log — tap-to-dictate into any field, using the browser's built-in
+/* Voice log, tap-to-dictate into any field, using the browser's built-in
    Web Speech API (no server, no cost). A button with data-voice-target="<id>"
    dictates into the element with that id. Uses event delegation so it also
    works for fields rendered dynamically (e.g. the coach dashboard SPA).

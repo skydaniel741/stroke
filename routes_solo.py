@@ -33,7 +33,7 @@ def scan_whiteboard():
 
     image_bytes = file.read()
     if len(image_bytes) > MAX_SCAN_BYTES:
-        return jsonify({'ok': False, 'error': 'That photo is too large — try a smaller image.'}), 400
+        return jsonify({'ok': False, 'error': 'That photo is too large. Try a smaller image.'}), 400
 
     # No content-type allowlist here on purpose -- phones report HEIC/HEIF for
     # gallery photos and browsers aren't always consistent about mimetypes.
@@ -57,7 +57,7 @@ def parse_transcript():
 
     transcript = (request.form.get('transcript') or '').strip()
     if not transcript:
-        return jsonify({'ok': False, 'error': "Didn't catch anything — try dictating again."}), 400
+        return jsonify({'ok': False, 'error': "Didn't catch anything. Try dictating again."}), 400
 
     from ai_utils import extract_set_from_transcript
     result = extract_set_from_transcript(
@@ -168,7 +168,7 @@ def onboarding():
             adaptation=adaptation_text,
         )
         if not result.get('ok'):
-            flash(result.get('error', "Couldn't generate a program — try again."), 'error')
+            flash(result.get('error', "Couldn't generate a program. Try again."), 'error')
             return redirect(url_for('solo.onboarding'))
 
         # Realism pass: every block is checked against what this swimmer can
@@ -235,8 +235,8 @@ def program():
     week_dates = [week_start + timedelta(days=i) for i in range(7)]
     next_week_dates = [week_start + timedelta(days=7 + i) for i in range(7)]
     calendar_days = list(zip(program.get('days') or [], week_dates)) if program.get('days') else []
-    week_range = f"{_fmt(week_dates[0])} – {_fmt(week_dates[-1])}"
-    next_week_range = f"{_fmt(next_week_dates[0])} – {_fmt(next_week_dates[-1])}"
+    week_range = f"{_fmt(week_dates[0])} ,  {_fmt(week_dates[-1])}"
+    next_week_range = f"{_fmt(next_week_dates[0])} ,  {_fmt(next_week_dates[-1])}"
 
     return render_template(
         'solo_program.html', profile=profile, program=program,
@@ -264,7 +264,7 @@ def pro_upgrade():
     # (or similar) payment would be confirmed before flipping the plan.
     current_user.plan = 'solo_pro'
     db.session.commit()
-    flash('Welcome to Solo Pro — AI tuning is unlocked.', 'success')
+    flash('Welcome to Solo Pro, AI tuning is unlocked.', 'success')
     return redirect(url_for('solo.onboarding'))
 
 
@@ -438,7 +438,7 @@ def _an_parse_secs(t):
 
 def _an_fmt(secs):
     if secs is None:
-        return '—'
+        return 'n/a'
     if secs >= 60:
         return f'{int(secs // 60)}:{secs % 60:05.2f}'
     return f'{secs:.2f}'
@@ -906,7 +906,7 @@ def coach_injury():
     db.session.commit()
 
     if injury.red_flag:
-        flash("That sounds like something to get checked by a physio or clinician before doing more dryland work — hold off on training that area for now.", 'error')
+        flash("That sounds like something to get checked by a physio or clinician before doing more dryland work, hold off on training that area for now.", 'error')
     else:
         flash('Injury status updated.', 'success')
     return redirect(url_for('solo.coach', topic='dryland'))
@@ -1097,7 +1097,7 @@ def plan_setup():
             except ValueError:
                 race_date = None
             if race_date and race_date <= date.today():
-                flash('That race date is in the past — pick a future date or leave it blank.', 'error')
+                flash('That race date is in the past. Pick a future date or leave it blank.', 'error')
                 return redirect(url_for('solo.plan_setup'))
 
         target_norm, _secs = clean_time(request.form.get('target_time'), key='goal_seconds')
@@ -1169,7 +1169,7 @@ def plan_session_complete(ps_id):
         ps.status = 'completed'
         ps.completed_at = datetime.utcnow()
         db.session.commit()
-        flash('Nice work — session ticked off.', 'success')
+        flash('Nice work, session ticked off.', 'success')
     return redirect(url_for('solo.plan'))
 
 
@@ -1186,7 +1186,7 @@ def plan_css():
     _norm200, t200 = clean_time(request.form.get('t200'))
     css = plan_logic.compute_css(t400, t200)
     if css is None:
-        flash("Those times don't work as a CSS test pair — check the 400 and 200 and try again.", 'error')
+        flash("Those times don't work as a CSS test pair. Check the 400 and 200 and try again.", 'error')
         return redirect(url_for('solo.plan'))
 
     tp = _active_plan()
@@ -1197,7 +1197,7 @@ def plan_css():
 
     if tp:
         n = plan_logic.rebuild_future_sessions(tp, rec)
-        flash(f'CSS updated — pace targets refreshed for {n} upcoming sessions.', 'success')
+        flash(f'CSS updated, pace targets refreshed for {n} upcoming sessions.', 'success')
     else:
         flash('CSS saved.', 'success')
     return redirect(url_for('solo.plan'))

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your plan — STROKE</title>
+<title>Your plan | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -152,7 +152,7 @@
         <div class="pl-css-pace num">{{ zone_rows[3].pace }} <span>/ 100m CSS</span></div>
       </div>
       <span class="pl-css-src">
-        {% if css_rec.source == 'estimated' %}Estimated — your week 1 test will sharpen this
+        {% if css_rec.source == 'estimated' %}Estimated. Your week 1 test will sharpen this
         {% elif css_rec.source == 'manual' %}From your entered 400 / 200
         {% else %}Measured from your logged 400 / 200{% endif %}
       </span>

@@ -36,9 +36,16 @@ def coach_required(f):
 
 
 def parent_required(f):
+    """Gate on having a live parent link, not on role.
+
+    A swimmer or coach who has been sent a link for their own child gets in
+    on the same footing as a parent-only account, and a parent-only account
+    whose last link was revoked is shut out immediately. Checking role here
+    would get both of those backwards.
+    """
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not current_user.is_authenticated or (current_user.role != 'parent' and not current_user.is_admin):
+        if not current_user.is_authenticated or not current_user.has_parent_access:
             abort(403)
         return f(*args, **kwargs)
     return wrapper

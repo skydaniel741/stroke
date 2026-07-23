@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solo Pro — STROKE</title>
+<title>Solo Pro | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -74,14 +74,14 @@
   {% else %}
   <div class="pro-card">
     <div class="pro-price"><b>$4</b><span>/ month · cancel anytime</span></div>
-    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Coaching tone control</b> — pick gentle &amp; encouraging, balanced, or blunt &amp; direct.</div></div>
-    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Program intensity</b> — dial your plan easier, normal, or a notch harder than your level.</div></div>
-    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Regenerate anytime</b> — rebuild your week as your goals and fitness change.</div></div>
-    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Everything in free Solo</b> — the AI program, daily check-ins and libraries.</div></div>
+    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Coaching tone control</b>: pick gentle &amp; encouraging, balanced, or blunt &amp; direct.</div></div>
+    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Program intensity</b>: dial your plan easier, normal, or a notch harder than your level.</div></div>
+    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Regenerate anytime</b>: rebuild your week as your goals and fitness change.</div></div>
+    <div class="pro-feat"><span class="pro-check">✓</span><div><b>Everything in free Solo</b>: the AI program, daily check-ins and libraries.</div></div>
     <form method="POST" action="/solo/pro/upgrade">
       <button type="submit" class="pro-btn">Upgrade to Solo Pro</button>
     </form>
-    <p class="pro-note">Demo checkout — no card charged.</p>
+    <p class="pro-note">Demo checkout. No card charged.</p>
   </div>
   {% endif %}
 </div>

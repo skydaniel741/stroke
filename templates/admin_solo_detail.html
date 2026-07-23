@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ u.username }} — Solo — STROKE Admin</title>
+<title>{{ u.username }} | Solo | STROKE Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -147,7 +147,7 @@
     {% endif %}
   </div>
   {% else %}
-  <div class="adm-panel"><p class="empty-note">Hasn't completed Solo onboarding yet — no AthleteProfile on file.</p></div>
+  <div class="adm-panel"><p class="empty-note">Hasn't completed Solo onboarding yet. No AthleteProfile on file.</p></div>
   {% endif %}
 
   <div class="adm-panel">
@@ -166,13 +166,13 @@
     <div class="adm-panel-head">Injury status on file</div>
     {% if injury and injury.has_anything_flagged() %}
     <div class="kv-grid">
-      <div class="kv"><div class="kv-lbl">Shoulder</div><div class="kv-val">{{ injury.shoulder or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Knee</div><div class="kv-val">{{ injury.knee or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Back</div><div class="kv-val">{{ injury.back or '—' }}</div></div>
-      <div class="kv"><div class="kv-lbl">Other</div><div class="kv-val">{{ injury.other or '—' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Shoulder</div><div class="kv-val">{{ injury.shoulder or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Knee</div><div class="kv-val">{{ injury.knee or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Back</div><div class="kv-val">{{ injury.back or 'n/a' }}</div></div>
+      <div class="kv"><div class="kv-lbl">Other</div><div class="kv-val">{{ injury.other or 'n/a' }}</div></div>
     </div>
     {% if injury.red_flag %}<p style="margin-top:10px;"><span class="badge no">Red flag noted</span></p>{% endif %}
-    <p style="margin-top:10px;font-size:11.5px;color:#9a96b0;">Updated {{ injury.updated_at.strftime('%d %b %Y') if injury.updated_at else '—' }}</p>
+    <p style="margin-top:10px;font-size:11.5px;color:#9a96b0;">Updated {{ injury.updated_at.strftime('%d %b %Y') if injury.updated_at else 'n/a' }}</p>
     {% else %}
     <p class="empty-note">Nothing on file.</p>
     {% endif %}

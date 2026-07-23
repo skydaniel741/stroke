@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Training history — STROKE</title>
+<title>Training history | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -43,14 +43,14 @@
 
 <div class="hi-wrap">
   <h1 class="hi-h1">Training history</h1>
-  <p class="hi-sub">Every swim and session you've ever logged, newest first — {{ total_count }} total.</p>
+  <p class="hi-sub">Every swim and session you've ever logged, newest first: {{ total_count }} total.</p>
 
   {% if entries %}
     {% for e in entries %}
       {% if e.type == 'session' %}
       <a href="/history/session/{{ e.id }}" class="hi-row">
         <div class="hi-row-main">
-          <div class="hi-row-title">{{ e.kind }} — {{ e.label }}</div>
+          <div class="hi-row-title">{{ e.kind }}: {{ e.label }}</div>
           <div class="hi-row-sub">{{ e.pool }} pool · {{ e.distance }}m</div>
         </div>
         <span class="hi-row-tag">Session</span>

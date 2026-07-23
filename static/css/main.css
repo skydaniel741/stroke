@@ -1,5 +1,5 @@
 /* ============================================================
-   MAIN STYLES — cozy pastel design system
+   MAIN STYLES, cozy pastel design system
    Shared tokens + components used across every page.
    Palette: soft light-blue + periwinkle-lavender + peach,
    rounded corners, gentle layered shadows, warm friendly text.
@@ -7,7 +7,7 @@
 
 :root {
   /* ---- ink / text (Hungry Tiger chocolate) ---- */
-  --ink:        #402011;   /* deep chocolate brown — primary ink */
+  --ink:        #402011;   /* deep chocolate brown, primary ink */
   --ink-soft:   #6b5240;   /* body-secondary */
   --ink-faint:  #9a836f;   /* captions, meta */
 
@@ -19,7 +19,7 @@
   --surface-3:  #f6ddc2;
 
   /* ---- accents (warm mix: gold + rust) ---- */
-  --blue:       #faae33;   /* amber gold — the lead accent */
+  --blue:       #faae33;   /* amber gold, the lead accent */
   --blue-600:   #e8912a;
   --blue-tint:  #ffedcf;
   --lav:        #f2b968;   /* soft amber */

@@ -1,10 +1,10 @@
 /* ============================================================
-   STROKE — public sub-pages (features, audiences, FAQ, legal)
+   STROKE, public sub-pages (features, audiences, FAQ, legal)
    and the auth screens.
 
    Loaded AFTER stroke_landing.css, which owns the .sl token set
    (mint-on-white). Nothing here redefines a token: this file is
-   only the layouts the landing page does not already have —
+   only the layouts the landing page does not already have 
    prose/legal, FAQ accordion, cookie banner, auth split.
    ============================================================ */
 
@@ -40,7 +40,7 @@
 }
 .sl .prose-toc a:hover{ border-color:var(--primary); color:var(--ink); }
 
-/* callout — the one place a page raises its voice */
+/* callout, the one place a page raises its voice */
 .sl .callout{
   border:1px solid var(--hairline); border-left:3px solid var(--primary);
   background:var(--surface-1); border-radius:var(--r-md);
@@ -106,7 +106,7 @@
 .sl .cookiebar .btn{ flex:1 1 auto; }
 
 /* ============================================================
-   AUTH — green on white, matching the marketing side.
+   AUTH, green on white, matching the marketing side.
    Replaces the navy chlorine .cx-auth skin on /login and /signup.
    ============================================================ */
 .sl .auth{ display:grid; min-height:100vh; }

@@ -28,7 +28,7 @@ def parse_secs(t):
 
 def fmt_secs(secs):
     if secs is None:
-        return '—'
+        return 'n/a'
     if secs >= 60:
         return f'{int(secs // 60)}:{secs % 60:05.2f}'
     return f'{secs:.2f}'

@@ -273,13 +273,13 @@ def coach_pro_state():
 
         recent_activity = sorted(
             [
-                {'kind': 'PB attempt', 'label': s.event, 'pool': s.pool or '—', 'loggedAt': s.logged_at.strftime('%Y-%m-%d')}
+                {'kind': 'PB attempt', 'label': s.event, 'pool': s.pool or 'n/a', 'loggedAt': s.logged_at.strftime('%Y-%m-%d')}
                 for s in swims
             ] + [
                 {
                     'kind': se.session_type or 'Session',
                     'label': (f"{len(se.get_sets())} set" + ('s' if len(se.get_sets()) != 1 else '')) if se.get_sets() else (se.session_type or 'Session'),
-                    'pool': se.pool or '—',
+                    'pool': se.pool or 'n/a',
                     'loggedAt': se.logged_at.strftime('%Y-%m-%d'),
                 }
                 for se in sessions
@@ -821,7 +821,7 @@ def coach_pro_invite_parent(membership_id):
         abort(404)
     _squad_or_404(m.squad_id)
     if not m.user_id:
-        return {'ok': False, 'error': "This swimmer doesn't have a STROKE account yet — invite them first."}, 400
+        return {'ok': False, 'error': "This swimmer doesn't have a STROKE account yet. Invite them first."}, 400
 
     existing_pending = (
         db.session.query(ParentLink)
@@ -912,7 +912,7 @@ def coach_pro_update_set(set_id):
     from validation import clean_sets_json
     _sets_json, blocks = clean_sets_json(request.form.get('sets_data') or '[]')
     if not blocks:
-        return {'ok': False, 'error': 'That set has no valid blocks — check the reps and distances.'}, 400
+        return {'ok': False, 'error': 'That set has no valid blocks. Check the reps and distances.'}, 400
 
     s.name = name[:100]
     s.category = request.form.get('category') or s.category
@@ -1333,7 +1333,7 @@ def coach_pro_dryland_save():
         })
 
     if not title or not blocks:
-        return {'ok': False, 'error': "Missing that session's title or exercises — try searching again."}, 400
+        return {'ok': False, 'error': "Missing that session's title or exercises. Try searching again."}, 400
 
     full_description = description
     if source_name or source_url:
@@ -1373,7 +1373,7 @@ def coach_pro_test_set_scan():
         return {'ok': False, 'error': 'Choose a photo first.'}, 400
     image_bytes = file.read()
     if len(image_bytes) > MAX_SCAN_BYTES:
-        return {'ok': False, 'error': 'That photo is too large — try a smaller image.'}, 400
+        return {'ok': False, 'error': 'That photo is too large. Try a smaller image.'}, 400
 
     memberships = (
         db.session.query(SquadMembership)
@@ -1413,7 +1413,7 @@ def coach_pro_set_scan():
         return {'ok': False, 'error': 'Choose a photo first.'}, 400
     image_bytes = file.read()
     if len(image_bytes) > MAX_SCAN_BYTES:
-        return {'ok': False, 'error': 'That photo is too large — try a smaller image.'}, 400
+        return {'ok': False, 'error': 'That photo is too large. Try a smaller image.'}, 400
 
     result = extract_set_from_image(
         image_bytes,
@@ -1468,7 +1468,7 @@ def coach_pro_test_set_log():
         if user_id not in valid_ids or not times:
             continue
         best = min(times, key=_secs)
-        all_times_note = f'{test_label} — reps: {", ".join(times)}' if len(times) > 1 else test_label
+        all_times_note = f'{test_label}, reps: {", ".join(times)}' if len(times) > 1 else test_label
         db.session.add(Swim(
             user_id=user_id,
             event=event,
@@ -1625,7 +1625,7 @@ def squad_join(invite_code):
     if not squad:
         abort(404)
 
-    # A membership may already exist for this user — either because they
+    # A membership may already exist for this user. Either because they
     # were invited by email while already having an account (user_id was
     # linked at invite time), or because they joined previously. Either way,
     # only an 'active' membership means there's nothing left to do here;
@@ -1695,7 +1695,7 @@ def consent_form(membership_id):
         membership.status = 'active'
         membership.joined_at = datetime.utcnow()
         db.session.commit()
-        flash(f'Consent recorded — welcome to {squad.name}.', 'success')
+        flash(f'Consent recorded, welcome to {squad.name}.', 'success')
         return redirect(url_for('main.dashboard'))
 
     return render_template('consent_form.html', membership=membership, squad=squad)
@@ -1897,9 +1897,9 @@ def _import_notes(ev):
     start, end = ev.get('start_date'), ev.get('end_date')
     if end and end != start:
         if start.month == end.month and start.year == end.year:
-            bits.append(f"{start.day}–{end.strftime('%d %b %Y')}")
+            bits.append(f"{start.day}, {end.strftime('%d %b %Y')}")
         else:
-            bits.append(f"{start.strftime('%d %b')} – {end.strftime('%d %b %Y')}")
+            bits.append(f"{start.strftime('%d %b')} ,  {end.strftime('%d %b %Y')}")
     if ev.get('location'):
         bits.append(ev['location'])
     bits.append('Imported from SCWC calendar')

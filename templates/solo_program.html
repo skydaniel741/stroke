@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your program — STROKE</title>
+<title>Your program | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -62,7 +62,7 @@
   .pr-cal-day.rest .pr-cal-focus{color:#a9a5bd;}
   .pr-cal-total{align-self:flex-start;font-size:10px;font-weight:800;color:#2c2942;background:#c8d5f6;padding:2px 8px;border-radius:20px;}
 
-  /* Selected day's full session — the readable, non-cramped view */
+  /* Selected day's full session, the readable, non-cramped view */
   .pr-day-detail{margin-top:14px;}
   .pr-day-panel{display:none;border:1px solid #e4e8f4;border-radius:16px;background:#fff;padding:16px 18px;box-shadow:0 10px 26px rgba(58,66,120,.10);}
   .pr-day-panel.active{display:block;}
@@ -170,7 +170,7 @@
   <h1 class="pr-h1">Your training week</h1>
 
   <div class="pr-tune" style="margin-bottom:12px">
-    Training for a race? <a href="/solo/plan">Build a race plan</a> — a full multi-week block with pace targets from your CSS. While a plan is active, follow the plan over this weekly program.
+    Training for a race? <a href="/solo/plan">Build a race plan</a>, a full multi-week block with pace targets from your CSS. While a plan is active, follow the plan over this weekly program.
   </div>
   <p class="pr-overview">{{ program.overview }}</p>
 
@@ -190,7 +190,7 @@
     <div class="pr-stats">
       <div class="pr-stat"><div class="pr-stat-num">{{ training_days | length }}</div><div class="pr-stat-lbl">Sessions / week</div></div>
       <div class="pr-stat"><div class="pr-stat-num">{{ '{:,}'.format(week_total) }}m</div><div class="pr-stat-lbl">Weekly volume</div></div>
-      <div class="pr-stat"><div class="pr-stat-num">{{ profile.level or '—' }}</div><div class="pr-stat-lbl">Level</div></div>
+      <div class="pr-stat"><div class="pr-stat-num">{{ profile.level or 'n/a' }}</div><div class="pr-stat-lbl">Level</div></div>
     </div>
 
     <div class="pr-cal-label">
@@ -253,7 +253,7 @@
       </div>
       {% endfor %}
     </div>
-    <p class="pr-cal-locked-note">Planned once you <a href="/solo/onboarding">rebuild</a> during that week — the AI plans one week at a time using your latest progress.</p>
+    <p class="pr-cal-locked-note">Planned once you <a href="/solo/onboarding">rebuild</a> during that week, the AI plans one week at a time using your latest progress.</p>
 
   {% elif program.sessions %}
     {# Programs generated before the calendar update -- offer a rebuild #}
@@ -286,7 +286,7 @@
 
   <div class="pr-section-label">Nutrition for you</div>
   <a class="pr-coach-cta" href="/solo/coach?topic=nutrition">
-    <span class="pr-coach-cta-txt"><b>Ask your AI nutrition coach</b><span>Meals, timing, hydration — tied to today's actual training, not a static plan.</span></span>
+    <span class="pr-coach-cta-txt"><b>Ask your AI nutrition coach</b><span>Meals, timing, hydration, tied to today's actual training, not a static plan.</span></span>
     <span class="pr-coach-cta-arrow">Chat →</span>
   </a>
   {% if nutrition and nutrition.focus_note %}
@@ -314,7 +314,7 @@
     <a href="/solo/onboarding" class="pr-btn">Rebuild program</a>
   </div>
   <p style="font-size:12px;color:#9a96b0;margin-top:10px">
-    {% if regens_left > 0 %}{{ regens_left }} of {{ regen_limit }} rebuilds left this week.{% else %}You've used all {{ regen_limit }} rebuilds this week — resets Monday.{% endif %}
+    {% if regens_left > 0 %}{{ regens_left }} of {{ regen_limit }} rebuilds left this week.{% else %}You've used all {{ regen_limit }} rebuilds this week, resets Monday.{% endif %}
   </p>
 </div>
 

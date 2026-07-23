@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Log swim — STROKE</title>
+<title>Log swim | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -22,7 +22,7 @@
 </nav>
 
 <!-- ═══════════════════════════════════
-     SCREEN 0 — CHOOSE PATH
+     SCREEN 0: CHOOSE PATH
 ════════════════════════════════════ -->
 <div class="screen active" id="screen0">
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -72,7 +72,7 @@
 </div>
 
 <!-- ═══════════════════════════════════
-     SCREEN 1 — PB EVENT PICKER
+     SCREEN 1: PB EVENT PICKER
 ════════════════════════════════════ -->
 <div class="screen" id="screen1">
   <p class="screen-title">Pick event</p>
@@ -100,7 +100,7 @@
 </div>
 
 <!-- ═══════════════════════════════════
-     SCREEN 2 — PB TIME ENTRY
+     SCREEN 2: PB TIME ENTRY
 ════════════════════════════════════ -->
 <div class="screen" id="screen2">
   <p class="screen-title">Enter time</p>
@@ -128,7 +128,7 @@
 </div>
 
 <!-- ═══════════════════════════════════
-     SCREEN 3 — SESSION BUILDER
+     SCREEN 3: SESSION BUILDER
 ════════════════════════════════════ -->
 <div class="screen" id="screen3">
   <p class="screen-title">Build session</p>
@@ -211,7 +211,7 @@
     <div class="wizard-step" id="wstep3">
       <p class="wizard-q">On the clock, or resting?</p>
       <div class="wizard-options wizard-options-sm" id="wRestType"></div>
-      <p class="wizard-q wizard-q-sub">"On" = send-off/interval — you leave again every X. "Rest" = an actual break before the next set.</p>
+      <p class="wizard-q wizard-q-sub">"On" = send-off/interval. You leave again every X. "Rest" = an actual break before the next set.</p>
       <div class="wizard-options" id="wRest"></div>
       <input class="wizard-custom-input" type="text" id="wRestCustom" placeholder="e.g. 1:15" maxlength="8" oninput="wizardCustom('rest', this.value)">
       <div class="wizard-advanced-toggle" onclick="toggleAdvanced()">+ Add a note or heart rate target (optional)</div>
@@ -244,7 +244,7 @@
 </div>
 
 <!-- ═══════════════════════════════════
-     SCREEN 4 — CONFIRM & SAVE
+     SCREEN 4: CONFIRM & SAVE
 ════════════════════════════════════ -->
 <div class="screen" id="screen4">
   <p class="screen-title">Save swim</p>
@@ -253,7 +253,7 @@
   <div class="confirm-card">
     <div class="confirm-row"><span class="confirm-key">Type</span><span class="confirm-val" id="cType">PB</span></div>
     <div class="confirm-row"><span class="confirm-key">Event</span><span class="confirm-val" id="cEvent">100m Freestyle</span></div>
-    <div class="confirm-row"><span class="confirm-key">Time / Volume</span><span class="confirm-val" id="cTime">—</span></div>
+    <div class="confirm-row"><span class="confirm-key">Time / Volume</span><span class="confirm-val" id="cTime">n/a</span></div>
     <div class="confirm-row"><span class="confirm-key">Pool</span><span class="confirm-val" id="cPool">25m</span></div>
     <div class="confirm-row"><span class="confirm-key">Date</span><span class="confirm-val" id="cDate">Today</span></div>
   </div>
@@ -406,12 +406,12 @@ function confirmSaveTemplate(){
     .then(r=>r.json())
     .then(data=>{
       if(data.ok){
-        status.textContent = `Saved as "${data.name}" — find it in the Set Library.`;
+        status.textContent = `Saved as "${data.name}". Find it in the Set Library.`;
       } else {
         status.textContent = data.error || 'Could not save set.';
       }
     })
-    .catch(()=>{ status.textContent = 'Could not save set — try again.'; });
+    .catch(()=>{ status.textContent = 'Could not save set. Try again.'; });
 }
 
 // ─── PB POOL ───
@@ -494,7 +494,7 @@ function toggleSplits(){
 function renderSplitsPreview(){
   const parts = parseSplits();
   document.getElementById('splitsPreview').textContent = parts.length
-    ? parts.length+' split'+(parts.length!==1?'s':'')+' — '+parts.join(', ')
+    ? parts.length+' split'+(parts.length!==1?'s':'')+', '+parts.join(', ')
     : '';
 }
 
@@ -508,7 +508,7 @@ function prepPBConfirm(){
   const today = new Date().toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'});
   document.getElementById('confirmMode').textContent = 'PB / race time';
   document.getElementById('cType').textContent = 'PB';
-  document.getElementById('cEvent').textContent = (pb.distance||'—')+' '+pb.stroke;
+  document.getElementById('cEvent').textContent = (pb.distance||'n/a')+' '+pb.stroke;
   document.getElementById('cTime').textContent = getTimeStr();
   document.getElementById('cPool').textContent = pb.pool+'m';
   document.getElementById('cDate').textContent = today;
@@ -616,7 +616,7 @@ function blockVolumeOk(){
   const warn = document.getElementById('wVolWarn');
   if(r > 0 && d > 0 && r * d > MAX_BLOCK_VOLUME){
     if(warn){
-      warn.textContent = `That's ${(r*d).toLocaleString()}m in one set — check the reps and distance (max 15,000m).`;
+      warn.textContent = `That's ${(r*d).toLocaleString()}m in one set. Check the reps and distance (max 15,000m).`;
       warn.style.display = 'block';
     }
     return false;
@@ -701,7 +701,7 @@ function escapeHtml(str){
 function renderSetsSummary(){
   const wrap = document.getElementById('setsSummary');
   if(sessionSets.length===0){
-    wrap.innerHTML = `<p class="sets-empty">No sets yet — tap "+ Add a set" to start.</p>`;
+    wrap.innerHTML = `<p class="sets-empty">No sets yet. Tap "+ Add a set" to start.</p>`;
   } else {
     wrap.innerHTML = sessionSets.map((s,i)=>`
       <div class="set-summary-row">

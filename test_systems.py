@@ -1272,7 +1272,151 @@ def test_role_isolation(app):
 
 
 # ===========================================================================
-# 16. Public pages: every marketing/legal route renders and links resolve
+# 16. Combined accounts: one login can be both a swimmer and a parent
+# ===========================================================================
+
+def test_combined_parent_swimmer(app):
+    """A swimming parent keeps ONE account.
+
+    Parent access is derived from live ParentLink rows rather than stored on
+    User.role, so this suite checks both directions and the edges:
+      - a swimmer claims a link and gains the parent view without losing
+        their own training;
+      - claiming requires an explicit confirmation, not just a page load;
+      - you cannot link yourself, or link the same swimmer twice;
+      - a coach can be a parent too;
+      - a parent-only account can turn on its own training and keep its links;
+      - revoking the last link removes parent access immediately, even though
+        role never changed.
+    """
+    from app import db
+    from models import User, Swim, ParentLink
+    import secrets as _secrets
+
+    def _mk_link(swimmer_id):
+        token = _secrets.token_urlsafe(24)
+        db.session.add(ParentLink(swimmer_id=swimmer_id, invite_token=token, status='pending'))
+        db.session.commit()
+        return token
+
+    with app.app_context():
+        mum = _mk_user(db, User, 'combomum@test.com')          # swims masters
+        kid = _mk_user(db, User, 'combokid@test.com')          # her daughter
+        coach = _mk_user(db, User, 'combocoach@test.com')
+        coach.role = 'coach'
+        parent_only = _mk_user(db, User, 'comboparent@test.com')
+        parent_only.role = 'parent'
+        db.session.commit()
+
+        db.session.add(Swim(user_id=mum.id, event='50m Freestyle', pool='25m',
+                            stroke='FR', time='31.40', logged_at=datetime.utcnow()))
+        db.session.add(Swim(user_id=kid.id, event='100m Backstroke', pool='25m',
+                            stroke='BK', time='1:11.90', logged_at=datetime.utcnow()))
+        db.session.commit()
+        mum_id, kid_id = mum.id, kid.id
+        kid_token = _mk_link(kid_id)
+        own_token = _mk_link(mum_id)
+
+    client = app.test_client()
+    client.post('/login', data={'email': 'combomum@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+
+    # Before claiming, the swimmer has no business in the parent area.
+    check('swimmer without a link is refused the parent view',
+          client.get('/parent/dashboard').status_code == 403)
+
+    # Opening the invite must NOT link on the GET -- it has to be confirmed.
+    r = client.get(f'/parent/join/{kid_token}')
+    check('opening an invite shows a confirmation', r.status_code == 200, r.status_code)
+    check('confirmation names the swimmer', 'combokid' in r.get_data(as_text=True))
+    with app.app_context():
+        check('GET alone does not create the link',
+              db.session.query(ParentLink).filter_by(invite_token=kid_token).first().status == 'pending')
+    check('still refused before confirming', client.get('/parent/dashboard').status_code == 403)
+
+    # Confirming links the account.
+    r = client.post(f'/parent/join/{kid_token}', follow_redirects=True)
+    check('confirming the invite works', r.status_code == 200, r.status_code)
+    with app.app_context():
+        link = db.session.query(ParentLink).filter_by(invite_token=kid_token).first()
+        check('link is now active', link.status == 'active')
+        check('link points at the claiming account', link.parent_id == mum_id)
+        check('claiming did NOT change their role',
+              db.session.get(User, mum_id).role == 'swimmer',
+              db.session.get(User, mum_id).role)
+
+    # Both sides now work off the one login.
+    parent_body = client.get('/parent/dashboard').get_data(as_text=True)
+    check('combined account sees the child in the parent view', '1:11.90' in parent_body)
+    check('parent view does not show the parent\'s own swim', '31.40' not in parent_body)
+
+    own_body = client.get('/dashboard', follow_redirects=True).get_data(as_text=True)
+    check('combined account still reaches its own training',
+          client.get('/dashboard').status_code in (200, 302))
+    check('own dashboard does not show the child\'s swim', '1:11.90' not in own_body)
+    check('own dashboard offers the parent view', '/parent/dashboard' in own_body)
+
+    # You cannot parent yourself, and you cannot double-link.
+    r = client.post(f'/parent/join/{own_token}', follow_redirects=True)
+    with app.app_context():
+        check('cannot claim your own invite link',
+              db.session.query(ParentLink).filter_by(invite_token=own_token).first().status == 'pending')
+    with app.app_context():
+        second = _mk_link(kid_id)
+    client.post(f'/parent/join/{second}', follow_redirects=True)
+    with app.app_context():
+        check('cannot link the same swimmer twice',
+              db.session.query(ParentLink)
+                .filter_by(swimmer_id=kid_id, parent_id=mum_id, status='active').count() == 1)
+    client.get('/logout')
+
+    # A coach can be a parent as well.
+    with app.app_context():
+        coach_token = _mk_link(kid_id)
+    client.post('/login', data={'email': 'combocoach@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+    client.post(f'/parent/join/{coach_token}', follow_redirects=True)
+    check('a coach can hold a parent link too',
+          client.get('/parent/dashboard').status_code == 200)
+    with app.app_context():
+        check('claiming did not demote the coach',
+              db.session.query(User).filter_by(email='combocoach@test.com').first().role == 'coach')
+    client.get('/logout')
+
+    # The other direction: a parent-only account takes up swimming.
+    with app.app_context():
+        po_token = _mk_link(kid_id)
+    client.post('/login', data={'email': 'comboparent@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+    client.post(f'/parent/join/{po_token}', follow_redirects=True)
+    r = client.post('/parent/enable-training', follow_redirects=True)
+    check('parent-only account can add its own training', r.status_code == 200, r.status_code)
+    with app.app_context():
+        po = db.session.query(User).filter_by(email='comboparent@test.com').first()
+        check('role flipped to swimmer', po.role == 'swimmer', po.role)
+        check('parent links survived the switch', len(po.linked_swimmer_ids()) == 1)
+    check('and still reaches the parent view',
+          client.get('/parent/dashboard').status_code == 200)
+    client.get('/logout')
+
+    # Revoking the last link removes parent access, without touching role.
+    client.post('/login', data={'email': 'combomum@test.com', 'password': 'test1234'},
+                follow_redirects=True)
+    with app.app_context():
+        for l in db.session.query(ParentLink).filter_by(parent_id=mum_id).all():
+            l.status = 'revoked'
+        db.session.commit()
+    check('revoking the last link removes parent access',
+          client.get('/parent/dashboard').status_code == 403)
+    with app.app_context():
+        check('own account survives losing parent access',
+              db.session.get(User, mum_id).role == 'swimmer')
+    check('own training still reachable after revocation',
+          client.get('/dashboard').status_code == 200)
+
+
+# ===========================================================================
+# 17. Public pages: every marketing/legal route renders and links resolve
 # ===========================================================================
 
 def test_public_pages(app):
@@ -1281,7 +1425,7 @@ def test_public_pages(app):
     client = app.test_client()
 
     static_paths = ['/', '/privacy', '/terms', '/cookies', '/data-safety', '/faq',
-                    '/login', '/login/coach', '/login/parent', '/signup']
+                    '/login', '/login/coach', '/signup']
     for path in static_paths:
         r = client.get(path)
         check(f'{path} renders', r.status_code == 200, r.status_code)
@@ -1296,6 +1440,29 @@ def test_public_pages(app):
     check('unknown feature slug 404s', client.get('/features/not-a-thing').status_code == 404)
     check('unknown audience 404s', client.get('/for/nobody').status_code == 404)
 
+    # Swimmers and parents share one page and one login door, because they are
+    # frequently the same account. The old three-way split must redirect, not
+    # 404, so existing links and parent invite emails still land.
+    for old_path, target in (('/for/parents', '/for/swimmers-and-parents'),
+                             ('/for/swimmers', '/for/swimmers-and-parents'),
+                             ('/login/parent', '/login')):
+        r = client.get(old_path)
+        check(f'{old_path} redirects', r.status_code in (301, 302), r.status_code)
+        check(f'{old_path} redirects to {target}', r.headers.get('Location', '').endswith(target),
+              r.headers.get('Location'))
+        check(f'{old_path} lands on a real page',
+              client.get(old_path, follow_redirects=True).status_code == 200)
+
+    login_body = client.get('/login').get_data(as_text=True)
+    # Trailing space so this counts the tabs, not the .auth-roles container.
+    check('login offers exactly two doors', login_body.count('class="auth-role ') == 2,
+          login_body.count('class="auth-role '))
+    check('the non-coach door covers both', 'Swimmer or parent' in login_body)
+
+    home_nav = client.get('/').get_data(as_text=True)
+    check('nav no longer splits parents from swimmers',
+          '/for/parents"' not in home_nav and '/for/swimmers"' not in home_nav)
+
     # Every footer link must resolve -- a legal page nobody can reach is worse
     # than no legal page, because it looks like one exists.
     for label, href in FOOTER_LINKS:
@@ -1304,7 +1471,7 @@ def test_public_pages(app):
     # The landing page must offer the explainers, not just the signup form.
     home = client.get('/').get_data(as_text=True)
     check('landing links to the coach page', '/for/coaches' in home)
-    check('landing links to the parent page', '/for/parents' in home)
+    check('landing links to the swimmer and parent page', '/for/swimmers-and-parents' in home)
     check('landing links to a feature deep-dive', '/features/session-builder' in home)
     check('landing no longer shows the hero pill', 'hero-pill' not in home)
     check('landing carries the cookie notice', 'cookiebar' in home)
@@ -1314,8 +1481,8 @@ def test_public_pages(app):
     signup = client.get('/signup').get_data(as_text=True)
     check('signup explains the parent route', 'parent link' in signup.lower())
 
-    # The three login doors are cosmetic: all three post to the same endpoint.
-    for path in ('/login', '/login/coach', '/login/parent'):
+    # The two login doors are cosmetic: both post to the same endpoint.
+    for path in ('/login', '/login/coach'):
         body = client.get(path).get_data(as_text=True)
         check(f'{path} posts to /login', 'action="/login"' in body, path)
 
@@ -1351,6 +1518,7 @@ def main():
         ('Event classifier (heuristic)', test_event_classifier_heuristic, False),
         ('Event import route (idempotent)', test_event_import_route, True),
         ('Role isolation (parent/swimmer/coach)', test_role_isolation, True),
+        ('Combined parent + swimmer accounts', test_combined_parent_swimmer, True),
         ('Public marketing + legal pages', test_public_pages, True),
     ]
     for name, fn, needs_app in suites:

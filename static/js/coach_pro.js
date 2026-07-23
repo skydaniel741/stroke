@@ -1,4 +1,4 @@
-/* Coach Pro — the real coaching dashboard, wired to your actual squads,
+/* Coach Pro, the real coaching dashboard, wired to your actual squads,
    swimmers, sets and assignments via /coach/pro/api/*. No fake data,
    no billing tab. Tabs: roster, attendance, builder, athlete hub,
    analytics, AI assistant. */
@@ -7,9 +7,9 @@ const STROKE_LABELS = { FR: 'Freestyle', BK: 'Backstroke', BR: 'Breaststroke', F
 const SET_CATEGORIES = ['Fast', 'Sprint', 'Easy', 'Recovery', 'Heart Rate', 'Threshold', 'Lactate', 'Drill', 'Fitness', 'Race Pace', 'Starts & Turns', 'Open Water', 'Triathlon'];
 const TARGET_MEET_PRESETS = ['NAGs', 'NZ Short Course Champs', 'NZ Short Course Open', 'NZ Long Course Champs', 'NZ Long Course Open', 'Club Champs'];
 const SEASON_PHASE_COLORS = {
-  'Early season — base building': 'bg-slate-100 text-slate-700',
-  'Mid season — quality': 'bg-blue-50 text-blue-700',
-  'Taper — sharpen for racing': 'bg-amber-50 text-amber-700',
+  'Early season, base building': 'bg-slate-100 text-slate-700',
+  'Mid season, quality': 'bg-blue-50 text-blue-700',
+  'Taper, sharpen for racing': 'bg-amber-50 text-amber-700',
   'Post long-course transition': 'bg-violet-50 text-violet-700',
 };
 
@@ -40,7 +40,7 @@ async function cpApi(url, opts) {
   let data = null;
   try { data = await res.json(); } catch (e) { /* non-JSON response */ }
   if (!res.ok || (data && data.ok === false)) {
-    alert((data && data.error) || 'Something went wrong — please try again.');
+    alert((data && data.error) || 'Something went wrong, please try again.');
     throw new Error('cp api error: ' + url);
   }
   return data;
@@ -162,7 +162,7 @@ function cpEsc(str) {
 /* ---------- athlete_model.py state helpers (progression / trend / load) ---------- */
 
 function cpFmtSecs(secs) {
-  if (secs == null) return '—';
+  if (secs == null) return 'n/a';
   if (secs >= 60) {
     const m = Math.floor(secs / 60);
     const s = (secs % 60).toFixed(2).padStart(5, '0');
@@ -219,7 +219,7 @@ function cpRenderStats() {
 
   document.getElementById('cpStatSwimmers').textContent = CP.swimmers.length;
   document.getElementById('cpStatPoints').textContent = avgDistance.toLocaleString() + 'm';
-  document.getElementById('cpStatAttendance').textContent = avgAttendance == null ? '—' : avgAttendance + '%';
+  document.getElementById('cpStatAttendance').textContent = avgAttendance == null ? 'n/a' : avgAttendance + '%';
   document.getElementById('cpStatActiveSets').textContent = activeSetsCount;
 }
 
@@ -270,7 +270,7 @@ function cpDaysBetween(startStr, endStr) {
 
 function cpDurationLabel(startStr, endStr) {
   const days = cpDaysBetween(startStr, endStr);
-  if (days === null) return '—';
+  if (days === null) return 'n/a';
   if (days < 0) return 'invalid range';
   const weeks = Math.round(days / 7);
   return weeks >= 1 ? `${weeks} wk${weeks === 1 ? '' : 's'}` : `${days} day${days === 1 ? '' : 's'}`;
@@ -317,7 +317,7 @@ function cpSeasonEditorHtml(ui) {
           <label class="block text-[10px] text-slate-500 font-mono mb-1">Meet date</label>
           <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-full pl-3 pr-1.5 py-1 focus-within:ring-1 focus-within:ring-brand-500">
             <input type="date" id="cpSeasonMeetDate" class="flex-1 min-w-0 text-[11px] text-slate-700 bg-transparent border-none outline-hidden font-mono" value="${ui.seasonMeetDate}">
-            <span id="cpSeasonMeetCountdown" class="text-[9px] font-mono font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-full shrink-0">${ui.seasonMeetDate ? cpWeeksOut(ui.seasonMeetDate) : '—'}</span>
+            <span id="cpSeasonMeetCountdown" class="text-[9px] font-mono font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-full shrink-0">${ui.seasonMeetDate ? cpWeeksOut(ui.seasonMeetDate) : 'n/a'}</span>
           </div>
         </div>
       </div>
@@ -396,7 +396,7 @@ function cpSeasonBannerHtml() {
 function cpRenderSchedule() {
   const ui = CP.ui.schedule;
   if (CP.squads.length === 0) {
-    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet — create one from Squad Roster first.</div>`;
+    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet. Create one from Squad Roster first.</div>`;
   }
 
   const next = CP.upcomingEvents[0];
@@ -413,7 +413,7 @@ function cpRenderSchedule() {
       </div>
       ${next.setTitle ? '<span class="text-[10px] text-brand-400 bg-white/10 px-3 py-1.5 rounded-lg">Auto-logs for swimmers marked present</span>' : ''}
     </div>` : `
-    <div class="bg-slate-50 border border-slate-100 rounded-xl p-6 text-center text-xs text-slate-400">Nothing scheduled yet — plan your first session below.</div>`;
+    <div class="bg-slate-50 border border-slate-100 rounded-xl p-6 text-center text-xs text-slate-400">Nothing scheduled yet. Plan your first session below.</div>`;
 
   const createForm = ui.showCreate ? `
     <form id="cpCreateEventForm" class="bg-slate-50 border border-slate-200 rounded-xl p-5 grid grid-cols-1 md:grid-cols-2 gap-4 shadow-sm">
@@ -450,7 +450,7 @@ function cpRenderSchedule() {
       <div>
         <label class="block text-[10px] text-slate-500 font-medium mb-1">Attach a set (auto-logs for attendees)</label>
         <select name="set_id" class="w-full text-xs px-2.5 py-1.5 bg-white border border-slate-200 rounded focus:outline-hidden">
-          <option value="">No set — just a calendar entry</option>
+          <option value="">No set: just a calendar entry</option>
           ${CP.savedSets.map(s => `<option value="${s.id}">${cpEsc(s.title)} · ${s.totalDistance}m</option>`).join('')}
         </select>
       </div>
@@ -520,7 +520,7 @@ function cpRenderTestSets() {
     </div>`;
   }
   if (CP.squads.length === 0) {
-    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet — create one from Squad Roster first.</div>`;
+    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet. Create one from Squad Roster first.</div>`;
   }
 
   const squadSwimmers = CP.swimmers.filter(s => s.userId && s.squadId === ui.squadId && s.status === 'active');
@@ -551,7 +551,7 @@ function cpRenderTestSets() {
         ${r.results.map((row, i) => `
           <div class="flex flex-wrap items-center gap-3 px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl" data-ts-row="${i}">
             <select class="ts-swimmer text-xs px-2 py-1.5 bg-white border ${row.userId ? 'border-emerald-200' : 'border-amber-300'} rounded w-44">
-              <option value="">Skip — don't log</option>
+              <option value="">Skip: don't log</option>
               ${squadSwimmers.map(sw => `<option value="${sw.userId}" ${sw.userId === row.userId ? 'selected' : ''}>${cpEsc(sw.name)}</option>`).join('')}
             </select>
             <span class="text-[10px] ${row.userId ? 'text-emerald-600' : 'text-amber-600'} font-semibold w-28">${row.userId ? 'Matched' : `Board says "${cpEsc(row.name)}"`}</span>
@@ -567,7 +567,7 @@ function cpRenderTestSets() {
     </div>` : `
     <div class="p-12 text-center bg-slate-50 border border-slate-100 rounded-xl">
       <i data-lucide="camera" class="w-6 h-6 text-slate-400 mx-auto mb-3"></i>
-      <p class="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">Ran a test set like 5×100 max? Photograph the results board or your clipboard and the times land on each swimmer's profile — no spreadsheet needed.</p>
+      <p class="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">Ran a test set like 5×100 max? Photograph the results board or your clipboard and the times land on each swimmer's profile. No spreadsheet needed.</p>
     </div>`;
 
   return `
@@ -597,7 +597,7 @@ function cpRenderAnnouncements() {
   const ui = CP.ui.announcements;
   if (!ui.squadId && CP.squads.length) ui.squadId = CP.squads[0].id;
   if (CP.squads.length === 0) {
-    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet — create one from Squad Roster first.</div>`;
+    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet. Create one from Squad Roster first.</div>`;
   }
 
   const posts = CP.announcements.filter(a => a.squadId === ui.squadId);
@@ -617,7 +617,7 @@ function cpRenderAnnouncements() {
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h3 class="text-sm font-semibold text-slate-800 flex items-center gap-2"><i data-lucide="megaphone" class="w-4 h-4 text-slate-500"></i> Announcements</h3>
-          <p class="text-xs text-slate-400 mt-1">One-way message board — swimmers see these on their dashboard.</p>
+          <p class="text-xs text-slate-400 mt-1">One-way message board. Swimmers see these on their dashboard.</p>
         </div>
         <select id="cpAnnSquadSelect" class="text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg font-medium focus:outline-hidden">
           ${CP.squads.map(sq => `<option value="${sq.id}" ${sq.id === ui.squadId ? 'selected' : ''}>${cpEsc(sq.name)}</option>`).join('')}
@@ -625,7 +625,7 @@ function cpRenderAnnouncements() {
       </div>
 
       <form id="cpAnnForm" class="bg-white border border-slate-200 rounded-xl p-4 flex gap-2.5">
-        <input type="text" name="message" id="cpAnnInput" required placeholder="e.g. No training Friday — pool closed for gala setup" class="flex-1 text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-brand-500 focus:outline-hidden">
+        <input type="text" name="message" id="cpAnnInput" required placeholder="e.g. No training Friday. Pool closed for gala setup" class="flex-1 text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-brand-500 focus:outline-hidden">
         <button type="button" data-voice-target="cpAnnInput" title="Dictate with your voice" class="voice-btn shrink-0 w-9 h-9 flex items-center justify-center border border-slate-200 rounded-lg text-slate-600 hover:text-brand-700 hover:border-brand-300 transition">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </button>
@@ -643,7 +643,7 @@ function cpRenderReports() {
   const ui = CP.ui.reports;
   if (!ui.squadId && CP.squads.length) ui.squadId = CP.squads[0].id;
   if (CP.squads.length === 0) {
-    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet — create one from Squad Roster first.</div>`;
+    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet. Create one from Squad Roster first.</div>`;
   }
 
   const squad = CP.squads.find(s => s.id === ui.squadId);
@@ -654,7 +654,7 @@ function cpRenderReports() {
       <td class="px-4 py-3 font-semibold text-slate-900">${cpEsc(s.name)}</td>
       <td class="px-4 py-3 text-center font-mono">${s.sessionsCount}</td>
       <td class="px-4 py-3 text-center font-mono">${(s.totalDistance || 0).toLocaleString()}m</td>
-      <td class="px-4 py-3 text-center font-mono">${s.attendanceRate == null ? '—' : s.attendanceRate + '%'}</td>
+      <td class="px-4 py-3 text-center font-mono">${s.attendanceRate == null ? 'n/a' : s.attendanceRate + '%'}</td>
       <td class="px-4 py-3 text-xs">
         ${(s.personalBests || []).length === 0 ? '<span class="text-slate-400 italic">None logged</span>' :
           s.personalBests.map(pb => `<span class="inline-block mr-3 whitespace-nowrap">${cpEsc(pb.event)}: <span class="font-mono font-bold">${cpEsc(pb.time)}</span></span>`).join('')}
@@ -678,7 +678,7 @@ function cpRenderReports() {
 
       <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div class="px-5 py-4 border-b border-slate-100">
-          <h4 class="text-base font-bold text-slate-900">${cpEsc(squad ? squad.name : '')} — squad report</h4>
+          <h4 class="text-base font-bold text-slate-900">${cpEsc(squad ? squad.name : '')}, squad report</h4>
           <p class="text-[10px] text-slate-400 mt-0.5">Generated ${CP.today} · ${squadSwimmers.length} active swimmer(s) · attendance measured over the last 30 days of roll calls</p>
         </div>
         ${squadSwimmers.length === 0 ? '<div class="p-12 text-center text-xs text-slate-400">No active swimmers in this squad yet.</div>' : `
@@ -729,7 +729,7 @@ function cpRenderAttendance() {
   if (!ui.squadId && CP.squads.length) ui.squadId = CP.squads[0].id;
 
   if (CP.squads.length === 0) {
-    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet — create one from Squad Roster first.</div>`;
+    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet. Create one from Squad Roster first.</div>`;
   }
 
   const squadSwimmers = CP.swimmers.filter(s => s.userId && s.squadId === ui.squadId && s.status === 'active');
@@ -765,7 +765,7 @@ function cpRenderAttendance() {
         </div>
       </div>
 
-      ${squadSwimmers.length === 0 ? `<div class="p-12 text-center text-slate-400 text-xs bg-slate-50 border border-slate-100 rounded-xl">No active swimmers in this squad yet — invites still pending count once they join.</div>` : `
+      ${squadSwimmers.length === 0 ? `<div class="p-12 text-center text-slate-400 text-xs bg-slate-50 border border-slate-100 rounded-xl">No active swimmers in this squad yet, invites still pending count once they join.</div>` : `
       <div class="flex items-center justify-between">
         <button data-action="cp-att-mark-all" class="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"><i data-lucide="check-check" class="w-3.5 h-3.5"></i> Mark everyone present</button>
         <span class="text-[10px] text-slate-400 font-medium">${markedCount}/${squadSwimmers.length} marked</span>
@@ -798,7 +798,7 @@ function cpRenderAI() {
     </div>`;
   }
   if (CP.squads.length === 0) {
-    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet — create one from Squad Roster first.</div>`;
+    return `<div class="p-12 text-center text-slate-400 text-xs">No squads yet. Create one from Squad Roster first.</div>`;
   }
 
   const insights = ui.insights;
@@ -812,7 +812,7 @@ function cpRenderAI() {
     </div>` : !insights ? `
     <div class="p-16 text-center bg-slate-50 border border-slate-100 rounded-xl">
       <i data-lucide="sparkles" class="w-6 h-6 text-slate-400 mx-auto mb-3"></i>
-      <p class="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">Pick a squad and hit Analyze. The assistant reads the last 60 days of logged swims, sessions, attendance and injury flags — then tells you who needs attention and what to train next.</p>
+      <p class="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">Pick a squad and hit Analyze. The assistant reads the last 60 days of logged swims, sessions, attendance and injury flags, then tells you who needs attention and what to train next.</p>
     </div>` : `
     <div class="space-y-5">
       <div class="bg-white border border-slate-200 rounded-xl p-5">
@@ -824,7 +824,7 @@ function cpRenderAI() {
         <div class="bg-white border border-slate-200 rounded-xl p-5">
           <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5"><i data-lucide="users" class="w-4 h-4 text-rose-500"></i> Swimmers to act on</h4>
           <div class="space-y-2.5">
-            ${(insights.swimmer_flags || []).length === 0 ? '<p class="text-xs text-slate-400 italic">Nobody flagged — squad looks healthy.</p>' :
+            ${(insights.swimmer_flags || []).length === 0 ? '<p class="text-xs text-slate-400 italic">Nobody flagged, squad looks healthy.</p>' :
               (insights.swimmer_flags || []).map(f => {
                 const st = cpAIFlagStyle(f.kind);
                 return `
@@ -888,13 +888,13 @@ function cpFamilyCell(swimmer) {
   const minorBadge = `
     <button data-action="cp-toggle-minor" data-membership-id="${swimmer.membershipId}"
       class="text-[9px] font-semibold px-1.5 py-0.5 rounded border transition ${swimmer.isMinor ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'}"
-      title="${swimmer.isMinor ? 'Marked as a minor — click to unmark' : 'Mark as a minor'}">${swimmer.isMinor ? 'Minor' : 'Mark minor'}</button>`;
+      title="${swimmer.isMinor ? 'Marked as a minor, click to unmark' : 'Mark as a minor'}">${swimmer.isMinor ? 'Minor' : 'Mark minor'}</button>`;
 
   let parentBit;
   if (swimmer.parentStatus === 'active') {
     parentBit = `<span class="text-[10px] text-emerald-600 font-medium">Parent: ${cpEsc(swimmer.parentName || '')}</span>`;
   } else if (swimmer.parentStatus === 'pending') {
-    parentBit = `<button data-action="cp-invite-parent" data-membership-id="${swimmer.membershipId}" class="text-[10px] text-amber-600 hover:text-amber-800 font-medium underline decoration-dotted" title="Pending — click to generate a fresh link">Invite pending</button>`;
+    parentBit = `<button data-action="cp-invite-parent" data-membership-id="${swimmer.membershipId}" class="text-[10px] text-amber-600 hover:text-amber-800 font-medium underline decoration-dotted" title="Pending, click to generate a fresh link">Invite pending</button>`;
   } else {
     parentBit = `<button data-action="cp-invite-parent" data-membership-id="${swimmer.membershipId}" class="text-[10px] text-brand-600 hover:text-brand-800 font-medium">+ Invite parent</button>`;
   }
@@ -933,7 +933,7 @@ function cpRenderImportPanel() {
     const mapPairs = Object.entries(pv.mapping || {}).filter(([, v]) => v);
     const mapLine = mapPairs.length
       ? mapPairs.map(([k, v]) => `<span class="text-slate-500">${cpEsc(k.replace('_', ' '))}</span> ← <span class="font-mono text-slate-700">${cpEsc(v)}</span>`).join('<span class="text-slate-300 mx-1.5">·</span>')
-      : '<span class="text-amber-600">The AI couldn\'t confidently map any columns — check your file has a name and email column.</span>';
+      : '<span class="text-amber-600">The AI couldn\'t confidently map any columns. Check your file has a name and email column.</span>';
 
     const rows = (pv.rows || []).map((r, i) => {
       const selectable = r.status === 'new';
@@ -942,12 +942,12 @@ function cpRenderImportPanel() {
           <td class="px-2 py-2 text-center">
             ${selectable
               ? `<input type="checkbox" data-action="cp-import-toggle-row" data-index="${i}" ${r._selected !== false ? 'checked' : ''} class="accent-brand-600 w-3.5 h-3.5 align-middle">`
-              : '<span class="text-slate-300">—</span>'}
+              : '<span class="text-slate-300">n/a</span>'}
           </td>
           <td class="px-3 py-2 font-medium text-slate-800">${cpEsc(r.name)}</td>
           <td class="px-3 py-2 text-slate-600">${cpEsc(r.email) || '<span class="text-slate-300 italic">none</span>'}</td>
-          <td class="px-3 py-2 text-slate-600">${cpEsc(r.group) || '<span class="text-slate-300">—</span>'}</td>
-          <td class="px-3 py-2 text-slate-500">${cpEsc(r.dob) || '<span class="text-slate-300">—</span>'}</td>
+          <td class="px-3 py-2 text-slate-600">${cpEsc(r.group) || '<span class="text-slate-300">n/a</span>'}</td>
+          <td class="px-3 py-2 text-slate-500">${cpEsc(r.dob) || '<span class="text-slate-300">n/a</span>'}</td>
           <td class="px-3 py-2">${cpImportStatusBadge(r.status, r.hasAccount)}</td>
         </tr>`;
     }).join('');
@@ -1081,8 +1081,8 @@ function cpRenderRoster() {
         <td class="px-4 py-3.5">${swimmerSquad ? `<span class="px-2 py-0.5 rounded text-[10px] font-medium border ${cpSquadColorClass(swimmerSquad.color)}">${cpEsc(swimmerSquad.name)}</span>` : '<span class="text-slate-400 text-[10px] italic">Unassigned</span>'}</td>
         <td class="px-4 py-3.5 text-center font-mono font-bold text-slate-800">${swimmer.sessionsCount}</td>
         <td class="px-4 py-3.5 text-center font-mono text-slate-600">${(swimmer.totalDistance || 0).toLocaleString()}m</td>
-        <td class="px-4 py-3.5 text-center">${swimmer.attendanceRate == null ? '<span class="text-slate-300">—</span>' : `<span class="font-mono font-bold ${swimmer.attendanceRate >= 80 ? 'text-emerald-600' : swimmer.attendanceRate >= 50 ? 'text-amber-600' : 'text-rose-600'}">${swimmer.attendanceRate}%</span>`}</td>
-        <td class="px-4 py-3.5 text-slate-500">${swimmer.lastActive || '—'}</td>
+        <td class="px-4 py-3.5 text-center">${swimmer.attendanceRate == null ? '<span class="text-slate-300">n/a</span>' : `<span class="font-mono font-bold ${swimmer.attendanceRate >= 80 ? 'text-emerald-600' : swimmer.attendanceRate >= 50 ? 'text-amber-600' : 'text-rose-600'}">${swimmer.attendanceRate}%</span>`}</td>
+        <td class="px-4 py-3.5 text-slate-500">${swimmer.lastActive || 'n/a'}</td>
         <td class="px-4 py-3.5">${cpFamilyCell(swimmer)}</td>
         <td class="px-4 py-3.5 text-center">
           <div class="flex items-center justify-center gap-3">
@@ -1114,7 +1114,7 @@ function cpRenderRoster() {
             <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">${CP.swimmers.length} athletes</span>
           </button>
           ${squadButtons}
-          ${CP.squads.length === 0 ? '<p class="text-xs text-slate-400 italic px-2">No squads yet — create one above.</p>' : ''}
+          ${CP.squads.length === 0 ? '<p class="text-xs text-slate-400 italic px-2">No squads yet. Create one above.</p>' : ''}
         </div>
       </div>
 
@@ -1132,7 +1132,7 @@ function cpRenderRoster() {
         ${cpRenderImportPanel()}
         ${addSwimmerForm}
         <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-          ${filtered.length === 0 ? `<div class="p-12 text-center text-slate-400 text-xs">No swimmers in this cohort yet — invite one above.</div>` : `
+          ${filtered.length === 0 ? `<div class="p-12 text-center text-slate-400 text-xs">No swimmers in this cohort yet. Invite one above.</div>` : `
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-slate-600 border-collapse">
               <thead>
@@ -1334,7 +1334,7 @@ function cpRenderBuilder() {
         </div>
         ${assignment.notes ? `<p class="text-[10px] text-slate-500 bg-slate-50 p-2 border border-slate-100 rounded-lg mt-2.5 leading-normal italic">"${cpEsc(assignment.notes)}"</p>` : ''}
         <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-          <span class="flex items-center gap-1 font-mono"><i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i> Due: ${assignment.dueDate || '—'}</span>
+          <span class="flex items-center gap-1 font-mono"><i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i> Due: ${assignment.dueDate || 'n/a'}</span>
           <button data-action="cp-remove-assignment" data-id="${assignment.id}" class="text-slate-400 hover:text-rose-600 font-medium transition">Recall Assignment</button>
         </div>
       </div>`;
@@ -1363,7 +1363,7 @@ function cpRenderBuilder() {
         ${cpRenderAIGenPanel()}
         ${cpRenderDrylandPanel()}
         ${createSetForm}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${setCards || '<p class="text-xs text-slate-400 italic">No sets yet — create your first blueprint above.</p>'}</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${setCards || '<p class="text-xs text-slate-400 italic">No sets yet. Create your first blueprint above.</p>'}</div>
       </div>
       <div class="lg:col-span-5 space-y-5">
         ${dispatchPanel}
@@ -1392,11 +1392,11 @@ const CP_AIGEN_STYLES = [
   'Best fit for the focus',
   'Bowman-style aerobic engine (Phelps/NBAC)',
   'USRPT race-pace (Rushall)',
-  'Sprint & power — max velocity, full recovery',
+  'Sprint & power, max velocity, full recovery',
   'Threshold / CSS (British Swimming style)',
   'Technique & drill emphasis',
 ];
-const CP_AIGEN_PHASES = ['Early season — base building', 'Mid season — quality', 'Taper — sharpen for racing', 'Post long-course transition'];
+const CP_AIGEN_PHASES = ['Early season, base building', 'Mid season, quality', 'Taper, sharpen for racing', 'Post long-course transition'];
 const CP_AIGEN_LEVELS = ['Age group (12 & under)', 'Junior (13-16)', 'Senior club', 'National / elite'];
 
 function cpRenderAIGenPanel() {
@@ -1408,7 +1408,7 @@ function cpRenderAIGenPanel() {
         <h4 class="text-xs font-bold text-white flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-400"></i> AI set generator</h4>
         <button type="button" data-action="cp-aigen-toggle" class="text-[10px] text-slate-400 hover:text-white">Close</button>
       </div>
-      <p class="text-[11px] text-slate-400 leading-relaxed">Writes a full session — warm up to cool down — using real elite methodology: Bowman's aerobic IM engine, USRPT race-pace, sprint programs, CSS threshold work, phased for your point in the season.</p>
+      <p class="text-[11px] text-slate-400 leading-relaxed">Writes a full session, warm up to cool down, using real elite methodology: Bowman's aerobic IM engine, USRPT race-pace, sprint programs, CSS threshold work, phased for your point in the season.</p>
       <div>
         <label class="block text-[10px] text-slate-400 font-medium mb-1">Training focus</label>
         <input type="text" name="focus" placeholder="e.g. 200 free back-half endurance, fly technique under fatigue" class="w-full text-xs px-2.5 py-1.5 bg-slate-800 border border-slate-800 text-slate-200 rounded focus:outline-hidden">
@@ -1470,8 +1470,8 @@ function cpRenderDrylandPanel() {
       const saved = ui.savedIndexes.includes(i);
       const exList = (c.exercises || []).map(ex => `
         <li class="flex items-start justify-between gap-2 py-1 border-b border-slate-800 last:border-0">
-          <span class="text-slate-200">${cpEsc(ex.name)}${ex.notes ? ` <span class="text-slate-500 italic">— ${cpEsc(ex.notes)}</span>` : ''}</span>
-          <span class="text-slate-400 font-mono shrink-0">${[ex.sets && `${cpEsc(ex.sets)} sets`, ex.reps && cpEsc(ex.reps), ex.rest && `rest ${cpEsc(ex.rest)}`].filter(Boolean).join(' · ') || '—'}</span>
+          <span class="text-slate-200">${cpEsc(ex.name)}${ex.notes ? ` <span class="text-slate-500 italic"> ${cpEsc(ex.notes)}</span>` : ''}</span>
+          <span class="text-slate-400 font-mono shrink-0">${[ex.sets && `${cpEsc(ex.sets)} sets`, ex.reps && cpEsc(ex.reps), ex.rest && `rest ${cpEsc(ex.rest)}`].filter(Boolean).join(' · ') || 'n/a'}</span>
         </li>`).join('');
       return `
         <div class="bg-slate-800/60 border border-slate-800 rounded-lg p-3.5 space-y-2">
@@ -1522,7 +1522,7 @@ function cpRenderDrylandPanel() {
         ${ui.loading ? '<span class="w-3.5 h-3.5 border-2 border-slate-400 border-t-slate-900 rounded-full animate-spin"></span> Searching the web…' : '<i data-lucide="search" class="w-3.5 h-3.5"></i> Search'}
       </button>
       ${resultsHtml}
-      ${(ui.results && ui.results.length) ? '<p class="text-[10px] text-amber-300/90 italic pt-1">AI-sourced from the web — review before assigning to a swimmer.</p>' : ''}
+      ${(ui.results && ui.results.length) ? '<p class="text-[10px] text-amber-300/90 italic pt-1">AI-sourced from the web. Review before assigning to a swimmer.</p>' : ''}
     </form>`;
 }
 
@@ -1532,7 +1532,7 @@ function cpRenderSwimmer() {
   const ui = CP.ui.swimmer;
   const realSwimmers = CP.swimmers.filter(s => s.userId);
   if (realSwimmers.length === 0) {
-    return `<div class="p-12 text-center text-slate-400 text-xs">No signed-up swimmers yet — invite one from Squad Roster, they'll show up here once they join.</div>`;
+    return `<div class="p-12 text-center text-slate-400 text-xs">No signed-up swimmers yet. Invite one from Squad Roster, they'll show up here once they join.</div>`;
   }
   const selected = realSwimmers.find(s => s.userId === ui.selectedSwimmerId) || realSwimmers[0];
   const swimmerSquad = CP.squads.find(sq => sq.id === selected.squadId);
@@ -1582,7 +1582,7 @@ function cpRenderSwimmer() {
             <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span class="text-[9.5px] text-slate-400 block font-semibold">Total Distance</span><span class="font-semibold text-slate-800">${(selected.totalDistance || 0).toLocaleString()}m</span></div>
             <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span class="text-[9.5px] text-slate-400 block font-semibold">Personal Bests</span><span class="font-semibold text-slate-800">${(selected.personalBests || []).length}</span></div>
             <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span class="text-[9.5px] text-slate-400 block font-semibold">Last Active</span><span class="font-semibold text-slate-800">${selected.lastActive || 'Never'}</span></div>
-            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span class="text-[9.5px] text-slate-400 block font-semibold">Email</span><span class="font-semibold text-slate-800 truncate block">${cpEsc(selected.email || '—')}</span></div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span class="text-[9.5px] text-slate-400 block font-semibold">Email</span><span class="font-semibold text-slate-800 truncate block">${cpEsc(selected.email || 'n/a')}</span></div>
           </div>
         </div>
       </div>
@@ -1838,7 +1838,7 @@ function cpProgressionPanel(swimmer) {
     return `
       <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
         <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i data-lucide="line-chart" class="w-4 h-4 text-brand-500"></i> Progression</h4>
-        <div class="py-8 text-center text-xs text-slate-400 italic">Not enough data yet — once ${cpEsc((swimmer.name || '').split(' ')[0] || 'they')} log a few more swims or sessions, trends will show here.</div>
+        <div class="py-8 text-center text-xs text-slate-400 italic">Not enough data yet. Once ${cpEsc((swimmer.name || '').split(' ')[0] || 'they')} log a few more swims or sessions, trends will show here.</div>
       </div>`;
   }
 
@@ -1846,10 +1846,10 @@ function cpProgressionPanel(swimmer) {
   const acwr = state.acwr;
   const acwrMeta =
     acwr == null ? { label: 'No load data yet', badge: 'bg-slate-100 text-slate-500' } :
-    acwr >= 1.7 ? { label: `${acwr}x — spiking`, badge: 'bg-rose-50 text-rose-700 border-rose-100' } :
-    acwr >= 1.35 ? { label: `${acwr}x — ramping up`, badge: 'bg-amber-50 text-amber-700 border-amber-100' } :
-    acwr <= 0.55 ? { label: `${acwr}x — well below normal`, badge: 'bg-amber-50 text-amber-700 border-amber-100' } :
-    { label: `${acwr}x — normal range`, badge: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
+    acwr >= 1.7 ? { label: `${acwr}x, spiking`, badge: 'bg-rose-50 text-rose-700 border-rose-100' } :
+    acwr >= 1.35 ? { label: `${acwr}x, ramping up`, badge: 'bg-amber-50 text-amber-700 border-amber-100' } :
+    acwr <= 0.55 ? { label: `${acwr}x, well below normal`, badge: 'bg-amber-50 text-amber-700 border-amber-100' } :
+    { label: `${acwr}x, normal range`, badge: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
 
   const events = Object.entries(state.events || {}).sort((a, b) => a[1].change_pct - b[1].change_pct);
   const eventRows = events.length === 0
@@ -1857,7 +1857,7 @@ function cpProgressionPanel(swimmer) {
     : events.map(([event, d]) => {
         const dir = d.direction === 'improving' ? { cls: 'text-emerald-700 bg-emerald-50 border-emerald-100', icon: '▼' } :
           d.direction === 'slipping' ? { cls: 'text-rose-700 bg-rose-50 border-rose-100', icon: '▲' } :
-          { cls: 'text-slate-500 bg-slate-100 border-slate-200', icon: '—' };
+          { cls: 'text-slate-500 bg-slate-100 border-slate-200', icon: 'n/a' };
         return `
         <div class="py-2 flex items-center justify-between gap-2">
           <div>
@@ -1897,7 +1897,7 @@ function cpVolumeChart(swimmer) {
   return `
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
       <div class="flex items-center justify-between mb-3.5">
-        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="bar-chart-3" class="w-4 h-4 text-brand-500"></i> Training volume — last 8 weeks</h4>
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="bar-chart-3" class="w-4 h-4 text-brand-500"></i> Training volume, last 8 weeks</h4>
         ${trendBadge}
       </div>
       <div class="flex items-end gap-2 h-28">
@@ -1947,7 +1947,7 @@ function cpRenderAnalytics() {
     amber: { card: 'bg-amber-50 border-amber-100', dot: 'bg-amber-500' },
     slate: { card: 'bg-slate-50 border-slate-200', dot: 'bg-slate-400' },
   };
-  const attentionList = needsAttention.length === 0 ? `<div class="p-8 text-center text-xs text-slate-400 italic">Nobody needs attention right now — everyone's tracking well.</div>` :
+  const attentionList = needsAttention.length === 0 ? `<div class="p-8 text-center text-xs text-slate-400 italic">Nobody needs attention right now. Everyone's tracking well.</div>` :
     needsAttention.map(({ swimmer, reason, badge }) => {
       const cls = attentionBadgeClasses[badge] || attentionBadgeClasses.slate;
       return `
@@ -2235,13 +2235,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data || data.ok === false) {
-          ui.error = (data && data.error) || 'Something went wrong — please try again.';
+          ui.error = (data && data.error) || 'Something went wrong, please try again.';
           ui.insights = null;
         } else {
           ui.insights = data.insights;
         }
       } catch (err) {
-        ui.error = 'Something went wrong — please try again.';
+        ui.error = 'Something went wrong, please try again.';
       }
       ui.loading = false;
       cpRenderTab();
@@ -2301,8 +2301,8 @@ document.addEventListener('DOMContentLoaded', () => {
       await cpRefresh();
       if (data && data.inviteUrl) {
         const fullUrl = window.location.origin + data.inviteUrl;
-        try { await navigator.clipboard.writeText(fullUrl); alert('Parent invite link copied — paste it into an email or text:\n\n' + fullUrl); }
-        catch (e) { prompt('Parent invite link — copy and send it to the parent:', fullUrl); }
+        try { await navigator.clipboard.writeText(fullUrl); alert('Parent invite link copied. Paste it into an email or text:\n\n' + fullUrl); }
+        catch (e) { prompt('Parent invite link, copy and send it to the parent:', fullUrl); }
       }
     }
 
@@ -2436,7 +2436,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (e.target.id === 'cpSeasonMeetDate') {
       CP.ui.schedule.seasonMeetDate = e.target.value;
       const badge = document.getElementById('cpSeasonMeetCountdown');
-      if (badge) badge.textContent = e.target.value ? cpWeeksOut(e.target.value) : '—';
+      if (badge) badge.textContent = e.target.value ? cpWeeksOut(e.target.value) : 'n/a';
     } else if (e.target.classList.contains('cp-season-phase-start') || e.target.classList.contains('cp-season-phase-end')) {
       const i = Number(e.target.dataset.seasonPhaseIndex);
       const field = e.target.classList.contains('cp-season-phase-start') ? 'start' : 'end';
@@ -2488,12 +2488,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch('/coach/pro/api/test-sets/scan', { method: 'POST', credentials: 'same-origin', body: fd });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data || data.ok === false) {
-          ui.error = (data && data.error) || 'Something went wrong — please try again.';
+          ui.error = (data && data.error) || 'Something went wrong, please try again.';
         } else {
           ui.result = data;
         }
       } catch (err) {
-        ui.error = 'Something went wrong — please try again.';
+        ui.error = 'Something went wrong, please try again.';
       }
       ui.scanning = false;
       cpRenderTab();
@@ -2513,13 +2513,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch('/coach/pro/api/sets/scan', { method: 'POST', credentials: 'same-origin', body: fd });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data || data.ok === false) {
-          ui.scanError = (data && data.error) || "Couldn't read that photo — try again or enter it manually.";
+          ui.scanError = (data && data.error) || "Couldn't read that photo. Try again or enter it manually.";
         } else {
           ui.blocks.push(...data.blocks);
           ui.scannedPool = data.pool;
         }
       } catch (err) {
-        ui.scanError = "Couldn't read that photo — try again or enter it manually.";
+        ui.scanError = "Couldn't read that photo. Try again or enter it manually.";
       }
       ui.scanning = false;
       cpRenderTab();
@@ -2544,12 +2544,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data || data.ok === false) {
-          ui.importError = (data && data.error) || 'Could not read that file — please try again.';
+          ui.importError = (data && data.error) || 'Could not read that file, please try again.';
         } else {
           ui.importPreview = data;
         }
       } catch (err) {
-        ui.importError = 'Something went wrong reading that file — please try again.';
+        ui.importError = 'Something went wrong reading that file, please try again.';
       }
       ui.importing = false;
       cpRenderTab();
@@ -2595,13 +2595,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data || data.ok === false) {
-          alert((data && data.error) || 'Something went wrong — please try again.');
+          alert((data && data.error) || 'Something went wrong, please try again.');
         } else {
           ui.show = false;
           await cpLoadState();
         }
       } catch (err) {
-        alert('Something went wrong — please try again.');
+        alert('Something went wrong, please try again.');
       }
       ui.loading = false;
       cpRenderAll();
@@ -2621,12 +2621,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data || data.ok === false) {
-          ui.error = (data && data.error) || "No dryland content found for that focus — try a different focus.";
+          ui.error = (data && data.error) || "No dryland content found for that focus. Try a different focus.";
         } else {
           ui.results = data.candidates || [];
         }
       } catch (err) {
-        ui.error = 'Something went wrong — please try again.';
+        ui.error = 'Something went wrong, please try again.';
       }
       ui.loading = false;
       cpRenderTab();

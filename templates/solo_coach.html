@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI coach — STROKE</title>
+<title>AI coach | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -95,9 +95,9 @@
   <h1 class="cc-h1">{{ 'Nutrition' if topic == 'nutrition' else 'Dryland' }} chat</h1>
   <p class="cc-sub">
     {% if topic == 'nutrition' %}
-      Ask about meals, timing, hydration, or how to fuel around today's session — grounded in your actual training load, not a generic diet sheet.
+      Ask about meals, timing, hydration, or how to fuel around today's session. All of it grounded in your actual training load, not a generic diet sheet.
     {% else %}
-      Ask for a dryland session, shoulder/cuff work, or check in on an injury — reasoned against your pool load and current joint status.
+      Ask for a dryland session, shoulder/cuff work, or check in on an injury. All of it reasoned against your pool load and current joint status.
     {% endif %}
   </p>
 
@@ -112,7 +112,7 @@
     {% endif %}
     {% if needs_injury_check %}
     <div class="cc-injury-stale">
-      {% if injury %}It's been a while since you updated your injury status — quick check before we prescribe anything.{% else %}Before your first dryland session, tell us about any current pain so we don't prescribe around it.{% endif %}
+      {% if injury %}It's been a while since you updated your injury status. A quick check before we prescribe anything.{% else %}Before your first dryland session, tell us about any current pain so we don't prescribe around it.{% endif %}
     </div>
     {% endif %}
     <div class="cc-card" id="ccInjuryForm" {% if not needs_injury_check %}style="display:none"{% endif %}>
@@ -124,7 +124,7 @@
         <input class="cc-input" name="knee" placeholder="None" value="{{ injury.knee if injury and injury.knee and injury.knee != 'None' else '' }}">
         <label class="cc-field-label">Lower back tightness or pain?</label>
         <input class="cc-input" name="back" placeholder="None" value="{{ injury.back if injury and injury.back and injury.back != 'None' else '' }}">
-        <label class="cc-field-label">Anything else — wrist, hip, ankle?</label>
+        <label class="cc-field-label">Anything else: wrist, hip, ankle?</label>
         <input class="cc-input" name="other" placeholder="None" value="{{ injury.other if injury and injury.other and injury.other != 'None' else '' }}">
         <label class="cc-red-flag">
           <input type="checkbox" name="red_flag" value="1" {{ 'checked' if injury and injury.red_flag }}>
@@ -163,7 +163,7 @@
   <div class="cc-card">
     <div class="cc-chat" id="ccChat">
       {% if not messages %}
-      <div class="cc-empty">No messages yet — ask a question below to get started.</div>
+      <div class="cc-empty">No messages yet. Ask a question below to get started.</div>
       {% endif %}
       {% for m in messages %}
       <div class="cc-msg {{ m.role }}">

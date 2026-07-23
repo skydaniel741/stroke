@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — STROKE</title>
+<title>Admin | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -169,7 +169,7 @@
 
   <div class="adm-panel">
     <div class="adm-panel-head">
-      {% if role_filter == 'coach' %}Coaches — {{ total_coaches }}{% else %}All signups{% endif %}
+      {% if role_filter == 'coach' %}Coaches: {{ total_coaches }}{% else %}All signups{% endif %}
     </div>
     <form class="adm-filter-bar" method="GET" action="/admin">
       <input type="text" name="q" placeholder="Search username or email…" value="{{ q }}">
@@ -206,7 +206,7 @@
           <td>{{ u.plan }}</td>
           <td>{{ u.role }}</td>
           <td>{{ u.created_at.strftime('%d %b %Y') }}</td>
-          <td>{% if u.is_admin %}<span class="badge admin">Admin</span>{% else %}—{% endif %}</td>
+          <td>{% if u.is_admin %}<span class="badge admin">Admin</span>{% else %}n/a{% endif %}</td>
           <td>
             <form class="adm-override-form" method="POST" action="/admin/users/{{ u.id }}/update">
               <select name="plan">

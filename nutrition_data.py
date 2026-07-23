@@ -9,7 +9,7 @@ Grounded in standard sports-nutrition timing guidance:
 
 Static content (no DB) so the section always renders. Each meal carries a full
 recipe plus the stats the UI shows: prep/cook time, calories, macros, timing.
-Photos are downloaded locally under static/images/ (not hotlinked) — `photo` is
+Photos are downloaded locally under static/images/ (not hotlinked), `photo` is
 a path relative to the static folder, passed through `url_for('static', ...)`
 in the template.
 """
@@ -27,10 +27,10 @@ MEALS = [
         'id': 'pb-overnight-oats', 'category': 'pre',
         'name': 'Peanut Butter Overnight Oats',
         'photo': 'images/nutrition/pb-overnight-oats.jpg',
-        'timing': 'Eat 2–3 hours before training',
+        'timing': 'Eat 2 to 3 hours before training',
         'prep_min': 5, 'cook_min': 0, 'calories': 430,
         'protein_g': 16, 'carbs_g': 60, 'fat_g': 13,
-        'why': 'Slow-release oats top up glycogen while banana adds quick carbs — energy that lasts a full session without weighing you down. The fat from peanut butter is small enough not to slow digestion if you eat this a couple of hours out.',
+        'why': 'Slow-release oats top up glycogen while banana adds quick carbs, energy that lasts a full session without weighing you down. The fat from peanut butter is small enough not to slow digestion if you eat this a couple of hours out.',
         'tip': 'Make a batch of 3-4 jars on Sunday night so pre-training breakfast is grab-and-go all week.',
         'ingredients': [
             '60 g rolled oats', '200 ml milk (or soy milk)', '1 tbsp peanut butter',
@@ -50,7 +50,7 @@ MEALS = [
         'timing': 'Eat 3 hours before training',
         'prep_min': 10, 'cook_min': 20, 'calories': 520,
         'protein_g': 35, 'carbs_g': 68, 'fat_g': 9,
-        'why': 'A classic pre-session plate: plenty of easy carbs from white rice, lean protein from chicken, and low fat so it clears your stomach in time. White rice over brown here on purpose — less fibre means less GI risk mid-set.',
+        'why': 'A classic pre-session plate: plenty of easy carbs from white rice, lean protein from chicken, and low fat so it clears your stomach in time. White rice over brown here on purpose, less fibre means less GI risk mid-set.',
         'tip': 'If training is earlier than 3 hours out, swap in half the rice and skip the spinach to speed up digestion.',
         'ingredients': [
             '150 g cooked white rice', '120 g chicken breast', '1 tsp olive oil',
@@ -67,11 +67,11 @@ MEALS = [
         'id': 'banana-honey-toast', 'category': 'pre',
         'name': 'Banana & Honey Toast',
         'photo': 'images/nutrition/banana-honey-toast.jpg',
-        'timing': 'Quick carbs 30–60 min before',
+        'timing': 'Quick carbs 30 to 60 min before',
         'prep_min': 4, 'cook_min': 2, 'calories': 260,
         'protein_g': 6, 'carbs_g': 50, 'fat_g': 3,
         'why': 'When the session is close, you want fast carbs and almost no fat or fibre. Toast + banana + honey digests quickly and tops off the tank without the sluggish feeling a heavier meal would cause.',
-        'tip': 'White bread digests faster than wholegrain this close to a session — save the wholegrain loaf for everyday meals.',
+        'tip': 'White bread digests faster than wholegrain this close to a session, save the wholegrain loaf for everyday meals.',
         'ingredients': [
             '2 slices wholegrain or white bread', '1 banana, sliced',
             '1 tbsp honey', 'Pinch of cinnamon',
@@ -90,13 +90,13 @@ MEALS = [
         'prep_min': 5, 'cook_min': 8, 'calories': 380,
         'protein_g': 12, 'carbs_g': 64, 'fat_g': 7,
         'why': 'Warm porridge is gentle on an early-morning stomach, and berries add fast carbs plus antioxidants without any heavy fat to digest. A good option when a jar of overnight oats didn\'t get prepped the night before.',
-        'tip': 'Frozen berries work fine here and are cheaper — just add them straight to the pan for the last minute of cooking.',
+        'tip': 'Frozen berries work fine here and are cheaper. Just add them straight to the pan for the last minute of cooking.',
         'ingredients': [
             '60 g rolled oats', '250 ml milk or water', '1 handful mixed berries',
             '1 tbsp honey', 'Pinch of salt',
         ],
         'steps': [
-            'Simmer oats in milk or water for 6–8 minutes, stirring occasionally.',
+            'Simmer oats in milk or water for 6 to 8 minutes, stirring occasionally.',
             'Spoon into a bowl and top with berries.',
             'Drizzle with honey and a pinch of salt.',
         ],
@@ -109,7 +109,7 @@ MEALS = [
         'timing': 'Within 30 min of finishing',
         'prep_min': 3, 'cook_min': 0, 'calories': 320,
         'protein_g': 20, 'carbs_g': 45, 'fat_g': 6,
-        'why': 'One of the most researched recovery options — a near-perfect 2:1 carb-to-protein ratio to restock glycogen and kick-start muscle repair while your body is most receptive, often called the "anabolic window."',
+        'why': 'One of the most researched recovery options, a near-perfect 2:1 carb-to-protein ratio to restock glycogen and kick-start muscle repair while your body is most receptive, often called the "anabolic window."',
         'tip': 'Keep a bottle of ready-made chocolate milk in your bag for the days you can\'t get to a blender straight after the pool.',
         'ingredients': [
             '300 ml milk', '2 tbsp cocoa powder', '1 tsp honey or sugar',
@@ -128,8 +128,8 @@ MEALS = [
         'timing': 'Within 60 min of finishing',
         'prep_min': 5, 'cook_min': 0, 'calories': 340,
         'protein_g': 24, 'carbs_g': 42, 'fat_g': 7,
-        'why': 'Greek yogurt is packed with protein for repair, berries and honey bring the carbs and antioxidants, and granola adds crunch and more fuel — an easy no-cook option for after an evening session.',
-        'tip': 'Use full-fat Greek yogurt if you\'re training twice a day — the extra calories are useful, not something to avoid.',
+        'why': 'Greek yogurt is packed with protein for repair, berries and honey bring the carbs and antioxidants, and granola adds crunch and more fuel, an easy no-cook option for after an evening session.',
+        'tip': 'Use full-fat Greek yogurt if you\'re training twice a day, the extra calories are useful, not something to avoid.',
         'ingredients': [
             '200 g Greek yogurt', '1 handful mixed berries', '30 g granola',
             '1 tbsp honey', '1 tbsp chopped nuts',
@@ -144,11 +144,11 @@ MEALS = [
         'id': 'salmon-sweet-potato', 'category': 'post',
         'name': 'Salmon & Sweet Potato Plate',
         'photo': 'images/nutrition/salmon-sweet-potato.jpg',
-        'timing': 'A proper recovery meal, 1–2 h after',
+        'timing': 'A proper recovery meal, 1 to 2 h after',
         'prep_min': 10, 'cook_min': 25, 'calories': 560,
         'protein_g': 38, 'carbs_g': 48, 'fat_g': 22,
         'why': 'Salmon brings protein plus omega-3s that help calm training inflammation; sweet potato reloads glycogen with steady-release carbs. A good choice for the main meal after your hardest session of the day.',
-        'tip': 'Roast a tray of extra sweet potato at the same time — it reheats well for tomorrow\'s lunch.',
+        'tip': 'Roast a tray of extra sweet potato at the same time. It reheats well for tomorrow\'s lunch.',
         'ingredients': [
             '1 salmon fillet (~130 g)', '1 medium sweet potato', '1 tsp olive oil',
             'Broccoli or greens', 'Lemon, salt & pepper',
@@ -167,7 +167,7 @@ MEALS = [
         'timing': 'Fast recovery, within 45 min',
         'prep_min': 8, 'cook_min': 0, 'calories': 400,
         'protein_g': 34, 'carbs_g': 38, 'fat_g': 12,
-        'why': 'Portable and protein-dense — tuna and egg repair muscle, the wrap and sweetcorn restock carbs. Easy to bag up for after a session when you\'re heading straight from the pool deck to school or work.',
+        'why': 'Portable and protein-dense, tuna and egg repair muscle, the wrap and sweetcorn restock carbs. Easy to bag up for after a session when you\'re heading straight from the pool deck to school or work.',
         'tip': 'Boil a batch of eggs at the start of the week so this takes under five minutes to put together.',
         'ingredients': [
             '1 large wholemeal wrap', '1 tin tuna (in spring water)', '1 boiled egg',
@@ -184,11 +184,11 @@ MEALS = [
         'id': 'turkey-sweet-potato-hash', 'category': 'post',
         'name': 'Turkey & Sweet Potato Hash',
         'photo': 'images/nutrition/turkey-sweet-potato-hash.jpg',
-        'timing': 'A hearty recovery meal, 1–2 h after',
+        'timing': 'A hearty recovery meal, 1 to 2 h after',
         'prep_min': 10, 'cook_min': 20, 'calories': 520,
         'protein_g': 36, 'carbs_g': 44, 'fat_g': 18,
-        'why': 'Lean turkey supplies the protein your muscles need to rebuild, while pan-fried sweet potato and peppers restock carbs and micronutrients in one skillet — a one-pan meal for busy training weeks.',
-        'tip': 'Double the batch and portion into containers — it reheats better than most recovery meals for a next-day lunch.',
+        'why': 'Lean turkey supplies the protein your muscles need to rebuild, while pan-fried sweet potato and peppers restock carbs and micronutrients in one skillet, a one-pan meal for busy training weeks.',
+        'tip': 'Double the batch and portion into containers. It reheats better than most recovery meals for a next-day lunch.',
         'ingredients': [
             '150 g turkey mince', '1 medium sweet potato, diced', '1/2 red pepper, diced',
             '1 tsp olive oil', 'Paprika, salt & pepper', 'Handful of spinach',
@@ -208,7 +208,7 @@ MEALS = [
         'timing': '3 hours before your first race',
         'prep_min': 10, 'cook_min': 10, 'calories': 480,
         'protein_g': 18, 'carbs_g': 74, 'fat_g': 10,
-        'why': 'A high-carb, familiar breakfast lays your race-day fuel foundation early — carb-loaded but gentle enough to settle well before warm-up. Never trial a brand-new breakfast on a race day; this is deliberately simple.',
+        'why': 'A high-carb, familiar breakfast lays your race-day fuel foundation early, carb-loaded but gentle enough to settle well before warm-up. Never trial a brand-new breakfast on a race day; this is deliberately simple.',
         'tip': 'Practice this exact breakfast before a normal training morning at least once so your stomach already knows it agrees with you.',
         'ingredients': [
             '1 cup oat or plain flour', '1 egg', '250 ml milk', '1 banana',
@@ -225,11 +225,11 @@ MEALS = [
         'id': 'race-bagel', 'category': 'race',
         'name': 'Between-Heats Bagel',
         'photo': 'images/nutrition/race-bagel.jpg',
-        'timing': 'Small top-up 60–90 min between swims',
+        'timing': 'Small top-up 60 to 90 min between swims',
         'prep_min': 4, 'cook_min': 2, 'calories': 300,
         'protein_g': 10, 'carbs_g': 52, 'fat_g': 6,
         'why': 'Between heats you need quick, easy carbs that top up energy without filling you up. A jam-and-nut-butter bagel is fast fuel that sits light in the stomach before your next swim.',
-        'tip': 'Pack this pre-made in your meet bag — don\'t rely on finding food at the venue between sessions.',
+        'tip': 'Pack this pre-made in your meet bag, don\'t rely on finding food at the venue between sessions.',
         'ingredients': [
             '1 plain bagel', '1 tbsp jam', '1 tsp peanut butter (thin layer)',
         ],
@@ -243,11 +243,11 @@ MEALS = [
         'id': 'race-rice-chicken', 'category': 'race',
         'name': 'Pre-Final Chicken & White Rice',
         'photo': 'images/nutrition/race-rice-chicken.jpg',
-        'timing': '2.5–3 h before an afternoon final',
+        'timing': '2.5 to 3 h before an afternoon final',
         'prep_min': 10, 'cook_min': 20, 'calories': 500,
         'protein_g': 34, 'carbs_g': 66, 'fat_g': 8,
         'why': 'Plain, tested and easy on the stomach: white rice for fast-available carbs, chicken for protein, minimal fat and fibre so nothing surprises you on race day.',
-        'tip': 'Ask the meet hotel or venue café in advance if plain rice and chicken are on the menu — don\'t assume you can improvise this on the day.',
+        'tip': 'Ask the meet hotel or venue café in advance if plain rice and chicken are on the menu, don\'t assume you can improvise this on the day.',
         'ingredients': [
             '150 g cooked white rice', '120 g chicken breast', '1 tsp olive oil',
             'Pinch of salt', 'Optional: cucumber on the side',
@@ -255,7 +255,7 @@ MEALS = [
         'steps': [
             'Cook the chicken simply in a little oil with salt.',
             'Serve over warm white rice.',
-            'Keep it plain — race day is not the day for new sauces.',
+            'Keep it plain, race day is not the day for new sauces.',
         ],
     },
     {
@@ -265,8 +265,8 @@ MEALS = [
         'timing': 'The evening before a big meet',
         'prep_min': 10, 'cook_min': 15, 'calories': 620,
         'protein_g': 32, 'carbs_g': 88, 'fat_g': 12,
-        'why': 'The classic carb-load dinner — plain pasta with lean chicken tops off glycogen stores overnight without anything rich or unfamiliar that could upset your stomach on race morning.',
-        'tip': 'Eat this at a normal dinner time, not right before bed — you want it mostly digested before you sleep.',
+        'why': 'The classic carb-load dinner, plain pasta with lean chicken tops off glycogen stores overnight without anything rich or unfamiliar that could upset your stomach on race morning.',
+        'tip': 'Eat this at a normal dinner time, not right before bed. You want it mostly digested before you sleep.',
         'ingredients': [
             '100 g dry pasta', '120 g chicken breast', '1 tbsp olive oil',
             'Tomato passata', 'Basil, salt & pepper', 'Parmesan to serve',
@@ -286,8 +286,8 @@ MEALS = [
         'timing': 'Balanced dinner any day',
         'prep_min': 10, 'cook_min': 20, 'calories': 540,
         'protein_g': 36, 'carbs_g': 46, 'fat_g': 22,
-        'why': 'A complete daily plate — protein, complex carbs, healthy fats and greens — that hits a swimmer\'s recovery and micronutrient needs without needing to be timed around a specific session.',
-        'tip': 'Cook a big batch of quinoa on a rest day and freeze portions — it cuts this down to a 10-minute dinner.',
+        'why': 'A complete daily plate, protein, complex carbs, healthy fats and greens, that hits a swimmer\'s recovery and micronutrient needs without needing to be timed around a specific session.',
+        'tip': 'Cook a big batch of quinoa on a rest day and freeze portions. It cuts this down to a 10-minute dinner.',
         'ingredients': [
             '1 salmon fillet', '80 g quinoa (dry)', 'Handful of greens',
             '1 tsp olive oil', 'Lemon, garlic, salt & pepper',
@@ -307,7 +307,7 @@ MEALS = [
         'prep_min': 12, 'cook_min': 12, 'calories': 580,
         'protein_g': 32, 'carbs_g': 70, 'fat_g': 16,
         'why': 'High-carb noodles refill glycogen after big sessions, lean beef repairs muscle, and a rainbow of veg covers the vitamins that keep training consistent through a heavy block.',
-        'tip': 'Prep the veg and sauce the night before — high heat, quick stir-frying is the part that actually takes no time.',
+        'tip': 'Prep the veg and sauce the night before, high heat, quick stir-frying is the part that actually takes no time.',
         'ingredients': [
             '150 g egg noodles', '120 g lean beef strips', 'Mixed veg (peppers, broccoli, carrot)',
             '1 tbsp soy sauce', '1 tsp sesame oil', '1 clove garlic', 'Thumb of ginger',
@@ -326,8 +326,8 @@ MEALS = [
         'timing': 'Balanced breakfast any day',
         'prep_min': 8, 'cook_min': 6, 'calories': 420,
         'protein_g': 20, 'carbs_g': 36, 'fat_g': 21,
-        'why': 'Eggs and avocado bring steady protein and good fats to start the day, while wholegrain toast supplies the fibre and carbs a light training morning still needs — best saved for rest days or light sessions given the fat content.',
-        'tip': 'Not the right choice within 2 hours of a hard session — save it for mornings with no training or an easy recovery swim.',
+        'why': 'Eggs and avocado bring steady protein and good fats to start the day, while wholegrain toast supplies the fibre and carbs a light training morning still needs, best saved for rest days or light sessions given the fat content.',
+        'tip': 'Not the right choice within 2 hours of a hard session, save it for mornings with no training or an easy recovery swim.',
         'ingredients': [
             '2 slices wholegrain bread', '2 eggs', '1/2 avocado, mashed',
             'Chilli flakes, salt & pepper', 'Squeeze of lemon',
@@ -346,8 +346,8 @@ MEALS = [
         'timing': 'A lighter balanced lunch any day',
         'prep_min': 10, 'cook_min': 15, 'calories': 460,
         'protein_g': 20, 'carbs_g': 62, 'fat_g': 14,
-        'why': 'A plant-forward option that still hits swimmer targets — chickpeas and grains bring steady carbs and protein, and the veg covers fibre and micronutrients on lighter training days.',
-        'tip': 'Swap the roasted veg with whatever\'s in the fridge — this recipe is forgiving and works with almost any vegetable combination.',
+        'why': 'A plant-forward option that still hits swimmer targets, chickpeas and grains bring steady carbs and protein, and the veg covers fibre and micronutrients on lighter training days.',
+        'tip': 'Swap the roasted veg with whatever\'s in the fridge. This recipe is forgiving and works with almost any vegetable combination.',
         'ingredients': [
             '150 g cooked chickpeas', '80 g cooked brown rice or couscous', 'Roasted veg (courgette, pepper, red onion)',
             '1 tbsp tahini or olive oil', 'Lemon juice, cumin, salt & pepper',
@@ -410,7 +410,7 @@ MEALS = [
     },
 ]
 
-# Recommended supplements — categories sports dietitians commonly suggest for
+# Recommended supplements, categories sports dietitians commonly suggest for
 # training swimmers, each with real, third-party-tested brand picks so a swimmer
 # knows *what to actually buy*, not just the category. Brands here are chosen for
 # NSF Certified for Sport / Informed Sport certification (the standard drug-tested

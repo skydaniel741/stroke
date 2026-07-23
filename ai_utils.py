@@ -48,7 +48,7 @@ def _tone_line(tone):
 # never reads as AI-generated. Recurses through the dict/list tool output.
 import re as _re
 
-_DASH_RE = _re.compile(r'\s*[—–]\s*|\s+--\s+')
+_DASH_RE = _re.compile(r'\s*[, ]\s*|\s+--\s+')
 
 
 def _humanize(value):
@@ -382,7 +382,7 @@ def extract_set_from_image(image_bytes, api_key, model):
     success or {'ok': False, 'error'} on any failure -- never raises."""
     normalized = normalize_image(image_bytes)
     if normalized is None:
-        return {'ok': False, 'error': "That doesn't look like a photo — try again."}
+        return {'ok': False, 'error': "That doesn't look like a photo. Try again."}
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
@@ -403,17 +403,17 @@ def extract_set_from_image(image_bytes, api_key, model):
         )
     except Exception:
         logger.exception('extract_set_from_image: API call failed')
-        return {'ok': False, 'error': "Couldn't read that photo — try again or enter it manually."}
+        return {'ok': False, 'error': "Couldn't read that photo. Try again or enter it manually."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use:
-        return {'ok': False, 'error': "Couldn't read that photo — try again or enter it manually."}
+        return {'ok': False, 'error': "Couldn't read that photo. Try again or enter it manually."}
 
     data = tool_use.input or {}
     blocks = [b for b in (_clamp_block(r) for r in data.get('blocks', [])) if b is not None]
 
     if not blocks:
-        return {'ok': False, 'error': "Couldn't find a set in that photo — try a clearer shot."}
+        return {'ok': False, 'error': "Couldn't find a set in that photo. Try a clearer shot."}
 
     pool = data.get('pool') if data.get('pool') in POOLS else '25m'
     session_type = (data.get('session_type') or 'Training').strip() or 'Training'
@@ -472,7 +472,7 @@ def extract_set_from_transcript(transcript, api_key, model):
     on success or {'ok': False, 'error'} on any failure -- never raises."""
     text = (transcript or '').strip()
     if not text:
-        return {'ok': False, 'error': "Didn't catch anything — try dictating again."}
+        return {'ok': False, 'error': "Didn't catch anything. Try dictating again."}
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
@@ -488,17 +488,17 @@ def extract_set_from_transcript(transcript, api_key, model):
         )
     except Exception:
         logger.exception('extract_set_from_transcript: API call failed')
-        return {'ok': False, 'error': "Couldn't parse that — try again or enter it manually."}
+        return {'ok': False, 'error': "Couldn't parse that. Try again or enter it manually."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use:
-        return {'ok': False, 'error': "Couldn't parse that — try again or enter it manually."}
+        return {'ok': False, 'error': "Couldn't parse that. Try again or enter it manually."}
 
     data = tool_use.input or {}
     blocks = [b for b in (_clamp_block(r) for r in data.get('blocks', [])) if b is not None]
 
     if not blocks:
-        return {'ok': False, 'error': "Couldn't find a set in that — try describing it differently."}
+        return {'ok': False, 'error': "Couldn't find a set in that. Try describing it differently."}
 
     pool = data.get('pool') if data.get('pool') in POOLS else '25m'
     session_type = (data.get('session_type') or 'Training').strip() or 'Training'
@@ -881,16 +881,16 @@ def generate_training_program(profile, meal_catalog, dryland_catalog, supplement
         )
     except Exception:
         logger.exception('generate_training_program: API call failed')
-        return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate a program right now. Try again in a moment."}
 
     if response.stop_reason == 'max_tokens':
         logger.error('generate_training_program: response truncated at max_tokens')
-        return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate a program right now. Try again in a moment."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use or not tool_use.input:
         logger.error('generate_training_program: no usable tool_use in response')
-        return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate a program right now. Try again in a moment."}
 
     program = tool_use.input
     for day in program.get('days', []):
@@ -898,7 +898,7 @@ def generate_training_program(profile, meal_catalog, dryland_catalog, supplement
         day['total'] = sum(b['reps'] * b['dist'] for b in day['blocks'])
     if not program.get('days'):
         logger.error('generate_training_program: program came back with no days')
-        return {'ok': False, 'error': "Couldn't generate a program right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate a program right now. Try again in a moment."}
 
     # The model is instructed to only pick real IDs from the catalogs we gave it,
     # but never trust that blindly -- drop anything hallucinated before it can
@@ -963,7 +963,7 @@ def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, ap
         if c.get('sleep_quality'):
             extra.append(f"sleep {c['sleep_quality']}/5")
         extra_str = f" ({', '.join(extra)})" if extra else ""
-        return f"- {c['date']}: felt {c['feeling_rating']}/5{extra_str} — \"{c['notes']}\""
+        return f"- {c['date']}: felt {c['feeling_rating']}/5{extra_str}, \"{c['notes']}\""
 
     history_lines = "\n".join(_fmt(c) for c in recent_checkins) or "No previous check-ins."
 
@@ -979,7 +979,7 @@ def generate_checkin_insight(profile, feeling_rating, notes, recent_checkins, ap
         f"{_tone_line(tone)}\n\n"
         f"Swimmer level: {profile.level or 'not specified'}, goal: {profile.main_goal or 'not specified'}.\n\n"
         f"Recent check-in history:\n{history_lines}\n\n"
-        f"Today's check-in: felt {feeling_rating}/5{today_extra_str} — \"{notes}\"\n\n"
+        f"Today's check-in: felt {feeling_rating}/5{today_extra_str}, \"{notes}\"\n\n"
         "Call the give_checkin_insight tool with your response."
     )
 
@@ -1059,11 +1059,11 @@ def generate_progress_insight(digest, api_key, model, tone='encouraging'):
         )
     except Exception:
         logger.exception('generate_progress_insight: API call failed')
-        return {'ok': False, 'error': "Couldn't generate an analysis right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate an analysis right now. Try again in a moment."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use or not tool_use.input:
-        return {'ok': False, 'error': "Couldn't generate an analysis right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate an analysis right now. Try again in a moment."}
 
     return {'ok': True, 'insight': _humanize(tool_use.input)}
 
@@ -1295,7 +1295,7 @@ SQUAD_INSIGHTS_TOOL_SCHEMA = {
                         },
                         "reason": {
                             "type": "string",
-                            "description": "ONE sentence (max ~20 words): the data point + the action. e.g. 'No swim in 12 days — check in.'",
+                            "description": "ONE sentence (max ~20 words): the data point + the action. e.g. 'No swim in 12 days. Check in.'",
                         },
                     },
                     "required": ["name", "kind", "reason"],
@@ -1350,11 +1350,11 @@ def generate_squad_insights(squad_name, swimmers_digest, api_key, model, tone='b
         )
     except Exception:
         logger.exception('generate_squad_insights: API call failed')
-        return {'ok': False, 'error': "Couldn't generate insights right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate insights right now. Try again in a moment."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use or not tool_use.input:
-        return {'ok': False, 'error': "Couldn't generate insights right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate insights right now. Try again in a moment."}
 
     return {'ok': True, 'insights': _humanize(tool_use.input)}
 
@@ -1497,16 +1497,16 @@ def generate_coach_set(params, api_key, model):
         )
     except Exception:
         logger.exception('generate_coach_set: API call failed')
-        return {'ok': False, 'error': "Couldn't generate a set right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate a set right now. Try again in a moment."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use or not tool_use.input:
-        return {'ok': False, 'error': "Couldn't generate a set right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't generate a set right now. Try again in a moment."}
 
     data = tool_use.input
     blocks = [b for b in (_clamp_block(r) for r in data.get('blocks', [])) if b is not None]
     if not blocks:
-        return {'ok': False, 'error': "The generated set came back empty — try again."}
+        return {'ok': False, 'error': "The generated set came back empty. Try again."}
 
     # Realism pass: even with the prompt rules, models occasionally write a
     # send-off the squad can't make. Fix intervals deterministically against
@@ -1689,14 +1689,14 @@ def fetch_dryland_content(params, api_key, model):
         )
     except Exception:
         logger.exception('fetch_dryland_content: research call failed')
-        return {'ok': False, 'error': "Couldn't search the web right now — try again in a moment."}
+        return {'ok': False, 'error': "Couldn't search the web right now. Try again in a moment."}
 
     findings_text = "\n".join(
         block.text for block in research_response.content
         if getattr(block, 'type', None) == 'text' and getattr(block, 'text', None)
     ).strip()
     if not findings_text:
-        return {'ok': False, 'error': "No dryland content found for that focus — try broadening it or picking a different focus."}
+        return {'ok': False, 'error': "No dryland content found for that focus. Try broadening it or picking a different focus."}
 
     extract_prompt = (
         "Here are a swim coach's research findings for a dryland content search:\n\n"
@@ -1718,11 +1718,11 @@ def fetch_dryland_content(params, api_key, model):
         )
     except Exception:
         logger.exception('fetch_dryland_content: extraction call failed')
-        return {'ok': False, 'error': "Found some content but couldn't process it — try again in a moment."}
+        return {'ok': False, 'error': "Found some content but couldn't process it. Try again in a moment."}
 
     tool_use = next((c for c in extract_response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use or not tool_use.input:
-        return {'ok': False, 'error': "Found some content but couldn't process it — try again in a moment."}
+        return {'ok': False, 'error': "Found some content but couldn't process it. Try again in a moment."}
 
     raw_candidates = tool_use.input.get('candidates') or []
     candidates = []
@@ -1758,7 +1758,7 @@ def fetch_dryland_content(params, api_key, model):
             break
 
     if not candidates:
-        return {'ok': False, 'error': "No dryland content found for that focus — try broadening it or picking a different focus."}
+        return {'ok': False, 'error': "No dryland content found for that focus. Try broadening it or picking a different focus."}
 
     return {'ok': True, 'candidates': _humanize(candidates)}
 
@@ -1826,7 +1826,7 @@ def extract_test_results_from_image(image_bytes, roster_names, api_key, model):
     {'ok': False, 'error': '...'} -- never raises."""
     normalized = normalize_image(image_bytes)
     if normalized is None:
-        return {'ok': False, 'error': "That doesn't look like a photo — try again."}
+        return {'ok': False, 'error': "That doesn't look like a photo. Try again."}
 
     roster_line = ", ".join(roster_names) if roster_names else "(no roster provided)"
     prompt = (
@@ -1858,11 +1858,11 @@ def extract_test_results_from_image(image_bytes, roster_names, api_key, model):
         )
     except Exception:
         logger.exception('extract_test_results_from_image: API call failed')
-        return {'ok': False, 'error': "Couldn't read that photo — try again or enter times manually."}
+        return {'ok': False, 'error': "Couldn't read that photo. Try again or enter times manually."}
 
     tool_use = next((c for c in response.content if getattr(c, 'type', None) == 'tool_use'), None)
     if not tool_use or not tool_use.input:
-        return {'ok': False, 'error': "Couldn't read that photo — try again or enter times manually."}
+        return {'ok': False, 'error': "Couldn't read that photo. Try again or enter times manually."}
 
     data = tool_use.input
     roster_set = set(roster_names or [])

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily check-in — STROKE</title>
+<title>Daily check-in | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -95,7 +95,7 @@
       </div>
       {% endif %}
     </div>
-    <p class="ci-sub">You've already checked in today — come back tomorrow, or update it below.</p>
+    <p class="ci-sub">You've already checked in today. Come back tomorrow, or update it below.</p>
   {% else %}
     {% if coach_question %}
     <div class="ci-insight" style="margin-bottom:18px">
@@ -103,7 +103,7 @@
       {{ coach_question }}
     </div>
     {% endif %}
-    <p class="ci-sub">Rate how it felt and jot down what could've gone better — the AI will respond with something specific to you.</p>
+    <p class="ci-sub">Rate how it felt and jot down what could've gone better. The AI will respond with something specific to you.</p>
   {% endif %}
 
   <form method="POST" action="/solo/checkin" id="checkinForm">
@@ -154,7 +154,7 @@
   <div class="ci-history-row">
     <span class="ci-history-date">{{ c.checkin_date.strftime('%d %b') }}</span>
     <span class="ci-history-rating">{{ c.feeling_rating }}/5</span>
-    <span class="ci-history-notes">{{ c.notes or '—' }}</span>
+    <span class="ci-history-notes">{{ c.notes or 'n/a' }}</span>
   </div>
   {% endfor %}
   {% endif %}

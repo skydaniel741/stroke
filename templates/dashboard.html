@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — STROKE</title>
+<title>Dashboard | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -90,6 +90,15 @@
         <span class="cx-tip">Coach dashboard</span>
       </a>
       {% endif %}
+
+      {# Shown when this account is also linked to a child. One account, both
+         views: their own training here, their swimmer's read-only view there. #}
+      {% if current_user.has_parent_access %}
+      <a href="/parent/dashboard" class="cx-navitem {{ 'active' if p.startswith('/parent/dashboard') }}">
+        <svg viewBox="0 0 24 24"><path d="M12 21s-8-4.5-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 11c0 5.5-8 10-8 10z"/></svg>
+        <span class="cx-tip">Parent view</span>
+      </a>
+      {% endif %}
     </div>
 
     <div class="cx-rail-spacer"></div>
@@ -134,7 +143,7 @@
       {% if needs_ai_onboarding %}
       <a href="/solo/onboarding" class="cx-banner cx-banner--ai">
         <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><path d="M12 7.5 13.6 11 17 12l-3.4 1L12 16.5 10.4 13 7 12l3.4-1z"/></svg>
-        <span>Set up your personalized AI training program — a few questions and it's ready.</span>
+        <span>Set up your personalized AI training program. A few questions and it's ready.</span>
         <span class="cx-banner-arrow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
       {% endif %}
@@ -210,7 +219,7 @@
       {% if show_rest_nudge %}
       <div class="cx-banner cx-banner--rest">
         <svg viewBox="0 0 24 24"><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.5 2 5 2c1.3 0 1.9-.5 2.5-1"/></svg>
-        <span>{{ streak }} days in a row — nice work. Consider a rest day so the training actually sinks in.</span>
+        <span>{{ streak }} days in a row, nice work. Consider a rest day so the training actually sinks in.</span>
       </div>
       {% endif %}
 
@@ -218,7 +227,7 @@
       <div class="cx-grid cx-grid--chart">
         <div class="cx-panel">
           <div class="cx-panel-label">
-            Training volume — last 8 weeks
+            Training volume, last 8 weeks
             <div class="cx-switch">
               <button class="active" data-metric="volume">Metres</button>
               <button data-metric="sessions">Sessions</button>
@@ -310,13 +319,13 @@
             {% for a in recent_activity %}
               {% if a.type == 'session' %}
               <a href="/history/session/{{ a.id }}" class="cx-row">
-                <span class="cx-row-main">{{ a.kind }} — {{ a.label }}</span>
+                <span class="cx-row-main">{{ a.kind }}: {{ a.label }}</span>
                 <span class="cx-row-tag">{{ a.pool }}</span>
                 <span class="cx-row-time">{{ a.logged_at.strftime('%d %b') }}</span>
               </a>
               {% else %}
               <div class="cx-row">
-                <span class="cx-row-main">{{ a.kind }} — {{ a.label }}</span>
+                <span class="cx-row-main">{{ a.kind }}: {{ a.label }}</span>
                 <span class="cx-row-tag">{{ a.pool }}</span>
                 <span class="cx-row-time">{{ a.logged_at.strftime('%d %b') }}</span>
               </div>
@@ -379,7 +388,7 @@
           {% for e in todays_squad_sessions %}
           <div class="cx-row">
             <span class="cx-row-main">
-              <strong>Today{% if e.slot %} · {{ e.slot }}{% endif %}{% if e.event_time %} {{ e.event_time }}{% endif %}</strong> — {{ e.title }}
+              <strong>Today{% if e.slot %} · {{ e.slot }}{% endif %}{% if e.event_time %} {{ e.event_time }}{% endif %}</strong>: {{ e.title }}
               {% if e.saved_set %}<span style="color:var(--coach);font-weight:700;font-size:12px"> · {{ e.saved_set.name }} ({{ e.saved_set.total_distance() }}m)</span>{% endif %}
             </span>
             <span class="cx-row-tag">{{ squad_names.get(e.squad_id, 'Squad') }}</span>
@@ -387,11 +396,11 @@
           {% endfor %}
           <p class="cx-note" style="margin-top:10px">Sessions with a set attached are logged for you automatically when your coach marks you present.</p>
         {% else %}
-          <p class="cx-note" style="margin-bottom:8px">Nothing scheduled today — here's what's coming up.</p>
+          <p class="cx-note" style="margin-bottom:8px">Nothing scheduled today. Here's what's coming up.</p>
         {% endif %}
         {% for e in upcoming_squad_sessions %}
         <div class="cx-row">
-          <span class="cx-row-main">{{ e.event_date.strftime('%a %d %b') }}{% if e.slot %} · {{ e.slot }}{% endif %} — {{ e.title }}
+          <span class="cx-row-main">{{ e.event_date.strftime('%a %d %b') }}{% if e.slot %} · {{ e.slot }}{% endif %}: {{ e.title }}
             {% if e.saved_set %}<span style="color:var(--muted);font-size:12px"> · {{ e.saved_set.total_distance() }}m</span>{% endif %}
           </span>
           <span class="cx-row-tag">{{ squad_names.get(e.squad_id, 'Squad') }}</span>
@@ -441,7 +450,7 @@ document.getElementById('themeToggle').addEventListener('click', function(){
   try { localStorage.setItem('stroke-theme', next); } catch(e){}
 });
 
-// Volume / Sessions chart switcher — both backed by real data
+// Volume / Sessions chart switcher: both backed by real data
 const chartBars = document.querySelectorAll('#chartBars .bar');
 document.querySelectorAll('.cx-switch button').forEach(btn => {
   btn.addEventListener('click', function() {
@@ -467,7 +476,7 @@ function animateCount(el){
 }
 document.querySelectorAll('[data-count]').forEach(animateCount);
 
-// Photo whiteboard scan — upload, then hand parsed blocks to the log flow for review
+// Photo whiteboard scan: upload, then hand parsed blocks to the log flow for review
 function handleScanUpload(input){
   const file = input.files[0];
   if(!file) return;
@@ -487,11 +496,11 @@ function handleScanUpload(input){
         status.classList.add('error');
       }
     })
-    .catch(() => { status.textContent = 'Could not read that photo — try again.'; status.classList.add('error'); })
+    .catch(() => { status.textContent = 'Could not read that photo. Try again.'; status.classList.add('error'); })
     .finally(() => { input.value = ''; });
 }
 
-// Voice log — dictate a workout, AI turns it into structured blocks for review on the log page
+// Voice log: dictate a workout, AI turns it into structured blocks for review on the log page
 (function () {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const btn = document.getElementById('voiceLogBtn');
@@ -519,7 +528,7 @@ function handleScanUpload(input){
     rec.onend = function () {
       rec = null;
       btn.classList.remove('voice-recording');
-      if (!transcript.trim()) { status.textContent = "Didn't catch anything — try again."; status.classList.add('error'); return; }
+      if (!transcript.trim()) { status.textContent = "Didn't catch anything. Try again."; status.classList.add('error'); return; }
       status.textContent = 'Parsing your set…';
       const body = new FormData();
       body.append('transcript', transcript);
@@ -531,7 +540,7 @@ function handleScanUpload(input){
             window.location.href = '/log?fromvoice=1';
           } else { status.textContent = data.error || 'Could not parse that.'; status.classList.add('error'); }
         })
-        .catch(() => { status.textContent = 'Could not parse that — try again.'; status.classList.add('error'); });
+        .catch(() => { status.textContent = 'Could not parse that. Try again.'; status.classList.add('error'); });
     };
     try { rec.start(); } catch (e) { rec = null; btn.classList.remove('voice-recording'); }
   };

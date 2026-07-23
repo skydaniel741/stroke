@@ -1,4 +1,4 @@
-# preview_app.py — runs the app on port 5001 for Claude's preview verification,
+# preview_app.py: runs the app on port 5001 for Claude's preview verification,
 # so it doesn't collide with the dev server on 5000. Safe to delete.
 from app import create_app
 

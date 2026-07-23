@@ -1,11 +1,11 @@
 {% extends 'public_base.html' %}
-{# One login form, three framings. /login is generic; /login/coach and
-   /login/parent change only the copy and the sign-up path shown underneath --
-   they POST to the same endpoint, because the account's own role decides
-   where it lands, not the door it came in through. Anything else would be a
-   role claim made by whoever is at the keyboard. #}
+{# One login form, two framings. /login covers swimmers and parents (often
+   the same account) and /login/coach changes only the copy. Both POST to the
+   same endpoint, because the account's own role decides where it lands, not
+   the door it came in through. Anything else would be a role claim made by
+   whoever is at the keyboard. #}
 
-{% block title %}Log in — STROKE{% endblock %}
+{% block title %}Log in | STROKE{% endblock %}
 {% block description %}Log in to your STROKE account.{% endblock %}
 
 {% block chrome %}{% endblock %}
@@ -45,9 +45,8 @@
       <p class="auth-sub">{{ variant.form_sub|safe }}</p>
 
       <div class="auth-roles">
-        <a href="/login" class="auth-role {{ 'on' if role == 'any' }}">Swimmer</a>
+        <a href="/login" class="auth-role {{ 'on' if role == 'any' }}">Swimmer or parent</a>
         <a href="/login/coach" class="auth-role {{ 'on' if role == 'coach' }}">Coach</a>
-        <a href="/login/parent" class="auth-role {{ 'on' if role == 'parent' }}">Parent</a>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}

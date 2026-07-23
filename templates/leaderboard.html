@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leaderboard — STROKE</title>
+<title>Leaderboard | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -47,7 +47,7 @@
   <p class="lb-sub">Opt-in comparison against other Stroke swimmers who've also opted in. No external data, ever.</p>
 
   <div class="lb-optin">
-    <span>{{ 'You are sharing your times on the leaderboard.' if opted_in else 'Your times are private — opt in to appear and compare.' }}</span>
+    <span>{{ 'You are sharing your times on the leaderboard.' if opted_in else 'Your times are private. Opt in to appear and compare.' }}</span>
     <form method="POST" action="/solo/leaderboard-optin">
       <button type="submit" class="lb-optin-btn {{ '' if opted_in else 'off' }}">{{ 'Opt out' if opted_in else 'Opt in' }}</button>
     </form>

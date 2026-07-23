@@ -1,7 +1,7 @@
 {% extends 'coach_base.html' %}
-{% block title %}Notes — {{ swimmer.username }}{% endblock %}
+{% block title %}Notes | {{ swimmer.username }}{% endblock %}
 {% set header_eyebrow = 'Squad · ' ~ squad.name %}
-{% block page_title %}Notes — {{ swimmer.username }}{% endblock %}
+{% block page_title %}Notes: {{ swimmer.username }}{% endblock %}
 {% block page_sub %}<p class="coach-header-sub">Coach-private. Never shown to the swimmer.</p>{% endblock %}
 
 {% block content %}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Sets — STROKE Admin</title>
+<title>Manage Sets | STROKE Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -395,7 +395,7 @@
               </select>
             </div>
             <div class="block-row block-row-note">
-              <input type="text" id="blkNote" placeholder="Coaching note (e.g. descend 1-4, build each 50) — optional">
+              <input type="text" id="blkNote" placeholder="Coaching note (e.g. descend 1-4, build each 50), optional">
               <button type="button" class="btn-add-block" onclick="addBlock()">+ Add block</button>
             </div>
             <div class="block-list" id="blockList">
@@ -466,7 +466,7 @@ function renderBlocks(){
   } else {
     list.innerHTML = blocks.map((b, i) => `
       <div class="block-chip">
-        <span><strong>${b.section}</strong> — ${b.reps} × ${b.dist}m ${strokeLabels[b.stroke] || b.stroke}${b.modifier ? ' ' + b.modifier : ''}${b.rest ? (b.rest_type === 'rest' ? ' · Rest ' + b.rest : ' · On ' + b.rest) : ''}${b.note ? ' · ' + b.note : ''}</span>
+        <span><strong>${b.section}</strong>: ${b.reps} × ${b.dist}m ${strokeLabels[b.stroke] || b.stroke}${b.modifier ? ' ' + b.modifier : ''}${b.rest ? (b.rest_type === 'rest' ? ' · Rest ' + b.rest : ' · On ' + b.rest) : ''}${b.note ? ' · ' + b.note : ''}</span>
         <button type="button" class="block-chip-remove" onclick="removeBlock(${i})">✕</button>
       </div>
     `).join('');

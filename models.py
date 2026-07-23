@@ -21,6 +21,11 @@ class User(db.Model, UserMixin):
     verify_attempts = db.Column(db.Integer, default=0)
     failed_login_attempts = db.Column(db.Integer, default=0)
     login_locked_until = db.Column(db.DateTime, nullable=True)
+    # A user's PRIMARY role: what their own account is for. Being a parent is
+    # NOT stored here -- see has_parent_access below. A masters swimmer whose
+    # daughter is in the club is role='swimmer' with a parent link, not two
+    # separate accounts. role='parent' is only for people who joined via a
+    # parent invite and have no training of their own.
     role = db.Column(db.String(20), default='swimmer')  # 'swimmer', 'coach', or 'parent'
     # Marked by a coach from the squad roster -- purely a display flag today
     # (shows a "Minor" badge, surfaces the "Invite parent" action). Doesn't
@@ -61,6 +66,36 @@ class User(db.Model, UserMixin):
         # The actual gate used by solo_required/dashboard nav: on the solo
         # tier AND marked paid, or an admin (who always has full access).
         return self.is_admin or (self.is_solo and self.solo_paid)
+
+    # ---- parenthood is a capability, not a role -------------------------
+    # Any account can be linked to a child as well as having its own
+    # training. The link table is the single source of truth, so revoking a
+    # link revokes the capability with no role field left pointing at it.
+
+    def linked_swimmer_ids(self):
+        """Swimmer ids this account currently has a live parent link to."""
+        from models import ParentLink
+        rows = (
+            db.session.query(ParentLink.swimmer_id)
+            .filter_by(parent_id=self.id, status='active')
+            .all()
+        )
+        return [r[0] for r in rows]
+
+    @property
+    def has_parent_access(self):
+        """True if this account can open the parent view at all.
+
+        role='parent' alone is not enough and not required: a parent-role
+        account whose only link was revoked must lose access, and a swimmer
+        or coach who has been sent a link must gain it.
+        """
+        return bool(self.is_admin or self.linked_swimmer_ids())
+
+    @property
+    def has_own_training(self):
+        """True if this account is also a swimmer in its own right."""
+        return self.role in ('swimmer', 'coach') or self.is_admin
 
     swims = db.relationship('Swim', backref='user', lazy=True)
     sessions = db.relationship('Session', backref='user', lazy=True)

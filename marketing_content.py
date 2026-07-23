@@ -148,7 +148,7 @@ FEATURES = {
             ('Read-only', 'no edit path exists in the parent view'),
             ('Revocable', 'access ends the moment the link is revoked'),
         ],
-        'cta': ('Read the parent guide', '/for/parents'),
+        'cta': ('Read the guide for swimmers and parents', '/for/swimmers-and-parents'),
         'related': ['attendance', 'data-safety'],
     },
     'squad-calendar': {
@@ -294,64 +294,52 @@ AUDIENCES = {
         'cta': ('Start your squad free', '/signup?as=coach'),
         'features': ['attendance', 'session-builder', 'results-scanner', 'team-analytics', 'squad-calendar', 'announcements'],
     },
-    'parents': {
-        'eyebrow': 'For parents',
-        'title': "Follow your swimmer's season without chasing the coach.",
-        'lede': "If your child's coach uses STROKE, you can get a read-only view of your own swimmer: their times, their personal bests, whether they are improving, their attendance, and what is on next.",
-        'audience': 'parents',
+    # One page for the whole non-coach side. Splitting parents and swimmers
+    # into two pages contradicted the account model: a swimming parent is one
+    # person with one login, so making them choose a door was asking a
+    # question the product had already answered.
+    'swimmers-and-parents': {
+        'eyebrow': 'For swimmers and parents',
+        'title': 'One account for the swimmer, and for the person driving them to training.',
+        'lede': "Swimmers log their training and watch a season add up. Parents get a read-only view of their own swimmer, by invitation. If you are both, and plenty of swimming parents are, it is the same login.",
+        'audience': 'swimmers-and-parents',
         'sections': [
             {
-                'h': 'How you get access',
-                'body': "You do not sign up on your own. Your swimmer, or their coach, sends you a parent link from the roster. Opening that link is what creates your parent account and connects it to that one swimmer. If you have not been sent a link, ask the coach for one.",
+                'h': 'If you swim',
+                'body': "Log your times, splits and personal bests and keep them season after season, scored to World Aquatics points so improvement across different events is one number. In a squad, your coach's sessions and announcements land on your dashboard and the sets you swim get logged when your coach takes the roll. On your own, you get a multi-week plan generated from your own times and an AI coach for nutrition and dryland questions.",
             },
             {
-                'h': 'What you will see',
-                'body': "Best time for each event with a plain read on whether it is improving, steady or slipping. Recent swims. Attendance over the last few sessions. Upcoming squad practices and meets. Where the coach has approved one, a short written summary of how the last week went.",
+                'h': 'If you are a parent',
+                'body': "You do not sign up on your own. Your swimmer, or their coach, sends you a parent link, and opening it connects you to that one swimmer. You then see their best time for each event with a plain read on whether it is improving, steady or slipping, their recent swims, their attendance, what is on next, and a short written summary of the week where the coach has approved one.",
             },
             {
-                'h': 'What you will not see, and why',
-                'body': "You will not see any other swimmer in the squad, including times, attendance or names on a leaderboard. You will not see the coach's private notes about your child, or any injury or availability flag the coach has set. Those exist so a coach can be candid in their own working notes; a parent view that exposed them would quietly end that candour.",
+                'h': 'If you are both, you need one account, not two',
+                'body': "A masters swimmer with a daughter in the club is one person. Open the parent link while you are already signed in, confirm it, and the parent view is added to the account you have: your own training stays exactly where it is, and you switch between the two from the sidebar. It works the other way too, so a parent who takes up swimming can turn on their own training without starting again. The same holds if you coach.",
             },
             {
-                'h': 'It is read-only, and you can leave',
-                'body': "There is nothing in the parent view you can edit, because no edit path exists there at all. The link can be revoked by your swimmer or their coach at any time, and you can ask us to delete your parent account whenever you want.",
+                'h': 'What a parent cannot see, and why',
+                'body': "Never another swimmer in the squad, including times, attendance or names. Never the coach's private notes about your child, or any injury or availability flag they have set. Those exist so a coach can be candid in their own working notes, and a parent view that exposed them would quietly end that candour, which would be worse for the swimmer. The parent view is also read-only by construction: there is no edit path in it at all.",
+            },
+            {
+                'h': "Who can see a swimmer's data",
+                'body': "Your coach, if you are in a squad. Any parent you have been linked to. Other swimmers only if you explicitly opt in to the leaderboard, which is off by default. Nobody else. A parent link can be revoked at any time by the swimmer or their coach, and access ends immediately.",
             },
         ],
         'facts': [
-            ('Invite only', 'access comes from the coach or swimmer'),
-            ('One swimmer', 'your child, and nobody else'),
-            ('Read-only', 'nothing to edit, nothing to break'),
-        ],
-        'cta': ('How we protect your data', '/data-safety'),
-        'features': ['parent-view', 'wa-points'],
-    },
-    'swimmers': {
-        'eyebrow': 'For swimmers',
-        'title': 'Every time you have swum, in one place that remembers.',
-        'lede': 'Whether you are in a squad or training on your own, STROKE keeps your times, splits, personal bests and points, and turns them into something that tells you whether the work is landing.',
-        'audience': 'swimmers',
-        'sections': [
-            {
-                'h': 'If you are in a squad',
-                'body': "Your coach's sessions and announcements show up on your dashboard, and the sets you swim get logged when your coach takes the roll. Your times build a season-long record you keep, not one that lives on your coach's laptop.",
-            },
-            {
-                'h': 'If you train on your own',
-                'body': "Log your swims and get a multi-week plan generated from your own times, plus an AI coach for nutrition and dryland questions. No squad, no coach, no permission needed.",
-            },
-            {
-                'h': 'Your data, and who can see it',
-                'body': "If you join a squad, your coach can see your training data. If you send a parent link, that parent can see a read-only view of you. Nobody else sees anything unless you explicitly opt in to the public leaderboard. You can revoke a parent link at any time.",
-            },
-        ],
-        'facts': [
-            ('Free', 'to create an account and log swims'),
-            ('Points on everything', 'World Aquatics scoring'),
-            ('Yours', 'your record, not your club\'s'),
+            ('One account', 'swim, parent, or both'),
+            ('Invite only', 'parent access comes from the coach or swimmer'),
+            ('Your child only', 'never another swimmer in the squad'),
         ],
         'cta': ('Create your account', '/signup'),
-        'features': ['solo-training', 'wa-points', 'parent-view'],
+        'features': ['solo-training', 'parent-view', 'wa-points'],
     },
+}
+
+# Old two-page split, kept so existing links and any shared URLs still land
+# somewhere sensible instead of 404ing.
+AUDIENCE_ALIASES = {
+    'parents': 'swimmers-and-parents',
+    'swimmers': 'swimmers-and-parents',
 }
 
 
@@ -392,7 +380,11 @@ FAQ = [
         'group': 'Parents',
         'items': [
             ('How do I get access?',
-             "Your swimmer or their coach sends you a parent link from the roster. Opening it creates your parent account and connects it to that swimmer. There is no way to sign up as a parent and then go looking for a child."),
+             "Your swimmer or their coach sends you a parent link from the roster. Opening it connects you to that swimmer. There is no way to sign up as a parent and then go looking for a child."),
+            ('I swim or coach myself. Do I need a separate parent account?',
+             "No. Open the parent link while signed in to the account you already have, confirm it, and the parent view is added alongside your own training. You switch between the two from the sidebar, and nothing about your own account changes. It works the other way as well: a parent-only account can start logging its own swims at any time."),
+            ('Can I be linked to more than one child?',
+             "Yes. One account can hold links to several swimmers, and you pick which one you are looking at from the parent dashboard."),
             ('Can I see the rest of the squad?',
              "No. A parent account can only ever see the swimmers it has been explicitly linked to. Other swimmers' times, attendance and names are not reachable from the parent view."),
             ('Can I see what the coach has written about my child?',
@@ -442,8 +434,7 @@ FAQ = [
 
 FOOTER_LINKS = [
     ('For coaches', '/for/coaches'),
-    ('For parents', '/for/parents'),
-    ('For swimmers', '/for/swimmers'),
+    ('For swimmers and parents', '/for/swimmers-and-parents'),
     ('FAQ', '/faq'),
     ('Privacy', '/privacy'),
     ('Terms', '/terms'),

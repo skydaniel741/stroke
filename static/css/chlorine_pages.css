@@ -1,12 +1,12 @@
 /* ============================================================
-   CHLORINE — PAGES COMPAT LAYER
+   CHLORINE, PAGES COMPAT LAYER
    Retro-fits every legacy swimmer/solo page (goals, log, history,
    leaderboard, personal bests, solo program/analytics/onboarding/pro,
    nutrition, sets, check-in, WA points) onto the dark "timing console"
    identity used by the new dashboard + landing.
 
    Everything is scoped under [data-skin="chlorine"], so coach/admin
-   pages — which share main.css / dashboard.css — stay on the old theme.
+   pages, which share main.css / dashboard.css, stay on the old theme.
 
    Strategy:
      1. Re-point the legacy CSS variables (main.css tokens) at the
@@ -54,7 +54,7 @@
 [data-skin="chlorine"] ::selection{ background:var(--sig-dim); color:var(--ink); }
 
 /* ============================================================
-   2a. main.css — the few hardcoded (non-token) spots
+   2a. main.css, the few hardcoded (non-token) spots
    ============================================================ */
 /* main.css sets overflow-x:hidden on <html>/<body>, which breaks
    position:sticky for every descendant (log-nav/sets-nav/wa-nav/etc all
@@ -498,7 +498,7 @@ html[data-skin="chlorine"]{ overflow-x:clip; }
    personal_bests), and the solo-* pages sandwich a logout link
    between the back-link and logo, pushing it further right still.
    A 3-column grid (1fr auto 1fr) centers the logo regardless of
-   what — if anything — sits on either side, so every nav matches
+   what, if anything, sits on either side, so every nav matches
    the log/sets look.
    ============================================================ */
 [data-skin="chlorine"] .log-nav,

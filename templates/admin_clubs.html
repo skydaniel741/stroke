@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clubs — STROKE Admin</title>
+<title>Clubs | STROKE Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -77,10 +77,10 @@
             {{ c.name }}
             <div class="club-meta">Created {{ c.created_at.strftime('%d %b %Y') }}</div>
           </td>
-          <td>{{ owners.get(c.owner_id, '—') }}</td>
-          <td>{{ c.age_range or '—' }}</td>
+          <td>{{ owners.get(c.owner_id, 'n/a') }}</td>
+          <td>{{ c.age_range or 'n/a' }}</td>
           <td>
-            {{ c.contact_email or '—' }}
+            {{ c.contact_email or 'n/a' }}
             {% if c.newsletter_url %}<div class="club-meta"><a href="{{ c.newsletter_url }}" target="_blank" rel="noopener">Newsletter link</a></div>{% endif %}
           </td>
           <td><span class="badge {{ c.status }}">{{ c.status }}</span></td>
@@ -94,7 +94,7 @@
                 <button type="submit" class="btn-delete" onclick="return confirm('Reject and delete this club?')">Reject</button>
               </form>
               {% else %}
-              —
+n/a
               {% endif %}
             </div>
           </td>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Invite a parent — STROKE</title>
+<title>Invite a parent | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
@@ -39,7 +39,7 @@
 
 <div class="pi-wrap">
   <h1 class="pi-h1">Invite a parent</h1>
-  <p class="pi-sub">Generate a link and send it to a parent or guardian. They'll get a read-only view of your times, personal bests, attendance and how training is landing — no editing, no access to the rest of your account.</p>
+  <p class="pi-sub">Generate a link and send it to a parent or guardian. They'll get a read-only view of your times, personal bests, attendance and how training is landing. No editing, no access to the rest of your account.</p>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
@@ -74,7 +74,7 @@
     </div>
     {% endfor %}
   {% else %}
-    <p class="pi-empty">No invites yet — generate one above to get started.</p>
+    <p class="pi-empty">No invites yet. Generate one above to get started.</p>
   {% endif %}
 </div>
 

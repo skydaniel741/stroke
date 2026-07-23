@@ -1,4 +1,4 @@
-/* rail.js — progressive enhancement for horizontal .h-rail sections.
+/* rail.js, progressive enhancement for horizontal .h-rail sections.
    For each <div class="rail-wrap"><div class="h-rail">…cards…</div></div>
    it injects prev/next arrows and a dot indicator on tablet/desktop.
    On phones the rail stacks vertically (CSS) and this stays out of the way. */

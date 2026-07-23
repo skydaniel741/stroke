@@ -1,5 +1,5 @@
 {% extends 'coach_base.html' %}
-{% block title %}Calendar — {{ squad.name }}{% endblock %}
+{% block title %}Calendar | {{ squad.name }}{% endblock %}
 {% set header_eyebrow = 'Squad · ' ~ squad.name %}
 {% block page_title %}Calendar{% endblock %}
 {% block page_sub %}<p class="coach-header-sub">Schedule practices, meets and other squad events.</p>{% endblock %}
@@ -73,7 +73,7 @@
     </div>
     {% endfor %}
   {% else %}
-    <p class="panel-note">Nothing scheduled yet — add an event above.</p>
+    <p class="panel-note">Nothing scheduled yet. Add an event above.</p>
   {% endif %}
 {% endblock %}
 

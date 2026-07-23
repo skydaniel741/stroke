@@ -1,5 +1,5 @@
 /* ============================================================
-   stroke-validate.js — one reusable client-side input guard.
+   stroke-validate.js, one reusable client-side input guard.
    Include on any page with numeric or length-limited inputs.
 
    Why this exists: browsers IGNORE the `maxlength` attribute on

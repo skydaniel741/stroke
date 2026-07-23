@@ -130,15 +130,19 @@ def feature_page(slug):
 
 @main.route('/for/<audience>')
 def audience_page(audience):
-    from marketing_content import AUDIENCES, FEATURES
+    from marketing_content import AUDIENCES, AUDIENCE_ALIASES, FEATURES
+    if audience in AUDIENCE_ALIASES:
+        return redirect(url_for('main.audience_page', audience=AUDIENCE_ALIASES[audience]), code=301)
     page = AUDIENCES.get(audience)
     if not page:
         abort(404)
     features = [(s, FEATURES[s]) for s in page.get('features', []) if s in FEATURES]
     ctas = {
         'coaches': ('Start your squad', 'Free while we build with early coaches. No card required.'),
-        'parents': ('Not been sent a link yet?', "Ask your swimmer's coach to send you one from their roster. There's nothing for you to sign up to first."),
-        'swimmers': ('Start logging', 'Free to create an account and log your swims.'),
+        'swimmers-and-parents': (
+            'Swimming? Start logging.',
+            "Free to create an account. If you're here as a parent, you don't sign up: ask your swimmer's coach to send you a parent link.",
+        ),
     }
     heading, sub = ctas[audience]
     return _public(
@@ -269,7 +273,7 @@ def resend_code():
         if send_verification_email(email, user.username, code):
             flash('New code sent.', 'success')
         else:
-            flash("Couldn't send the email right now — try again in a moment.", 'error')
+            flash("Couldn't send the email right now. Try again in a moment.", 'error')
 
     return redirect(url_for('main.verify', email=email))
 
@@ -319,20 +323,26 @@ def login():
     return _login_page('any')
 
 
-# Copy for the three doors into the same login form. The role here is
-# presentation only -- it never reaches the POST handler, because where an
-# account lands after logging in is decided by the role stored on the account,
-# not by which page the person happened to open. A visitor picking "Coach"
-# does not become one.
+# Copy for the two doors into the same login form.
+#
+# Two, not three: a swimmer and a parent are frequently the same person with
+# the same login (see User.has_parent_access), so asking them to pick between
+# those two labels is asking a question the account model has already
+# answered. Coaches get their own door because a coach account really is a
+# different thing to run.
+#
+# The role here is presentation only. It never reaches the POST handler,
+# because where an account lands after logging in is decided by the role
+# stored on the account. A visitor picking "Coach" does not become one.
 LOGIN_VARIANTS = {
     'any': {
         'tag': 'Welcome back',
         'headline': "Pick up where your last <em>length</em> left off.",
-        'sub': "Every best time, split and points score you've logged is still here, waiting for the next session.",
-        'points': ['Your full season history', 'Personal bests per course', 'World Aquatics points on everything'],
+        'sub': "Your times if you swim, your swimmer's if you're a parent, and both on the one login if you're both.",
+        'points': ['Your full season history', 'Personal bests per course', "Your swimmer's parent view, if you've been linked"],
         'form_h': 'Welcome back',
         'form_sub': 'Log in to your STROKE account.',
-        'switch': 'No account yet? <a href="/signup">Sign up free</a>',
+        'switch': 'No account yet? <a href="/signup">Sign up free</a> &middot; Parents need a link from the coach, <a href="/for/swimmers-and-parents">here is why</a>',
     },
     'coach': {
         'tag': 'Coach login',
@@ -340,17 +350,8 @@ LOGIN_VARIANTS = {
         'sub': "Roster, attendance, today's session and the whole squad's numbers, in the same place you left them.",
         'points': ['Attendance logs the set for everyone present', 'Squad-wide analytics, not one swimmer at a time', 'Parent links you control and can revoke'],
         'form_h': 'Coach login',
-        'form_sub': 'Same login for every STROKE account — this door just knows you run a squad.',
+        'form_sub': 'Same login for every STROKE account. This door just knows you run a squad.',
         'switch': 'Not set up yet? <a href="/signup?as=coach">Start your squad free</a> &middot; <a href="/for/coaches">What coaches get</a>',
-    },
-    'parent': {
-        'tag': 'Parent login',
-        'headline': "See how their season is <em>actually going.</em>",
-        'sub': "Times, personal bests, attendance and what's coming up — for your swimmer, read-only.",
-        'points': ['Your own swimmer, and nobody else', 'Read-only: nothing to break', "The coach's private notes stay private"],
-        'form_h': 'Parent login',
-        'form_sub': "Log in to the parent view.",
-        'switch': "Haven't been sent a parent link? Ask your swimmer's coach for one &middot; <a href=\"/for/parents\">How it works</a>",
     },
 }
 
@@ -366,7 +367,10 @@ def login_coach():
 
 @main.route('/login/parent')
 def login_parent():
-    return _login_page('parent')
+    """Kept so parent invite emails and older links still work. There is no
+    separate parent door any more: a parent logs in exactly where a swimmer
+    does, because it is frequently the same account."""
+    return redirect(url_for('main.login'), code=301)
 
 
 def _oauth_login_or_create(email, display_name):
@@ -412,7 +416,7 @@ def oauth_start(provider):
         return redirect(url_for('main.login'))
 
     if not current_app.config.get(f'{provider.upper()}_AUTH_ENABLED'):
-        flash(f"{provider.capitalize()} sign-in isn't set up yet — use email and password for now.", 'error')
+        flash(f"{provider.capitalize()} sign-in isn't set up yet. Use email and password for now.", 'error')
         return redirect(url_for('main.login'))
 
     client = oauth.create_client(provider)
@@ -432,7 +436,7 @@ def oauth_callback(provider):
     try:
         token = client.authorize_access_token()
     except Exception:
-        flash('Sign-in was cancelled or failed — try again.', 'error')
+        flash('Sign-in was cancelled or failed. Try again.', 'error')
         return redirect(url_for('main.login'))
 
     userinfo = token.get('userinfo') or {}
@@ -467,7 +471,7 @@ def dashboard():
     from models import Swim, Session, Announcement, SquadMembership, AthleteProfile, SquadEvent, Squad
     from datetime import timedelta
 
-    # Coaches and parents live on their own side — keep them there (admins keep full access).
+    # Coaches and parents live on their own side. Keep them there (admins keep full access).
     if current_user.role == 'coach' and not current_user.is_admin:
         return redirect(url_for('coach.coach_dashboard'))
     if current_user.role == 'parent' and not current_user.is_admin:
@@ -603,7 +607,7 @@ def dashboard():
             {
                 'kind': 'PB',
                 'label': s.event,
-                'pool': s.pool or '—',
+                'pool': s.pool or 'n/a',
                 'logged_at': s.logged_at,
                 'type': 'swim',
                 'id': s.id,
@@ -612,7 +616,7 @@ def dashboard():
             {
                 'kind': s.session_type or 'Session',
                 'label': f"{len(s.get_sets())} set" + ('s' if len(s.get_sets()) != 1 else '') if s.get_sets() else (s.session_type or 'Session'),
-                'pool': s.pool or '—',
+                'pool': s.pool or 'n/a',
                 'logged_at': s.logged_at,
                 'type': 'session',
                 'id': s.id,
@@ -705,7 +709,7 @@ def log():
                 flash('Pick an event first.', 'error')
                 return redirect(url_for('main.log'))
             if time_norm is None:
-                flash("That time doesn't look right — enter it like 1:02.50 or 58.90.", 'error')
+                flash("That time doesn't look right, enter it like 1:02.50 or 58.90.", 'error')
                 return redirect(url_for('main.log'))
 
             splits_raw = request.form.get('splits', '[]')
@@ -736,7 +740,7 @@ def log():
             # bad reps/distances/rests are cleaned or dropped, never stored.
             sets_json, blocks = clean_sets_json(request.form.get('session_data', '[]'))
             if not blocks:
-                flash('That session had no valid sets — check the reps and distances.', 'error')
+                flash('That session had no valid sets. Check the reps and distances.', 'error')
                 return redirect(url_for('main.log'))
             session = Session(
                 user_id=current_user.id,
@@ -754,7 +758,7 @@ def log():
             try:
                 import plan_logic
                 if plan_logic.link_completed(current_user.id, session):
-                    flash('Session logged — plan workout ticked off!', 'success')
+                    flash('Session logged. Plan workout ticked off!', 'success')
                 else:
                     flash('Session logged!', 'success')
             except Exception:
@@ -934,7 +938,7 @@ def sets_create():
     if not name:
         return {'ok': False, 'error': 'Set needs a name.'}, 400
     if not blocks:
-        return {'ok': False, 'error': 'That set has no valid blocks — check the reps and distances.'}, 400
+        return {'ok': False, 'error': 'That set has no valid blocks. Check the reps and distances.'}, 400
 
     new_set = SavedSet(
         name=name,
@@ -988,7 +992,7 @@ def history():
                 'id': s.id,
                 'kind': 'PB',
                 'label': s.event,
-                'pool': s.pool or '—',
+                'pool': s.pool or 'n/a',
                 'tag': s.tag or 'practice',
                 'logged_at': s.logged_at,
             } for s in swims
@@ -998,7 +1002,7 @@ def history():
                 'id': s.id,
                 'kind': s.session_type or 'Session',
                 'label': f"{len(s.get_sets())} set" + ('s' if len(s.get_sets()) != 1 else '') if s.get_sets() else (s.session_type or 'Session'),
-                'pool': s.pool or '—',
+                'pool': s.pool or 'n/a',
                 'distance': s.total_distance(),
                 'logged_at': s.logged_at,
             } for s in sessions
@@ -1348,12 +1352,12 @@ def personal_bests_analyze():
 
     profile = db.session.query(AthleteProfile).filter_by(user_id=current_user.id).first()
     if profile and profile.progress_insight_at and datetime.utcnow() - profile.progress_insight_at < timedelta(hours=24):
-        flash("You've already got a fresh analysis — check back later for an update.", 'error')
+        flash("You've already got a fresh analysis. Check back later for an update.", 'error')
         return redirect(url_for('main.personal_bests'))
 
     has_data, digest = _build_progression_digest(current_user.id)
     if not has_data:
-        flash("Not enough repeated timed swims yet — log a few more of the same event to unlock an AI analysis.", 'error')
+        flash("Not enough repeated timed swims yet. Log a few more of the same event to unlock an AI analysis.", 'error')
         return redirect(url_for('main.personal_bests'))
 
     tone = profile.coaching_tone if profile else 'encouraging'
@@ -1361,7 +1365,7 @@ def personal_bests_analyze():
         digest, current_app.config['ANTHROPIC_API_KEY'], current_app.config['ANTHROPIC_MODEL'], tone=tone,
     )
     if not result.get('ok'):
-        flash(result.get('error', "Couldn't generate an analysis — try again."), 'error')
+        flash(result.get('error', "Couldn't generate an analysis. Try again."), 'error')
         return redirect(url_for('main.personal_bests'))
 
     if not profile:
@@ -1453,7 +1457,7 @@ def personal_bests_import():
             athlete_model.update_athlete_state(current_user.id)
         flash(f'Imported {count} swim(s).', 'success')
     except Exception:
-        flash('Could not read that CSV — check it matches the exported format and try again.', 'error')
+        flash('Could not read that CSV. Check it matches the exported format and try again.', 'error')
 
     return redirect(url_for('main.personal_bests'))
 
@@ -1492,7 +1496,7 @@ def goals():
 
         target_time, _secs = clean_time(target_time_raw, key='goal_seconds')
         if target_time is None:
-            flash("That target time doesn't look right — enter it like 1:02.50 or 58.90.", 'error')
+            flash("That target time doesn't look right, enter it like 1:02.50 or 58.90.", 'error')
             return redirect(url_for('main.goals'))
 
         target_date_val = None
@@ -1855,7 +1859,7 @@ def admin_user_delete(user_id):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        flash(f"Couldn't delete {username} — they still have linked data (swims, sets, etc).", 'error')
+        flash(f"Couldn't delete {username}. They still have linked data (swims, sets, etc).", 'error')
         return redirect(url_for('main.admin_dashboard'))
 
     _log_admin_action('delete_user', 'User', user_id, f'{username} <{email}>')
@@ -1884,7 +1888,7 @@ def admin_user_resend_verification(user_id):
         _log_admin_action('resend_verification', 'User', u.id, u.email)
         flash(f'Verification email resent to {u.email}.', 'success')
     else:
-        flash("Couldn't send the email right now — try again in a moment.", 'error')
+        flash("Couldn't send the email right now. Try again in a moment.", 'error')
     return redirect(url_for('main.admin_dashboard'))
 
 
@@ -2013,7 +2017,7 @@ def admin_standards_create():
 
     cutoff_time, _secs = clean_time(cutoff_raw, key='goal_seconds')
     if cutoff_time is None:
-        flash("That cutoff time doesn't look right — enter it like 1:02.50 or 58.90.", 'error')
+        flash("That cutoff time doesn't look right, enter it like 1:02.50 or 58.90.", 'error')
         return redirect(url_for('main.admin_standards'))
 
     standard = Standard(
@@ -2135,7 +2139,7 @@ def admin_sets_create():
         flash('Set needs a name.', 'error')
         return redirect(url_for('main.admin_sets'))
     if not blocks:
-        flash('That set has no valid blocks — check the reps and distances.', 'error')
+        flash('That set has no valid blocks. Check the reps and distances.', 'error')
         return redirect(url_for('main.admin_sets'))
 
     new_set = SavedSet(

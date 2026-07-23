@@ -28,7 +28,7 @@ def send_verification_email(to_email, username, code):
 
     resend.api_key = api_key or os.getenv('RESEND_API_KEY')
 
-    # Styles are inlined — many email clients strip <style> blocks.
+    # Styles are inlined, many email clients strip <style> blocks.
     # Palette matches the site: lavender #ccccff, ink #111, white cards,
     # hard borders + offset shadows.
     html_content = f"""

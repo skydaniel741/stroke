@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Build your plan — STROKE</title>
+<title>Build your plan | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -81,7 +81,7 @@
   <div class="pl-callout">
     <span class="pl-callout-badge">Pace found</span>
     We found your recent <b>400 free ({{ css_preview.t400 }})</b> and <b>200 free ({{ css_preview.t200 }})</b>.
-    Your CSS pace comes out at <b>{{ css_preview.css }} per 100m</b> — every session target will be built from it.
+    Your CSS pace comes out at <b>{{ css_preview.css }} per 100m</b>: every session target will be built from it.
   </div>
   {% else %}
   <div class="pl-callout">
@@ -94,7 +94,7 @@
     <div class="pl-field">
       <label class="pl-label" for="goal_event">Goal event</label>
       <select class="pl-select" id="goal_event" name="goal_event">
-        <option value="">No specific event — just get faster</option>
+        <option value="">No specific event: just get faster</option>
         {% for ev in events %}
         <option value="{{ ev }}" {{ 'selected' if latest_goal and latest_goal.event == ev }}>{{ ev }}</option>
         {% endfor %}

@@ -1,9 +1,9 @@
 /* ============================================================
-   STROKE — landing page (marketing)
+   STROKE, landing page (marketing)
    Same Linear.app structural system (hairline-bordered surface
    ladder, no drop shadows, rounded-md 8px buttons never pill,
    Inter throughout, scarce single accent) but recolored to a
-   white canvas with a mint-green accent per Danny's request —
+   white canvas with a mint-green accent per Danny's request 
    the dark near-black/lavender pass was "ugly."
    Mobile-first: base styles are the phone view, min-width media
    queries scale up to desktop. Every card/block is a link.
@@ -53,7 +53,7 @@
 html:has(.sl){ scroll-behavior:smooth; }
 @media (prefers-reduced-motion:reduce){ html:has(.sl){ scroll-behavior:auto; } }
 
-/* headline face — single voice, Inter 500/600, aggressive negative tracking that eases toward 0 at body sizes */
+/* headline face, single voice, Inter 500/600, aggressive negative tracking that eases toward 0 at body sizes */
 .sl h1,.sl h2,.sl h3,.sl .display{
   font-family:'Inter', ui-sans-serif, sans-serif;
   font-weight:600;
@@ -96,7 +96,7 @@ html:has(.sl){ scroll-behavior:smooth; }
   transform:translateX(0);
 }
 
-/* buttons — rounded-md, never pill */
+/* buttons, rounded-md, never pill */
 .sl .btn{
   display:inline-flex; align-items:center; justify-content:center;
   padding:11px 18px; border-radius:var(--r-md);
@@ -108,7 +108,7 @@ html:has(.sl){ scroll-behavior:smooth; }
 .sl .btn-ghost{ background:var(--surface-1); color:var(--ink); border:1px solid var(--hairline); }
 .sl .btn-ghost:hover{ border-color:var(--hairline-strong); background:var(--surface-2); }
 
-/* eyebrow — the one place tracking goes positive, marks it as taxonomy */
+/* eyebrow, the one place tracking goes positive, marks it as taxonomy */
 .sl .eyebrow{
   font-family:'Inter',sans-serif; font-weight:500;
   color:var(--ink-subtle); font-size:13px; letter-spacing:.4px; text-transform:uppercase;
@@ -290,7 +290,7 @@ html:has(.sl){ scroll-behavior:smooth; }
 .sl .footer-links a:hover{ color:var(--ink); }
 
 /* ============================================================
-   RESPONSIVE — scale up from the phone view
+   RESPONSIVE, scale up from the phone view
    ============================================================ */
 @media(min-width:680px){
   .sl .sec{ padding:80px 32px; }

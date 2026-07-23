@@ -1,5 +1,5 @@
 /* ============================================================
-   INDEX PAGE STYLES — v3 "Warm Kitchen"
+   INDEX PAGE STYLES, v3 "Warm Kitchen"
    Maggie-app design language (oversized uppercase display type,
    arch-topped super-rounded cards, full-bleed flat colour-block
    statement sections, a handwritten script accent) rebuilt on the
@@ -10,10 +10,10 @@
    ============================================================ */
 
 :root{
-  --choc:#402011;        /* deep chocolate — primary dark surface / ink */
+  --choc:#402011;        /* deep chocolate, primary dark surface / ink */
   --choc-deep:#281006;   /* near-black brown */
   --rust:#823513;        /* warm rust mid-tone */
-  --gold:#faae33;        /* amber gold — the hero accent */
+  --gold:#faae33;        /* amber gold, the hero accent */
   --gold-deep:#e8912a;
   --gold-soft:#ffd591;
   --magenta:#d1255c;     /* pop accent */

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ category.label }} — STROKE</title>
+<title>{{ category.label }} | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -29,7 +29,7 @@
     <div>
       <p class="sets-eyebrow">Set library</p>
       <h1 class="sets-h1">{{ category.label }}</h1>
-      <p class="sets-sub">{{ category.blurb }} — {{ total_count }} set{{ 's' if total_count != 1 else '' }} in this category.</p>
+      <p class="sets-sub">{{ category.blurb }}: {{ total_count }} set{{ 's' if total_count != 1 else '' }} in this category.</p>
     </div>
   </div>
 

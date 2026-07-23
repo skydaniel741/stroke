@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Goals — STROKE</title>
+<title>Goals | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -63,7 +63,7 @@
 
 <div class="g-wrap">
   <h1 class="g-h1">Goals</h1>
-  <p class="g-sub">Set a target time and date. No auto-plan — just a clear marker to swim towards.</p>
+  <p class="g-sub">Set a target time and date. No auto-plan. Just a clear marker to swim towards.</p>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
@@ -94,12 +94,12 @@
     {% for row in goal_rows %}
     <div class="g-goal {{ 'achieved' if row.achieved else '' }}">
       <div>
-        <div class="g-goal-main">{{ row.goal.event }} — target {{ row.goal.target_time }}</div>
+        <div class="g-goal-main">{{ row.goal.event }}: target {{ row.goal.target_time }}</div>
         <div class="g-goal-sub">
           {% if row.goal.target_date %}By {{ row.goal.target_date.strftime('%d %b %Y') }} · {% endif %}
           {% if row.best_secs is not none %}
             Current best: {{ row.best_secs|round(2) }}s
-            {% if row.gap is not none and row.gap > 0 %} — {{ row.gap }}s to go{% endif %}
+            {% if row.gap is not none and row.gap > 0 %}: {{ row.gap }}s to go{% endif %}
           {% else %}
             No PB logged for this event yet
           {% endif %}
@@ -114,7 +114,7 @@
     </div>
     {% endfor %}
   {% else %}
-    <p class="panel-note">No goals set yet — add one above.</p>
+    <p class="panel-note">No goals set yet. Add one above.</p>
   {% endif %}
 </div>
 

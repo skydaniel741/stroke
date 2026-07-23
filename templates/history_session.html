@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ s.session_type or 'Session' }} — STROKE</title>
+<title>{{ s.session_type or 'Session' }} | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -99,7 +99,7 @@
 
     {% for sec in sections %}
     <div class="print-section">
-      <p class="print-section-head">{{ sec.name }} <span class="print-section-dist">— {{ sec.distance }}m</span></p>
+      <p class="print-section-head">{{ sec.name }} <span class="print-section-dist">{{ sec.distance }}m</span></p>
       {% for b in sec.blocks %}
       <div class="print-line">
         <p class="print-line-main">{{ b.reps }} × {{ b.dist }}m {{ stroke_labels.get(b.stroke, b.stroke) }}{% if b.modifier %} {{ b.modifier }}{% endif %}{% if b.rest and b.rest not in ['0', '0:00'] %} <span class="print-line-rest">@ {{ b.rest }} rest</span>{% endif %}</p>

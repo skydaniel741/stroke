@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nutrition — STROKE</title>
+<title>Nutrition | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -99,7 +99,7 @@
 <div class="nu-wrap">
   <p class="nu-eyebrow">Solo · Nutrition</p>
   <h1 class="nu-h1">Fuel for swimmers</h1>
-  <p class="nu-sub">Meals built around your training — what to eat before you dive in, how to recover after, and how to fuel on race day. Tap any meal for the full recipe, timing and stats.</p>
+  <p class="nu-sub">Meals built around your training, what to eat before you dive in, how to recover after, and how to fuel on race day. Tap any meal for the full recipe, timing and stats.</p>
 
   {% for cat in categories %}
     {% set meals = meals_by_cat.get(cat.key, []) %}

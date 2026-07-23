@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parent dashboard — STROKE</title>
+<title>Parent dashboard | STROKE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chlorine.css') }}">
@@ -54,7 +54,19 @@
 
 <nav class="pd-nav">
   <a href="/parent/dashboard" class="pd-logo">STROKE</a>
-  <a href="/logout" class="pd-logout">Log out</a>
+  {# The way back for an account that is both. A parent-only account has no
+     training side to return to, so it gets the "start logging" offer instead. #}
+  {% if current_user.has_own_training %}
+  <a href="{{ '/coach' if current_user.role == 'coach' else '/dashboard' }}" class="pd-logout" style="margin-left:auto;color:var(--brand)">
+    {{ 'My coach dashboard' if current_user.role == 'coach' else 'My own training' }}
+  </a>
+  <a href="/logout" class="pd-logout" style="margin-left:16px">Log out</a>
+  {% else %}
+  <form method="POST" action="/parent/enable-training" style="margin-left:auto">
+    <button type="submit" class="pd-logout" style="background:none;border:none;cursor:pointer;font:inherit;color:var(--brand)">I swim too, add my own training</button>
+  </form>
+  <a href="/logout" class="pd-logout" style="margin-left:16px">Log out</a>
+  {% endif %}
 </nav>
 
 <div class="pd-wrap">
@@ -147,7 +159,7 @@
         </div>
         {% endfor %}
         {% if not snapshot.recent_attendance and not snapshot.upcoming_events %}
-        <p class="pd-empty" style="padding:16px 0">Nothing recorded yet — this shows up once they're on a squad with a coach on STROKE.</p>
+        <p class="pd-empty" style="padding:16px 0">Nothing recorded yet. This shows up once they're on a squad with a coach on STROKE.</p>
         {% endif %}
       </div>
     </div>
@@ -161,7 +173,7 @@
           <div class="pd-checkin-text">{{ c.ai_insight or "Checked in, no note this time." }}</div>
         </div>
         {% endfor %}
-        <p class="pd-note">Guidance built from their own logged data — not medical or performance advice.</p>
+        <p class="pd-note">Guidance built from their own logged data. Not medical or performance advice.</p>
       {% else %}
       <p class="pd-empty" style="padding:16px 0">No check-ins yet.</p>
       {% endif %}
