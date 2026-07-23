@@ -100,6 +100,25 @@ def _age_factor(age):
 
 FITNESS_FACTOR = {'Low': 1.10, 'Moderate': 1.0, 'Good': 0.95, 'High': 0.90}
 
+# Riegel's endurance model exponent (t2 = t1 * (d2/d1)^exponent) -- the
+# population-average curve most race-time calculators use. A swimmer's own
+# exponent (fit from their own PBs, see plan_logic.classify_swimmer_type)
+# compared against this is what tells sprint vs. distance aptitude apart.
+RIEGEL_EXPONENT = 1.06
+
+
+def riegel_predict(known_secs, known_dist, target_dist, exponent=RIEGEL_EXPONENT):
+    """Predict a swim time at target_dist from a known time at known_dist, via
+    Riegel's endurance model. Returns None outside a trustworthy extrapolation
+    range (0.25x-4x) -- Riegel drifts badly past that, so a wild guess is
+    worse than no estimate at all."""
+    if not known_secs or not known_dist or not target_dist:
+        return None
+    ratio = target_dist / known_dist
+    if not (0.25 <= ratio <= 4):
+        return None
+    return known_secs * ratio ** exponent
+
 
 def estimate_rep_seconds(dist, stroke='FR', modifier='', level=None, age=None, fitness=None):
     """Best estimate of how long one rep takes this swimmer, in seconds.

@@ -690,6 +690,54 @@ def test_training_plan(app):
                                                 PlannedSession.status == 'planned').count()
         check('future sessions untouched by sweep', future_ok > 0)
 
+        # --- shared Riegel predictor (swim_logic.riegel_predict) ---
+        from swim_logic import riegel_predict
+        check('riegel_predict basic', abs(riegel_predict(60.0, 100, 200) - 60.0 * 2 ** 1.06) < 1e-9)
+        check('riegel_predict rejects >4x extrapolation', riegel_predict(30.0, 50, 1500) is None)
+        check('riegel_predict rejects <0.25x extrapolation', riegel_predict(1200.0, 1500, 50) is None)
+        check('riegel_predict rejects missing input', riegel_predict(None, 100, 200) is None)
+
+        # --- css_estimate: generalizes beyond a literal 400+200 pair ---
+        css_u1 = _mk_user(db, User, 'css-pair@test.com')
+        _seed_swims(db, Swim, css_u1.id, '400m Freestyle', [('5:52.00', 1)])
+        _seed_swims(db, Swim, css_u1.id, '200m Freestyle', [('2:48.00', 1)])
+        est1 = pl.css_estimate(css_u1.id)
+        check('css_estimate real pair -> time_trial',
+              est1 is not None and est1['source'] == 'time_trial' and abs(est1['css'] - 92.0) < 0.01, est1)
+
+        css_u2 = _mk_user(db, User, 'css-single@test.com')
+        _seed_swims(db, Swim, css_u2.id, '800m Freestyle', [('9:30.00', 1)])
+        est2 = pl.css_estimate(css_u2.id)
+        check('css_estimate single distant swim -> estimated_riegel',
+              est2 is not None and est2['source'] == 'estimated_riegel', est2)
+        check('css_estimate basis reflects the logged swim',
+              est2 is not None and est2['basis400'] == '800m Freestyle' and est2['basis200'] == '800m Freestyle')
+
+        css_u3 = _mk_user(db, User, 'css-none@test.com')
+        _seed_swims(db, Swim, css_u3.id, '50m Freestyle', [('28.00', 1)])
+        check('css_estimate no trustworthy anchor -> None', pl.css_estimate(css_u3.id) is None)
+
+        # --- classify_swimmer_type: sprint/distance lean from the swimmer's own curve ---
+        type_u1 = _mk_user(db, User, 'type-sprint@test.com')
+        _seed_swims(db, Swim, type_u1.id, '100m Freestyle', [('1:00.00', 1)])
+        _seed_swims(db, Swim, type_u1.id, '400m Freestyle', [('5:20.00', 1)])
+        sprint_type = pl.classify_swimmer_type(type_u1.id)
+        check('classify_swimmer_type reads a sprint lean',
+              sprint_type is not None and sprint_type['profile'] == 'sprint', sprint_type)
+
+        type_u2 = _mk_user(db, User, 'type-distance@test.com')
+        _seed_swims(db, Swim, type_u2.id, '100m Freestyle', [('1:05.00', 1)])
+        _seed_swims(db, Swim, type_u2.id, '400m Freestyle', [('4:20.00', 1)])
+        distance_type = pl.classify_swimmer_type(type_u2.id)
+        check('classify_swimmer_type reads a distance lean',
+              distance_type is not None and distance_type['profile'] == 'distance', distance_type)
+
+        type_u3 = _mk_user(db, User, 'type-none@test.com')
+        _seed_swims(db, Swim, type_u3.id, '100m Freestyle', [('1:00.00', 1)])
+        _seed_swims(db, Swim, type_u3.id, '200m Freestyle', [('2:10.00', 1)])
+        check('classify_swimmer_type needs >= 3x distance spread',
+              pl.classify_swimmer_type(type_u3.id) is None)
+
 
 # ===========================================================================
 # 10. Research agent: source hardening, scout filtering, pipeline idempotency,

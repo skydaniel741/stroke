@@ -1593,7 +1593,10 @@ function cpRenderSwimmer() {
           ${cpVolumeChart(selected)}
         </div>
         ${cpReadinessPanel(selected)}
-        ${cpCssTrendPanel(selected)}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          ${cpCssTrendPanel(selected)}
+          ${cpSwimmerTypePanel(selected)}
+        </div>
         ${cpPacingPanel(selected)}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between">
@@ -1757,34 +1760,72 @@ function cpPacingPanel(swimmer) {
     </div>`;
 }
 
-/* Aerobic-capacity trend via CSS (Critical Swim Speed) -- the same engine
-   the Solo training-plan feature computes from (plan_logic.compute_css), just
-   surfaced coach-side. Requires no new data: derived from the swimmer's best
-   recent 400+200 freestyle pair, compared against the same pair from the
-   prior 90-day window. */
+/* Aerobic capacity via CSS (Critical Swim Speed) plus the five training-pace
+   zones derived from it -- the same engine the Solo training-plan feature
+   uses (plan_logic.css_estimate / plan_logic.zones), surfaced coach-side.
+   Requires no new data: derived from whatever freestyle PBs the swimmer has
+   logged, preferring a real 400+200 pair but falling back to a Riegel
+   estimate from any other freestyle distance when that pair isn't there. */
 function cpCssTrendPanel(swimmer) {
   const css = swimmer.cssTrend;
   if (!css) {
     return `
       <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
         <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i data-lucide="timer" class="w-4 h-4 text-brand-500"></i> Aerobic capacity (CSS)</h4>
-        <div class="py-8 text-center text-xs text-slate-400 italic">No 400 + 200 freestyle time-trial pair logged in the last 90 days yet — CSS needs both to compute.</div>
+        <div class="py-8 text-center text-xs text-slate-400 italic">No freestyle PB logged in the last 90 days yet, CSS needs at least one to estimate from.</div>
       </div>`;
   }
   const dir = css.direction === 'improving' ? { cls: 'text-emerald-700 bg-emerald-50 border-emerald-100', icon: '▼' } :
     css.direction === 'slipping' ? { cls: 'text-rose-700 bg-rose-50 border-rose-100', icon: '▲' } :
-    { cls: 'text-slate-500 bg-slate-100 border-slate-200', icon: '—' };
+    { cls: 'text-slate-500 bg-slate-100 border-slate-200', icon: 'n/a' };
+  const zoneRows = (css.zones || []).map(z => `
+        <div class="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
+          <div>
+            <span class="text-xs font-semibold text-slate-700">${cpEsc(z.label)}</span>
+            <span class="text-[10px] text-slate-400 block">${cpEsc(z.note)}</span>
+          </div>
+          <span class="text-xs font-black text-slate-900 font-mono shrink-0 ml-2">${cpEsc(z.pace)}<span class="text-[9px] font-semibold text-slate-400"> /100</span></span>
+        </div>`).join('');
   return `
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
       <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3.5 flex items-center gap-1.5"><i data-lucide="timer" class="w-4 h-4 text-brand-500"></i> Aerobic capacity (CSS)</h4>
       <div class="flex items-center justify-between gap-2">
         <div>
           <span class="text-lg font-black text-slate-900 font-mono">${cpEsc(css.cssPace)}<span class="text-xs font-semibold text-slate-400"> /100m</span></span>
-          <span class="text-[10px] text-slate-400 font-mono block">from time trial ${cpEsc(css.trialDate)}</span>
+          ${css.source === 'estimated_riegel'
+            ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100 ml-1.5 align-middle">ESTIMATED</span>'
+            : ''}
         </div>
         ${css.direction ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border font-mono shrink-0 ${dir.cls}">${dir.icon} ${Math.abs(css.changePct).toFixed(1)}%</span>` : ''}
       </div>
-      ${css.previousCssPace ? `<p class="text-[10.5px] text-slate-400 mt-2">vs. ${cpEsc(css.previousCssPace)} /100m the prior 90 days</p>` : `<p class="text-[10.5px] text-slate-400 mt-2">No prior-period trial pair yet to compare against.</p>`}
+      ${css.basisNote ? `<p class="text-[10.5px] text-amber-700 mt-1.5">${cpEsc(css.basisNote)}</p>` : ''}
+      ${css.previousCssPace ? `<p class="text-[10.5px] text-slate-400 mt-1">vs. ${cpEsc(css.previousCssPace)} /100m the prior 90 days</p>` : `<p class="text-[10.5px] text-slate-400 mt-1">No prior-period reading yet to compare against.</p>`}
+      <div class="mt-3 pt-3 border-t border-slate-100">${zoneRows}</div>
+    </div>`;
+}
+
+/* Sprint vs. distance aptitude -- fit from the swimmer's own freestyle PBs
+   across distances (plan_logic.classify_swimmer_type), no external time
+   standards needed. Complements the CSS panel: CSS tells you their pace,
+   this tells you which event distances/zones are likely to pay off most. */
+function cpSwimmerTypePanel(swimmer) {
+  const t = swimmer.swimmerType;
+  if (!t) {
+    return `
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i data-lucide="compass" class="w-4 h-4 text-brand-500"></i> Swimmer type</h4>
+        <div class="py-8 text-center text-xs text-slate-400 italic">Needs freestyle PBs at two distances with a real gap (e.g. 100 &amp; 400) to read a lean from.</div>
+      </div>`;
+  }
+  const badge = t.profile === 'sprint' ? 'bg-sky-50 text-sky-700 border-sky-100' :
+    t.profile === 'distance' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+    'bg-slate-100 text-slate-600 border-slate-200';
+  return `
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+      <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3.5 flex items-center gap-1.5"><i data-lucide="compass" class="w-4 h-4 text-brand-500"></i> Swimmer type</h4>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border font-mono ${badge}">${cpEsc(t.label)}</span>
+      <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">${cpEsc(t.note)}</p>
+      <p class="text-[10px] text-slate-400 mt-2">Based on ${cpEsc((t.basedOn || []).join(' & '))}</p>
     </div>`;
 }
 

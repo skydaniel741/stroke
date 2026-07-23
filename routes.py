@@ -1139,7 +1139,10 @@ def personal_bests():
 
     # --- predicted times: Riegel's endurance model (t2 = t1 * (d2/d1)^1.06),
     # the same formula behind most race-time calculators. Trained on race
-    # data across distances; a solid guide for training targets. ---
+    # data across distances; a solid guide for training targets. Shared with
+    # the CSS estimator and swimmer-type classifier (swim_logic.riegel_predict). ---
+    from swim_logic import riegel_predict
+
     def _event_parts(event):
         m = re.match(r'\s*(\d+)\s*m?\s+(.+)', event or '')
         return (int(m.group(1)), m.group(2).strip()) if m else (None, None)
@@ -1169,10 +1172,9 @@ def personal_bests():
                 continue
             # Predict from the nearest distance we actually have a time for.
             base_dist = min(bests.keys(), key=lambda d: abs(d - target))
-            # Riegel drifts badly past ~4x extrapolation; skip those.
-            if not (0.25 <= target / base_dist <= 4):
+            predicted = riegel_predict(bests[base_dist], base_dist, target)
+            if predicted is None:
                 continue
-            predicted = bests[base_dist] * (target / base_dist) ** 1.06
             prediction_rows.append({
                 'event': f'{target}m {stroke_name}',
                 'predicted': _fmt_secs(predicted),

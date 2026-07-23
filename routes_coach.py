@@ -78,21 +78,25 @@ def _best_by_event_pool(swims):
 
 
 def _css_trend(user_id):
-    """Aerobic-capacity trend for a swimmer: CSS (Critical Swim Speed, sec/100m)
-    from their best recent 400/200 freestyle pair, compared against the same
-    computation for the prior 90-day window. Lower CSS = faster. Returns None
-    when there's no valid time-trial pair in the current window."""
+    """Aerobic-capacity reading for a swimmer: CSS (Critical Swim Speed,
+    sec/100m) plus the five training-pace zones derived from it, compared
+    against the same computation for the prior 90-day window. Lower CSS =
+    faster. Uses plan_logic.css_estimate, which prefers a real 400+200 pair
+    but falls back to Riegel-predicting whichever is missing from any other
+    freestyle PB on file -- so a swimmer with e.g. only an 800 free still
+    gets a reading, just marked as estimated. Returns None only when there's
+    no usable freestyle PB at all in the current window."""
     import plan_logic
     import pacing
 
     now = datetime.utcnow()
-    s400, s200 = plan_logic.find_time_trials(user_id, days=90, end=now)
-    current_css = plan_logic.compute_css(s400.time_in_seconds(), s200.time_in_seconds()) if (s400 and s200) else None
-    if current_css is None:
+    current = plan_logic.css_estimate(user_id, days=90, end=now)
+    if current is None:
         return None
+    current_css = current['css']
 
-    prev400, prev200 = plan_logic.find_time_trials(user_id, days=90, end=now - timedelta(days=90))
-    prev_css = plan_logic.compute_css(prev400.time_in_seconds(), prev200.time_in_seconds()) if (prev400 and prev200) else None
+    previous = plan_logic.css_estimate(user_id, days=90, end=now - timedelta(days=90))
+    prev_css = previous['css'] if previous else None
 
     direction = None
     change_pct = None
@@ -105,12 +109,48 @@ def _css_trend(user_id):
         else:
             direction = 'steady'
 
+    zone_paces = plan_logic.zones(current_css)
+    zone_rows = [
+        {
+            'key': key,
+            'label': plan_logic.ZONE_META[key]['label'],
+            'note': plan_logic.ZONE_META[key]['note'],
+            'pace': pacing.fmt_secs(zone_paces[key]),
+        }
+        for key in plan_logic.ZONE_ORDER
+    ]
+
+    basis_note = None
+    if current['source'] == 'estimated_riegel':
+        parts = sorted({current['basis400'], current['basis200']})
+        basis_note = f"Estimated from {' & '.join(parts)}. No direct 400+200 pair logged yet."
+
     return {
         'cssPace': pacing.fmt_secs(current_css),
-        'trialDate': s400.logged_at.strftime('%Y-%m-%d'),
+        'source': current['source'],
+        'basisNote': basis_note,
         'previousCssPace': pacing.fmt_secs(prev_css) if prev_css else None,
         'direction': direction,
         'changePct': change_pct,
+        'zones': zone_rows,
+    }
+
+
+def _swimmer_type(user_id):
+    """Sprint vs. distance aptitude reading for the Athlete Hub, or None when
+    the swimmer doesn't have enough freestyle spread logged yet (see
+    plan_logic.classify_swimmer_type for the minimum-data rule)."""
+    import plan_logic
+
+    result = plan_logic.classify_swimmer_type(user_id)
+    if result is None:
+        return None
+    return {
+        'profile': result['profile'],
+        'label': plan_logic.SWIMMER_TYPE_LABELS[result['profile']],
+        'note': plan_logic.SWIMMER_TYPE_NOTES[result['profile']],
+        'exponent': result['exponent'],
+        'basedOn': result['basedOn'],
     }
 
 
@@ -265,6 +305,9 @@ def coach_pro_state():
             # engine the solo training-plan feature already computes from,
             # None when the swimmer has no recent 400+200 freestyle pair.
             'cssTrend': _css_trend(m.user_id) if m.user_id else None,
+            # Sprint vs. distance aptitude, fit from the swimmer's own
+            # freestyle PBs across distances (see plan_logic.classify_swimmer_type).
+            'swimmerType': _swimmer_type(m.user_id) if m.user_id else None,
             'recentActivity': recent_activity,
             'sessionsCount': len(swims) + len(sessions),
             'totalDistance': total_distance,

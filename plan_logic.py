@@ -26,8 +26,8 @@ from datetime import date, datetime, timedelta
 
 from swim_logic import (
     BASE_PACE_100, DEFAULT_LEVEL, FITNESS_FACTOR, MIN_REST,
-    MODIFIER_FACTOR, SESSION_CAP, STROKE_FACTOR, WEEK_CAP,
-    START_VOLUME_PER_DAY, _age_factor, fmt_time, parse_time,
+    MODIFIER_FACTOR, RIEGEL_EXPONENT, SESSION_CAP, STROKE_FACTOR, WEEK_CAP,
+    START_VOLUME_PER_DAY, _age_factor, fmt_time, parse_time, riegel_predict,
 )
 from workout_templates import get_template, templates_for
 
@@ -61,6 +61,23 @@ ZONE_REST_SLACK = {
     'threshold': 10.0,
     'vo2max': 30.0,  # speed work needs real recovery to stay fast
 }
+
+# Coach-facing label + one-line explanation per zone, slowest to fastest --
+# for the Athlete Hub CSS panel. `vo2max` is still an aerobic zone (a sustained
+# hard-interval pace), not raw sprint speed -- true sprint/max velocity is a
+# different metric the app already shows via Personal Bests / Race Pacing.
+ZONE_META = {
+    'recovery': {'label': 'Recovery', 'note': 'Easy aerobic, active-recovery swims.'},
+    'endurance': {'label': 'Endurance', 'note': 'Aerobic base-building pace.'},
+    'tempo': {'label': 'Tempo', 'note': 'Sub-threshold, race-pace prep.'},
+    'threshold': {'label': 'Threshold', 'note': 'Their CSS pace, the anchor number.'},
+    'vo2max': {'label': 'VO2max', 'note': 'Hardest aerobic zone, short high-intensity reps.'},
+}
+ZONE_ORDER = ('recovery', 'endurance', 'tempo', 'threshold', 'vo2max')
+
+# Freestyle distances a swimmer might realistically have PBs logged at --
+# used both to find/predict a CSS pair and to fit a swimmer-type curve.
+FREESTYLE_DISTANCES = (50, 100, 200, 400, 800, 1500)
 
 
 def compute_css(t400, t200):
@@ -99,6 +116,69 @@ def find_time_trials(user_id, days=90, end=None):
     return best[400], best[200]
 
 
+def _best_freestyle_by_distance(user_id, days=None, end=None):
+    """Best freestyle Swim per logged distance (only distances in
+    FREESTYLE_DISTANCES), optionally windowed. Returns {distance: Swim}."""
+    from models import Swim
+    end = end or datetime.utcnow()
+    q = Swim.query.filter(Swim.user_id == user_id, Swim.logged_at < end)
+    if days is not None:
+        q = q.filter(Swim.logged_at >= end - timedelta(days=days))
+    best = {}
+    for s in q.all():
+        if 'free' not in (s.event or '').lower():
+            continue
+        d = s.distance()
+        if d not in FREESTYLE_DISTANCES:
+            continue
+        secs = s.time_in_seconds()
+        if not secs:
+            continue
+        if d not in best or secs < best[d].time_in_seconds():
+            best[d] = s
+    return best
+
+
+def css_estimate(user_id, days=90, end=None):
+    """CSS for a swimmer from whatever freestyle PBs they have logged in the
+    `days`-long window ending at `end`, not just a literal 400+200 pair.
+    Prefers a real 400+200 pair (source='time_trial'); when one or both are
+    missing, Riegel-predicts the missing target(s) from the nearest logged
+    freestyle distance (source='estimated_riegel'), so a swimmer with e.g.
+    only an 800 free PB still gets a CSS reading. Returns None when neither
+    target is reachable within a trustworthy extrapolation range. Returns
+    {'css', 'source', 't400', 't200', 'basis400', 'basis200'} on success --
+    basis400/200 are the event strings the numbers actually came from."""
+    end = end or datetime.utcnow()
+    bests = _best_freestyle_by_distance(user_id, days=days, end=end)
+    if not bests:
+        return None
+
+    def resolve(target):
+        if target in bests:
+            sw = bests[target]
+            return sw.time_in_seconds(), sw.event, True
+        nearest = min(bests, key=lambda d: abs(d - target))
+        predicted = riegel_predict(bests[nearest].time_in_seconds(), nearest, target)
+        if predicted is None:
+            return None, None, False
+        return predicted, bests[nearest].event, False
+
+    t400, basis400, real400 = resolve(400)
+    t200, basis200, real200 = resolve(200)
+    if t400 is None or t200 is None:
+        return None
+    css = compute_css(t400, t200)
+    if css is None:
+        return None
+    return {
+        'css': css,
+        'source': 'time_trial' if (real400 and real200) else 'estimated_riegel',
+        't400': t400, 't200': t200,
+        'basis400': basis400, 'basis200': basis200,
+    }
+
+
 def estimate_css(profile):
     """Fallback CSS from the level pace model when no time trials exist.
     Rough by design -- the plan schedules a CSS test in week 1 to correct it."""
@@ -113,6 +193,69 @@ def estimate_css(profile):
 def zones(css):
     """The five training-zone paces (sec/100m) for a given CSS."""
     return {zone: css + off for zone, off in ZONE_OFFSETS.items()}
+
+
+# How far a swimmer's own pace-vs-distance curve has to lean away from the
+# population Riegel exponent before we call it a real sprint/distance lean,
+# rather than balanced. Approximate by nature -- same "training anchor, not
+# lab-exact" honesty as CSS itself.
+SWIMMER_TYPE_DELTA = 0.03
+
+SWIMMER_TYPE_LABELS = {
+    'sprint': 'Sprint-leaning',
+    'balanced': 'Balanced / middle-distance',
+    'distance': 'Distance-leaning',
+}
+SWIMMER_TYPE_NOTES = {
+    'sprint': ("Times fall off faster than typical as distance increases. Reads as a sprint/power profile: "
+               "likely gets the most benefit from race-pace, VO2max, and speed work; aerobic volume has "
+               "diminishing returns for them."),
+    'balanced': ("Pace holds up about like a typical swimmer's as distance increases, with no strong lean either "
+                 "way. A mixed diet across zones probably suits them best."),
+    'distance': ("Holds pace better than typical as distance increases. Reads as an aerobic/distance profile: "
+                 "likely gets the most benefit from base volume and threshold work."),
+}
+
+
+def classify_swimmer_type(user_id):
+    """Sprint vs. distance aptitude from the swimmer's own freestyle PBs
+    across distances -- no external time-standards table needed. Fits how
+    their own pace falls off with distance (least-squares in log-log space)
+    and compares the resulting exponent to the population Riegel exponent
+    (swim_logic.RIEGEL_EXPONENT). Needs at least two freestyle PBs spanning a
+    real distance gap (>= 3x, e.g. 100 & 400) -- distances close together
+    (100 & 200) don't carry enough signal to fit a reliable curve. Returns
+    {'profile', 'exponent', 'basedOn'} or None when there isn't enough spread."""
+    bests = _best_freestyle_by_distance(user_id)
+    if len(bests) < 2:
+        return None
+    distances = sorted(bests)
+    if distances[-1] / distances[0] < 3:
+        return None
+
+    xs = [math.log(d) for d in distances]
+    ys = [math.log(bests[d].time_in_seconds()) for d in distances]
+    n = len(xs)
+    mean_x = sum(xs) / n
+    mean_y = sum(ys) / n
+    denom = sum((x - mean_x) ** 2 for x in xs)
+    if denom == 0:
+        return None
+    exponent = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys)) / denom
+
+    delta = exponent - RIEGEL_EXPONENT
+    if delta >= SWIMMER_TYPE_DELTA:
+        profile = 'sprint'
+    elif delta <= -SWIMMER_TYPE_DELTA:
+        profile = 'distance'
+    else:
+        profile = 'balanced'
+
+    return {
+        'profile': profile,
+        'exponent': round(exponent, 3),
+        'basedOn': [bests[d].event for d in distances],
+    }
 
 
 def target_seconds(dist, zone_pace100):
